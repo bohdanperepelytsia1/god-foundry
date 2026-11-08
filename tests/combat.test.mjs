@@ -36,11 +36,18 @@ game.user.targets = new Set([{ id: 'o' }])
 assert.deepEqual(targetChoices(hero).map(t => t.name), ['Огр', 'Гоблін'])
 game.user.targets = new Set()
 
+// Однакові імена — з номерами
+const g2 = mkToken('g2', 'Гоблін', 5)
+canvas.tokens.placeables = [goblin, g2, ogre]
+assert.deepEqual(targetChoices(hero).map(t => t.label).sort(), ['Гоблін #1', 'Гоблін #2', 'Огр'])
+canvas.tokens.placeables = [goblin, ogre]
+
 // 1. Без цілі в діалозі — атака не відбувається
 dialogAnswer = { target: '', hitMod: 3, dmgMod: 1 }
 await weaponAttack(hero, sword)
 assert.equal(cards.length, 0); assert.match(warns.pop(), /ціль/i)
-assert.ok(lastDialog.includes('— обери ціль —') && lastDialog.includes('Гоблін — ШУ 8'), 'список цілей у діалозі')
+assert.ok(lastDialog.includes('type="radio" name="target"') && lastDialog.includes('Гоблін') && lastDialog.includes('<b>8</b> ШУ'), 'список цілей у діалозі')
+assert.ok(!/Token\.\w+" checked/.test(lastDialog), 'без позначеної цілі нічого не обрано наперед')
 
 // 2. Попадання 8 проти ШУ 8 — промах (треба більше), урон не кидається
 rolled.length = 0; nextTotals = [8]

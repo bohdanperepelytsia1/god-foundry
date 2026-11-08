@@ -34,9 +34,17 @@
           <input type="search" data-filter="inventory" placeholder="Пошук…" class="god-select-on-focus"></div>
         <select class="god-inv-sort" data-inv-sort data-tooltip="Сортування">{{selectOptions sorts selected=sort}}</select>
         <div class="god-create">
-          <button type="button" data-action="itemCreate" data-type="gear" data-tooltip="Новий предмет"><i class="fa-solid fa-box"></i></button>
-          <button type="button" data-action="itemCreate" data-type="weapon" data-tooltip="Нова зброя"><i class="fa-solid fa-khanda"></i></button>
-          <button type="button" data-action="itemCreate" data-type="armor" data-tooltip="Новий обладунок"><i class="fa-solid fa-shield-halved"></i></button>
+          <details class="god-create-menu">
+            <summary data-tooltip="Новий предмет — обери, що це"><i class="fa-solid fa-plus"></i> Додати</summary>
+            <div class="god-create-list">
+              <button type="button" data-action="itemCreate" data-type="weapon"><img src="systems/god/assets/icons/weapons/onehand.svg" alt="">Зброя</button>
+              <button type="button" data-action="itemCreate" data-type="armor"><img src="systems/god/assets/icons/armor/cuirass.svg" alt="">Обладунок</button>
+              <hr>
+              {{#each gearCats}}
+              <button type="button" data-action="itemCreate" data-type="gear" data-category="{{id}}"><img src="{{icon}}" alt="">{{label}}</button>
+              {{/each}}
+            </div>
+          </details>
         </div>
       </div>
 
@@ -75,6 +83,7 @@
               <span class="god-inv-eq">
                 {{#if equippable}}<a data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти{{else}}Одягнути / взяти в руку{{/if}}">
                   <i class="fa-solid fa-shirt {{#unless equipped}}god-off{{/unless}}"></i></a>{{/if}}
+                {{#if @root.editable}}<a class="god-inv-del" data-action="itemDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>{{/if}}
               </span>
             </li>
             {{/each}}

@@ -27,11 +27,12 @@ export function itemSub(item) {
   const s = item.system
   if (item.type === 'weapon') return [GOD.WEAPON_CATEGORIES[s.category], s.phys && `${s.phys} фіз`, s.mag && `${s.mag} маг`].filter(Boolean).join(' · ')
   if (item.type === 'armor') return [GOD.ARMOR_SLOTS[s.slot], s.phys && `PR ${s.phys}`, s.mag && `MR ${s.mag}`].filter(Boolean).join(' · ')
+  const cat = item.type === 'gear' && s.category && s.category !== 'item' ? GOD.GEAR_CATEGORIES[s.category]?.label : ''
   if (item.type === 'gear' && s.consumable) {
     const r = R.restoreList(s.restore).map(x => `${abbr(x.key)} ${x.value > 0 ? '+' : ''}${x.value}`)
-    return r.length ? r.join(' · ') : 'розхідне'
+    return [cat, ...r].filter(Boolean).join(' · ') || 'розхідне'
   }
-  return ''
+  return cat
 }
 
 function tagsOf(s) {
@@ -126,7 +127,7 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
 
   return {
     id: item.id, name: item.name, img: item.img, type: item.type,
-    typeLabel: item.type === 'gear' && s.consumable ? 'Розхідне' : game.i18n.localize(`TYPES.Item.${item.type}`),
+    typeLabel: item.type === 'gear' ? `${GOD.GEAR_CATEGORIES[s.category]?.label ?? 'Предмет'}${s.consumable ? ' · розхідне' : ''}` : game.i18n.localize(`TYPES.Item.${item.type}`),
     kicker: itemSub(item), tags: tagsOf(s),
     qty, location: s.location, equipped: !!s.equipped,
     equippable: ['weapon', 'armor'].includes(item.type),

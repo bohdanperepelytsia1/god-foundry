@@ -203,20 +203,43 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       spell.use()
     })
   }
-  // «Урон» — цілі атаки (або обраним токенам у старих картках): MR → PR → HP
-  for (const btn of html.querySelectorAll('[data-god-apply]')) {
+  // «Урон» — цілі атаки (або обраним токенам у старих картках): MR → PR → HP.
+  // Натиснути можна один раз: після застосування кнопка гасне в усіх (прапорець на повідомленні).
+  // Майстер може повторити Shift+кліком.
+  const applied = message.getFlag('god', 'applied') ?? {}
+  html.querySelectorAll('[data-god-apply]').forEach((btn, i) => {
+    const key = String(i)
+    const done = applied[key]
+    if (done || pendingApply.has(`${message.id}:${key}`)) lockApplyButton(btn, done)
     btn.addEventListener('click', async ev => {
       ev.preventDefault()
+      const again = game.user.isGM && ev.shiftKey
+      if ((btn.disabled || message.getFlag('god', `applied.${key}`)) && !again) return
+      const pk = `${message.id}:${key}`
+      if (pendingApply.has(pk) && !again) return
+      pendingApply.add(pk)
+      lockApplyButton(btn, null)
       const amount = (Number(btn.dataset.phys) || 0) + (Number(btn.dataset.mag) || 0) + (Number(btn.dataset.amount) || 0)
-      if (btn.dataset.target) return applyToTarget(btn.dataset.target, amount)
-      const tokens = canvas.tokens?.controlled ?? []
-      if (!tokens.length) return ui.notifications.warn('Обери токен(и), яким застосувати урон')
-      for (const t of tokens) {
-        if (!t.actor?.isOwner) { ui.notifications.warn(`Немає прав на «${t.name}»`); continue }
-        await API.dealDamage(t.actor, amount)
+      try {
+        if (btn.dataset.target) {
+          const ok = await applyToTarget(btn.dataset.target, amount, { messageId: message.id, key })
+          if (!ok) { pendingApply.delete(pk); unlockApplyButton(btn) }
+          return
+        }
+        const tokens = (canvas.tokens?.controlled ?? []).filter(t => t.actor?.isOwner)
+        if (!tokens.length) {
+          pendingApply.delete(pk); unlockApplyButton(btn)
+          return ui.notifications.warn('Обери токен(и), яким застосувати урон')
+        }
+        const lines = []
+        for (const t of tokens) lines.push(API.damageSummary(t.actor.name, await API.dealDamage(t.actor, amount)))
+        await markApplied(message, key, { by: game.user.id, text: lines.join('; ') })
+      } catch (err) {
+        console.error('G.O.D. | урон не застосовано', err)
+        pendingApply.delete(pk); unlockApplyButton(btn)
       }
     })
-  }
+  })
 })
 
 // ── Числові поля: клік по «0» — нуль зникає, по іншому числу — воно виділяється ──
@@ -284,22 +307,56 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
  * Урон по цілі: власник застосовує сам, інакше — через активного майстра (сокет системи),
  * тож гравець може натиснути «Урон» по ворогу, а ворог — по гравцю.
  */
-async function applyToTarget(uuid, amount) {
+async function applyToTarget(uuid, amount, mark) {
   const doc = fromUuidSync(uuid)
   const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
-  if (!actor) return ui.notifications.warn('Ціль більше не існує')
-  if (actor.isOwner) return API.dealDamage(actor, amount)
-  if (!game.users.activeGM) return ui.notifications.warn('Немає майстра онлайн, щоб застосувати урон')
-  game.socket.emit('system.god', { op: 'damage', uuid, amount, from: game.user.id })
+  if (!actor) { ui.notifications.warn('Ціль більше не існує'); return false }
+  if (actor.isOwner) {
+    const out = await API.dealDamage(actor, amount)
+    await markApplied(game.messages.get(mark.messageId), mark.key, { by: game.user.id, text: API.damageSummary(actor.name, out) })
+    return true
+  }
+  if (!game.users.activeGM) { ui.notifications.warn('Немає майстра онлайн, щоб застосувати урон'); return false }
+  game.socket.emit('system.god', { op: 'damage', uuid, amount, from: game.user.id, ...mark })
   ui.notifications.info(`Урон ${amount} → ${actor.name}: надіслано майстру`)
+  return true
+}
+
+/** Ключі кнопок урону, які вже натиснуто на цьому клієнті (до приходу прапорця з сервера) */
+const pendingApply = new Set()
+function lockApplyButton(btn, done) {
+  btn.disabled = true
+  btn.classList.add('applied')
+  btn.innerHTML = `<i class="fa-solid fa-check"></i> ${done?.text ? foundry.utils.escapeHTML?.(done.text) ?? done.text : 'Застосовано'}`
+  btn.dataset.tooltip = game.user.isGM ? 'Урон уже застосовано. Shift+клік — застосувати ще раз' : 'Урон уже застосовано'
+  if (game.user.isGM) btn.disabled = false   // майстру лишаємо Shift+клік
+}
+function unlockApplyButton(btn) {
+  btn.disabled = false
+  btn.classList.remove('applied')
+  const amount = (Number(btn.dataset.phys) || 0) + (Number(btn.dataset.mag) || 0) + (Number(btn.dataset.amount) || 0)
+  btn.innerHTML = `<i class="fa-solid fa-burst"></i> Урон ${amount}`
+}
+/** Позначити кнопку на повідомленні як застосовану — для всіх клієнтів і після перезавантаження */
+async function markApplied(message, key, info) {
+  if (!message) return
+  if (message.isOwner) return message.setFlag('god', `applied.${key}`, info)
+  if (game.users.activeGM) game.socket.emit('system.god', { op: 'mark', messageId: message.id, key, info })
 }
 
 Hooks.once('ready', async () => {
   game.socket.on('system.god', async msg => {
-    if (msg?.op !== 'damage' || game.user !== game.users.activeGM) return
-    const doc = fromUuidSync(msg.uuid)
-    const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
-    if (actor) await API.dealDamage(actor, Number(msg.amount) || 0)
+    if (game.user !== game.users.activeGM) return
+    const message = msg?.messageId ? game.messages.get(msg.messageId) : null
+    if (msg?.op === 'damage') {
+      const doc = fromUuidSync(msg.uuid)
+      const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
+      if (!actor || message?.getFlag('god', `applied.${msg.key}`)) return
+      const out = await API.dealDamage(actor, Number(msg.amount) || 0)
+      if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
+    } else if (msg?.op === 'mark' && message) {
+      await message.setFlag('god', `applied.${msg.key}`, msg.info)
+    }
   })
   await migrateWorld()
   GodQuickbar.refresh()

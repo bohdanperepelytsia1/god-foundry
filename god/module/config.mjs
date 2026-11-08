@@ -115,6 +115,30 @@ export const INVENTORY_LOCATIONS = {
   books: 'Книги', ingredients: 'Інгредієнти', potions: 'Зілля',
 }
 
+/**
+ * Категорії звичайних предметів: що це таке. Визначають іконку, типовий розділ інвентаря
+ * і чи предмет розхідний. Розділ потім можна змінити — категорія лишиться.
+ */
+export const GEAR_CATEGORIES = {
+  item:       { label: 'Звичайний',      icon: 'item',     loc: 'main' },
+  potion:     { label: 'Зілля',          icon: 'potion',   loc: 'potions',     consumable: true },
+  food:       { label: 'Їжа й питво',    icon: 'food',     loc: 'main',        consumable: true },
+  medicine:   { label: 'Ліки, бинти',    icon: 'flask',    loc: 'potions',     consumable: true },
+  ingredient: { label: 'Інгредієнт',     icon: 'herb',     loc: 'ingredients' },
+  tool:       { label: 'Інструмент',     icon: 'tools',    loc: 'tools' },
+  lockpick:   { label: 'Відмички',       icon: 'lockpick', loc: 'tools' },
+  book:       { label: 'Книга',          icon: 'book',     loc: 'books' },
+  scroll:     { label: 'Сувій, лист',    icon: 'scroll',   loc: 'books' },
+  quest:      { label: 'Квестовий',      icon: 'map',      loc: 'quest' },
+  key:        { label: 'Ключ',           icon: 'key',      loc: 'quest' },
+  light:      { label: 'Світло',         icon: 'torch',    loc: 'main' },
+  camp:       { label: 'Похідне',        icon: 'camp',     loc: 'main' },
+  rope:       { label: 'Мотузка, кріплення', icon: 'rope', loc: 'main' },
+  valuable:   { label: 'Цінність',       icon: 'coins',    loc: 'main' },
+}
+/** Розділ інвентаря → типова категорія (для кнопки «+» у розділі) */
+export const LOCATION_CATEGORY = { main: 'item', belt: 'item', quest: 'quest', tools: 'tool', books: 'book', ingredients: 'ingredient', potions: 'potion' }
+
 export const WEAPON_CATEGORIES = {
   fist: 'Кулачна', light: 'Легка', onehand: 'Одноручна', heavy1h: 'Тяжка одноручна',
   twohand: 'Дворучна', bow: 'Лук', throw: 'Метальна',
@@ -173,7 +197,7 @@ export const MONEY = {
 
 export const GOD = {
   BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
-  INVENTORY_LOCATIONS, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
+  INVENTORY_LOCATIONS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 
 // ── Іконки системи (assets/icons) ────────────────────────────────────────────
@@ -191,6 +215,7 @@ export function defaultIcon(type, system = {}) {
   if (type === 'spell') return I('schools', system.school ?? 'fire')
   if (type === 'ability') return I('misc', 'ability')
   if (type === 'trait') return I('misc', system.kind === 'quirk' ? 'quirk' : 'trait')
+  if (type === 'gear') return I('gear', GEAR_CATEGORIES[system.category]?.icon ?? 'item')
   return I('gear', 'item')
 }
 export const ACTOR_ICONS = { character: I('misc', 'character'), npc: I('misc', 'npc') }

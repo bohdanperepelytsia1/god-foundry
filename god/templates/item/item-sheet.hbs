@@ -10,6 +10,19 @@
     </div>
   </header>
 
+  {{#if isGear}}
+  <fieldset class="god-gear-cats"><legend>Що це</legend>
+    <div class="god-cat-grid">
+      {{#each gearCats}}
+      <button type="button" class="god-cat {{#if active}}active{{/if}}" data-action="gearCategory" data-cat="{{id}}" {{#unless @root.editable}}disabled{{/unless}}
+        data-tooltip="{{label}} → розділ «{{locLabel}}»{{#if consumable}}, розхідне{{/if}}">
+        <img src="{{icon}}" alt=""><span>{{label}}</span></button>
+      {{/each}}
+    </div>
+    <p class="god-hint">Категорія ставить іконку, розділ інвентаря і «розхідне». Розділ потім можна змінити нижче.</p>
+  </fieldset>
+  {{/if}}
+
   {{#if isWeapon}}
   <fieldset><legend>Зброя</legend>
     <div class="god-form-grid">

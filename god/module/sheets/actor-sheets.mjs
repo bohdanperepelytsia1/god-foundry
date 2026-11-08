@@ -21,6 +21,14 @@ import { buildInventory, inspectItem, newInventoryState } from './inventory.mjs'
 const { HandlebarsApplicationMixin } = foundry.applications.api
 const { ActorSheetV2 } = foundry.applications.sheets
 const TPL = 'systems/god/templates/actor'
+/** Обмежити розмір вікна екраном (з урахуванням панелей Foundry) */
+export function fitToScreen(pos) {
+  if (!pos || typeof window === 'undefined') return pos
+  const W = window.innerWidth, H = window.innerHeight
+  if (typeof pos.width === 'number') pos.width = Math.max(360, Math.min(pos.width, W - 340))
+  if (typeof pos.height === 'number') pos.height = Math.max(420, Math.min(pos.height, H - 70))
+  return pos
+}
 const enrich = (html, doc) => foundry.applications.ux.TextEditor.implementation.enrichHTML(html ?? '', { relativeTo: doc })
 
 class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
@@ -57,6 +65,13 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   _editMode = false
   _expanded = new Set()
+
+  /** Вікно не більше за екран: на ноутбуці 1366×768 лист влазить повністю */
+  _initializeApplicationOptions(options) {
+    const o = super._initializeApplicationOptions(options)
+    fitToScreen(o.position)
+    return o
+  }
 
   _item(target) { return this.document.items.get(target.closest('[data-item-id]')?.dataset.itemId) }
   /** Ефект актора або ефект предмета — за UUID */
@@ -114,6 +129,10 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
 
     bindResourceControls(root, () => this.document)
     this._bindInventory(root)
+    // Випадне меню «+ Предмет» закривається кліком повз нього
+    root.addEventListener('pointerdown', ev => {
+      for (const d of root.querySelectorAll('details.god-create-menu[open]')) if (!d.contains(ev.target)) d.removeAttribute('open')
+    })
     // Страховка: рядок предмета завжди несе дані для перетягування (на хотбар, швидку панель, іншому актору)
     root.addEventListener('dragstart', ev => {
       const row = ev.target.closest?.('.god-row[data-item-id]')
@@ -129,8 +148,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (!CM) return
     const it = li => this.document.items.get(li.dataset.itemId)
     try {
-      new CM(this.element, '.god-row[data-item-id]', [
-        { name: 'Використати', icon: '<i class="fa-solid fa-dice-d20"></i>', condition: li => ['weapon', 'spell', 'ability'].includes(it(li)?.type), callback: li => it(li)?.use() },
+      new CM(this.element, '.god-row[data-item-id], .god-inv-row[data-item-id]', [
+        { name: 'Використати', icon: '<i class="fa-solid fa-dice-d20"></i>', condition: li => ['weapon', 'spell', 'ability'].includes(it(li)?.type) || it(li)?.system.consumable, callback: li => it(li)?.use() },
         { name: 'Редагувати', icon: '<i class="fa-solid fa-pen"></i>', callback: li => it(li)?.sheet.render(true) },
         { name: 'Одягнути / зняти', icon: '<i class="fa-solid fa-shirt"></i>', condition: li => ['weapon', 'armor'].includes(it(li)?.type), callback: li => this.document.toggleEquip(it(li)) },
         { name: 'Показати в чаті', icon: '<i class="fa-solid fa-comment"></i>', callback: li => import('../dice/rolls.mjs').then(m => m.postItem(this.document, it(li))) },
@@ -226,9 +245,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       ev.preventDefault(); this.document.items.get(this._inv.selected)?.use()
     } else if (ev.key === 'Delete' && this.isEditable) {
       ev.preventDefault()
-      const item = this.document.items.get(this._inv.selected)
-      if (item) foundry.applications.api.DialogV2.confirm({ window: { title: 'Видалити' }, content: `<p>Видалити «${foundry.utils.escapeHTML?.(item.name) ?? item.name}»?</p>`, rejectClose: false })
-        .then(ok => ok && item.delete())
+      GodActorSheetBase.#confirmDelete(this.document.items.get(this._inv.selected))
     }
   }
 
@@ -307,6 +324,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
 
   async _gearContext(context, items) {
     const d = this.document.system.derived
+    context.gearCats = Object.entries(GOD.GEAR_CATEGORIES).map(([id, g]) => ({ id, label: g.label, icon: `systems/god/assets/icons/gear/${g.icon}.svg` }))
     const armor = items.filter(i => i.type === 'armor')
     context.slots = Object.entries(GOD.ARMOR_SLOTS).map(([slot, label]) => {
       const it = armor.find(a => a.system.equipped && a.system.slot === slot)
@@ -362,11 +380,19 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
   static #itemEdit(ev, target) { this._item(target)?.sheet.render(true) }
   static #itemDelete(ev, target) { GodActorSheetBase.#confirmDelete(this._item(target)) }
   static async #confirmDelete(item) {
-    if (!item) return
+    if (!item) return ui.notifications.warn('Предмет не знайдено — онови лист')
+    if (!item.isOwner) return ui.notifications.warn('Немає прав видаляти цей предмет')
+    const name = foundry.utils.escapeHTML?.(item.name) ?? item.name
+    const qty = item.system?.quantity > 1 ? ` (усі ${item.system.quantity} шт.)` : ''
     const ok = await foundry.applications.api.DialogV2.confirm({
-      window: { title: 'Видалити' }, content: `<p>Видалити «${foundry.utils.escapeHTML?.(item.name) ?? item.name}»?</p>`, rejectClose: false,
+      window: { title: 'Видалити предмет', icon: 'fa-solid fa-trash' }, classes: ['god-dialog'],
+      content: `<p>Видалити «<b>${name}</b>»${qty}? Це не можна скасувати.</p>`, rejectClose: false, modal: true,
     })
-    if (ok) item.delete()
+    if (!ok) return
+    try { await item.delete() } catch (err) {
+      console.error('G.O.D. | не вдалося видалити предмет', err)
+      ui.notifications.error(`Не вдалося видалити «${item.name}»: ${err.message}`)
+    }
   }
   static #itemEquip(ev, target) { const it = this._item(target); if (it) this.document.toggleEquip(it) }
   static async #itemCreate(ev, target) {
@@ -374,7 +400,11 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const system = {}
     if (target.dataset.location) system.location = target.dataset.location
     if (target.dataset.kind) system.kind = target.dataset.kind
-    const name = target.dataset.kind === 'quirk' ? 'Нова особливість' : target.dataset.kind === 'trait' ? 'Нова риса' : game.i18n.localize(`TYPES.Item.${type}`)
+    if (type === 'gear') system.category = target.dataset.category ?? GOD.LOCATION_CATEGORY[system.location] ?? 'item'
+    target.closest('details')?.removeAttribute('open')
+    const gearName = type === 'gear' && system.category !== 'item' ? GOD.GEAR_CATEGORIES[system.category]?.label : null
+    const name = target.dataset.kind === 'quirk' ? 'Нова особливість' : target.dataset.kind === 'trait' ? 'Нова риса'
+      : gearName ?? ({ gear: 'Новий предмет', weapon: 'Нова зброя', armor: 'Новий обладунок', spell: 'Нове заклинання', ability: 'Нова здібність' })[type] ?? game.i18n.localize(`TYPES.Item.${type}`)
     const [item] = await this.document.createEmbeddedDocuments('Item', [{ name, type, system }], { godNoStack: true })
     item?.sheet.render(true)
   }

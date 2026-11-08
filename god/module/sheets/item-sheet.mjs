@@ -1,5 +1,6 @@
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
+import { fitToScreen } from './actor-sheets.mjs'
 
 const { HandlebarsApplicationMixin } = foundry.applications.api
 const { ItemSheetV2 } = foundry.applications.sheets
@@ -12,15 +13,28 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     form: { submitOnChange: true },
     actions: {
       editImage: GodItemSheet.#editImage,
+      gearCategory: GodItemSheet.#gearCategory,
       effectCreate: GodItemSheet.#effectCreate, effectEdit: GodItemSheet.#effectEdit,
       effectDelete: GodItemSheet.#effectDelete, effectToggle: GodItemSheet.#effectToggle,
     },
   }
+  _initializeApplicationOptions(options) {
+    const o = super._initializeApplicationOptions(options)
+    fitToScreen(o.position)
+    return o
+  }
+
   static PARTS = { body: { template: 'systems/god/templates/item/item-sheet.hbs', scrollable: [''] } }
 
   static #editImage() {
     const FP = foundry.applications.apps?.FilePicker?.implementation ?? globalThis.FilePicker
     new FP({ type: 'image', current: this.document.img, callback: path => this.document.update({ img: path }) }).browse()
+  }
+
+  /** Категорія звичайного предмета: іконка, розділ і «розхідне» підлаштуються в _preUpdate */
+  static #gearCategory(ev, target) {
+    if (!this.isEditable) return
+    this.document.update({ 'system.category': target.dataset.cat })
   }
 
   _eff(t) { return this.document.effects.get(t.closest('[data-effect-id]')?.dataset.effectId) }
@@ -57,6 +71,7 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (s.staminaCost) f.push({ label: `${s.staminaCost} ВС` })
       if (s.cooldown) f.push({ label: `CD ${s.cooldown}` })
     }
+    if (item.type === 'gear' && s.category && s.category !== 'item') f.push({ label: GOD.GEAR_CATEGORIES[s.category]?.label })
     if (item.type === 'gear' && s.consumable) {
       f.push({ label: 'розхідне' })
       for (const r of R.restoreList(s.restore)) f.push({ label: `${GOD.RESOURCES[r.key]?.abbr ?? r.key.toUpperCase()} ${r.value > 0 ? '+' : ''}${r.value}`, cls: r.key === 'mp' ? 'mag' : '' })
@@ -85,6 +100,10 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       handOptions: { main: 'Основна рука (+СИЛ×5)', off: 'Друга рука (без СИЛ)' },
       damageKinds: { mag: 'Магічний', phys: 'Фізичний', none: 'Без урону' },
       facts: GodItemSheet.facts(item),
+      gearCats: item.type === 'gear' ? Object.entries(GOD.GEAR_CATEGORIES).map(([id, g]) => ({
+        id, label: g.label, consumable: g.consumable, locLabel: GOD.INVENTORY_LOCATIONS[g.loc],
+        icon: `systems/god/assets/icons/gear/${g.icon}.svg`, active: item.system.category === id,
+      })) : [],
       restoreFields: item.type === 'gear' ? R.RESTORE_KEYS.map(key => ({
         key, value: item.system.restore?.[key] ?? 0,
         abbr: GOD.RESOURCES[key]?.abbr ?? key.toUpperCase(),

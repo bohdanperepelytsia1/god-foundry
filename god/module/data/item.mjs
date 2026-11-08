@@ -52,9 +52,15 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 }
 
 export class GearData extends foundry.abstract.TypeDataModel {
+  /** Старі предмети без категорії: беремо її з розділу інвентаря */
+  static migrateData(source) {
+    if (source && source.category === undefined && source.location) source.category = GOD.LOCATION_CATEGORY[source.location] ?? 'item'
+    return super.migrateData(source)
+  }
   static defineSchema() {
     return {
       ...physical(),
+      category: choice(Object.keys(GOD.GEAR_CATEGORIES), 'item'),
       // Розхідне (зілля, їжа, бинти): «Використати» відновлює ресурси і списує 1 шт
       consumable: new f.BooleanField({ initial: false }),
       restore: new f.SchemaField(Object.fromEntries(['hp', 'mp', 'ed', 'mt', 'pr', 'mr'].map(k => [k, int(0)]))),

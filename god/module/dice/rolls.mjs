@@ -29,10 +29,24 @@ export function targetChoices(actor) {
     if (!origin) return null
     try { return Math.round(canvas.grid.measurePath([origin.center, t.center]).distance) } catch { return null }
   }
-  return tokens
+  const list = tokens
     .filter(t => t.actor && !own.includes(t) && (t.visible || game.user.isGM))
-    .map(t => ({ uuid: t.document.uuid, name: t.name, dodge: t.actor.system?.derived?.dodge ?? 0, dist: dist(t), marked: marked.has(t.id) }))
+    .map(t => {
+      const hp = t.actor.system?.resources?.hp
+      const seeHp = game.user.isGM || t.actor.isOwner
+      return {
+        uuid: t.document.uuid, tokenId: t.id, name: t.name, img: t.document.texture?.src ?? t.actor.img,
+        dodge: t.actor.system?.derived?.dodge ?? 0, dist: dist(t), marked: marked.has(t.id),
+        disp: t.document.disposition ?? 0,
+        hpPct: seeHp && hp?.max ? Math.max(0, Math.min(100, Math.round(hp.value / hp.max * 100))) : null,
+      }
+    })
     .sort((a, b) => (b.marked - a.marked) || ((a.dist ?? 0) - (b.dist ?? 0)) || a.name.localeCompare(b.name, 'uk'))
+  // Однакові імена нумеруємо (від найближчого) — і підсвічуємо токен при наведенні в діалозі
+  const count = {}, seen = {}
+  for (const t of list) count[t.name] = (count[t.name] ?? 0) + 1
+  for (const t of list) t.label = count[t.name] > 1 ? `${t.name} #${seen[t.name] = (seen[t.name] ?? 0) + 1}` : t.name
+  return list
 }
 
 /** Ціль за UUID токена → { uuid, name, dodge, actor } і позначка T для наочності */
@@ -95,21 +109,33 @@ async function rollDialog({ title, fields, info }) {
       <label class="god-dlg-check"><input type="checkbox" name="${fd.name}" ${fd.value ? 'checked' : ''}><span>${esc(fd.label)}</span></label>`
     if (fd.type === 'target') {
       const pre = fd.choices.find(t => t.marked)
+      const DISP = { '-1': 'hostile', '0': 'neutral', '1': 'friendly', '-2': 'secret' }
       return `
-      <label class="god-dlg-field god-dlg-target"><span>${esc(fd.label ?? 'Ціль')}</span>
-        <select name="${fd.name}" required>
-          ${pre ? '' : '<option value="" selected disabled>— обери ціль —</option>'}
-          ${fd.choices.map(t => `<option value="${t.uuid}" ${t === pre ? 'selected' : ''}>${esc(t.name)} — ШУ ${t.dodge}${t.dist !== null ? ` · ${t.dist} м` : ''}</option>`).join('')}
-        </select></label>`
+      <div class="god-dlg-target">
+        <span class="god-dlg-target-label">${esc(fd.label ?? 'Ціль')} <small>наведи — токен підсвітиться на сцені</small></span>
+        <div class="god-targets">
+          ${fd.choices.map(t => `
+          <label class="god-target disp-${DISP[t.disp] ?? 'neutral'}" data-token-id="${t.tokenId}">
+            <input type="radio" name="${fd.name}" value="${t.uuid}" ${t === pre ? 'checked' : ''} required>
+            <img src="${esc(t.img)}" alt="">
+            <span class="god-target-name">${esc(t.label)}${t.marked ? ' <i class="fa-solid fa-bullseye" data-tooltip="Позначена ціль (T)"></i>' : ''}
+              ${t.hpPct !== null ? `<span class="god-target-hp"><i style="width:${t.hpPct}%"></i></span>` : ''}</span>
+            <span class="god-target-meta"><b>${t.dodge}</b> ШУ${t.dist !== null ? `<br>${t.dist} м` : ''}</span>
+            <a class="god-target-pan" data-tooltip="Показати на сцені"><i class="fa-solid fa-location-crosshairs"></i></a>
+          </label>`).join('')}
+        </div>
+      </div>`
     }
     return `
       <label class="god-dlg-field"><span>${esc(fd.label)}</span>
         <input type="number" name="${fd.name}" value="${fd.value ?? 0}" autofocus></label>`
   }).join('')
+  const hasTarget = fields.some(fd => fd.type === 'target')
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title, icon: 'fa-solid fa-dice-d20' },
     classes: ['god-dialog'],
-    position: { width: 380 },
+    position: { width: hasTarget ? 420 : 380 },
+    render: hasTarget ? (event, dialog) => bindTargetList(dialog?.element ?? event?.target?.element ?? dialog) : undefined,
     content: `${info ? `<p class="god-dlg-info">${info}</p>` : ''}${rows}`,
     rejectClose: false,
     buttons: [{
@@ -126,11 +152,39 @@ async function rollDialog({ title, fields, info }) {
       },
     }],
   })
+  if (hasTarget) clearTargetHover()
   if (!result || typeof result !== 'object') return null
   // Ціль обов'язкова: без неї влучання не перевірити
   const tf = fields.find(fd => fd.type === 'target')
   if (tf && !result[tf.name]) { ui.notifications.warn('Обери ціль атаки'); return null }
   return result
+}
+
+/** Наведення на рядок цілі підсвічує токен; кнопка-приціл центрує сцену на ньому */
+function bindTargetList(root) {
+  const box = root?.querySelector?.('.god-targets')
+  if (!box) return
+  const tok = el => canvas?.tokens?.get(el?.closest('[data-token-id]')?.dataset.tokenId)
+  const out = clearTargetHover
+  box.addEventListener('pointerover', ev => {
+    const t = tok(ev.target)
+    if (!t || t === hoveredToken) return
+    out(); hoveredToken = t
+    try { t._onHoverIn?.(new PointerEvent('pointerenter'), { hoverOutOthers: true }) } catch {}
+  })
+  box.addEventListener('pointerleave', out)
+  box.addEventListener('click', ev => {
+    const pan = ev.target.closest('.god-target-pan')
+    if (!pan) return
+    ev.preventDefault()
+    const t = tok(pan)
+    if (t) canvas.animatePan({ x: t.center.x, y: t.center.y, duration: 250 })
+  })
+}
+let hoveredToken = null
+function clearTargetHover() {
+  try { hoveredToken?._onHoverOut?.(new PointerEvent('pointerleave')) } catch {}
+  hoveredToken = null
 }
 
 // ── Прості перевірки ─────────────────────────────────────────────────────────
