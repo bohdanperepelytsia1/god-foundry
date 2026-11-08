@@ -40,6 +40,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       toggleEdit: GodActorSheetBase.#toggleEdit,
       editImage: GodActorSheetBase.#editImage,
       showPortrait: GodActorSheetBase.#showPortrait,
+      syncToken: GodActorSheetBase.#syncToken,
+      deathSave: GodActorSheetBase.#deathSave,
       itemUse: GodActorSheetBase.#itemUse,
       itemEdit: GodActorSheetBase.#itemEdit,
       itemDelete: GodActorSheetBase.#itemDelete,
@@ -376,6 +378,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (IP) return new IP({ src: a.img, uuid: a.uuid, window: { title: a.name } }).render({ force: true })
     if (globalThis.ImagePopout) return new globalThis.ImagePopout(a.img, { title: a.name, uuid: a.uuid }).render(true)
   }
+  static #syncToken() { if (this.isEditable) this.document.syncTokenArt() }
+  static #deathSave() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.deathSave(this.document)) }
   static #itemUse(ev, target) { this._item(target)?.use() }
   static #itemEdit(ev, target) { this._item(target)?.sheet.render(true) }
   static #itemDelete(ev, target) { GodActorSheetBase.#confirmDelete(this._item(target)) }
@@ -403,7 +407,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (type === 'gear') system.category = target.dataset.category ?? GOD.LOCATION_CATEGORY[system.location] ?? 'item'
     target.closest('details')?.removeAttribute('open')
     const gearName = type === 'gear' && system.category !== 'item' ? GOD.GEAR_CATEGORIES[system.category]?.label : null
-    const name = target.dataset.kind === 'quirk' ? 'Нова особливість' : target.dataset.kind === 'trait' ? 'Нова риса'
+    const name = target.dataset.kind === 'quirk' ? 'Нова особливість' : target.dataset.kind === 'trait' ? 'Нова риса' : target.dataset.kind === 'debuff' ? 'Новий дебаф'
       : gearName ?? ({ gear: 'Новий предмет', weapon: 'Нова зброя', armor: 'Новий обладунок', spell: 'Нове заклинання', ability: 'Нова здібність' })[type] ?? game.i18n.localize(`TYPES.Item.${type}`)
     const [item] = await this.document.createEmbeddedDocuments('Item', [{ name, type, system }], { godNoStack: true })
     item?.sheet.render(true)
@@ -440,6 +444,10 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       actor, system: actor.system, config: GOD, isGM: game.user.isGM,
       editable, editMode: editable && this._editMode,
       isNpc: actor.type === 'npc',
+      down: (actor.system.resources?.hp?.value ?? 1) <= 0 ? {
+        dead: actor.statuses?.has('dead'),
+        ok: actor.getFlag('god', 'deathSaves')?.ok ?? 0, fail: actor.getFlag('god', 'deathSaves')?.fail ?? 0,
+      } : null,
       portraitIcon: !actor.img || actor.img.startsWith("systems/god/assets/icons") || actor.img.startsWith("icons/svg"),
     })
 
@@ -512,6 +520,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     position: { width: 920, height: 780 },
     actions: {
       rollStat: GodCharacterSheet.#rollStat,
+      rollStats: GodCharacterSheet.#rollStats,
       rollSkill: GodCharacterSheet.#rollSkill,
       skillUp: GodCharacterSheet.#skillUp,
       skillDown: GodCharacterSheet.#skillDown,
@@ -543,6 +552,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
   _collapsed = new Set()
   _onlyLearned = false
   static #rollStat(ev, target) { this.document.rollStat(target.dataset.stat) }
+  static #rollStats() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.rollStatArray(this.document)) }
   static #rollSkill(ev, target) { this.document.rollSkill(target.dataset.skill) }
   static #skillUp(ev, target) { this.document.changeSkill(target.dataset.skill, +1, { free: game.user.isGM && ev.shiftKey }) }
   static #skillDown(ev, target) { this.document.changeSkill(target.dataset.skill, -1, { free: game.user.isGM && ev.shiftKey }) }
@@ -582,6 +592,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
         key, ...cfg, value: r.value, max: r.max, bonus: r.bonus,
         pct: r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0,
         tip: `${cfg.label}: ${GOD.STATS[cfg.stat].label} ${st[cfg.stat].value} × ${cfg.mult} = ${r.auto}${r.bonus ? ` ${r.bonus > 0 ? '+' : ''}${r.bonus}` : ''}`,
+        state: key === 'mt' ? R.mentalState(r.value) : null,
       }
     })
     context.armorRes = ['pr', 'mr'].map(key => {
@@ -591,8 +602,11 @@ export class GodCharacterSheet extends GodActorSheetBase {
         tip: key === 'pr' ? 'Фізичний захист — сума одягненої броні' : 'Магічний захист — сума одягненої броні' }
     })
     const dp = d.dodgeParts
+    const AW = { light: 'легкий', mediumFit: 'середній підігнаний', medium: 'середній', heavyFit: 'тяжкий підігнаний', heavy: 'тяжкий' }
     context.dodgeTip = `ШУ: навантаження ${dp.load} з бази ${dp.base} → ${dp.fromLoad}` +
-      `${dp.skill ? ` · Ухиляння +${dp.skill}` : ''}${dp.bonus ? ` · правка/ефекти ${dp.bonus > 0 ? '+' : ''}${dp.bonus}` : ''}`
+      `${dp.skill ? ` · Ухиляння +${dp.skill}` : ''}` +
+      ` · обладунок ${d.armorWorst ? AW[d.armorWorst] : 'відсутній'} ${d.armorDodge >= 0 ? '+' : ''}${d.armorDodge}` +
+      `${dp.bonus ? ` · правка/ефекти ${dp.bonus > 0 ? '+' : ''}${dp.bonus}` : ''} · максимум ${R.MAX_DODGE}`
     context.xpPct = (() => {
       const lo = R.totalXpForLevel(d.level), hi = d.xpNext
       return hi > lo ? Math.max(0, Math.min(100, (sys.progress.xp - lo) / (hi - lo) * 100)) : 0
@@ -643,7 +657,12 @@ export class GodCharacterSheet extends GodActorSheetBase {
     // ── Риси та знання
     const traitItems = items.filter(i => i.type === 'trait')
     context.traits = traitItems.filter(i => i.system.kind !== 'quirk').map(i => GodActorSheetBase.itemRow(i))
+    context.traits = traitItems.filter(i => i.system.kind === 'trait').map(i => GodActorSheetBase.itemRow(i))
     context.quirks = traitItems.filter(i => i.system.kind === 'quirk').map(i => GodActorSheetBase.itemRow(i))
+    const debuffs = traitItems.filter(i => i.system.kind === 'debuff')
+    const dPts = debuffs.reduce((s, i) => s + (i.system.points || 0), 0)
+    context.debuffs = debuffs.map(i => GodActorSheetBase.itemRow(i))
+    context.debuffPts = { total: dPts, max: GOD.BALANCE.DEBUFF_MAX_TOTAL, over: dPts > GOD.BALANCE.DEBUFF_MAX_TOTAL }
     context.knowledge = {
       languages: sys.knowledge.languages.map((r, index) => ({ ...r, index })),
       recipes: sys.knowledge.recipes.map((r, index) => ({ ...r, index })),

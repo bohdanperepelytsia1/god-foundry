@@ -1449,3 +1449,39 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god .god-create .god-create-list button { height: 32px; border: none; background: transparent; color: var(--g-text); justify-content: flex-start; }
 .god .god-create .god-create-list button:hover { background: var(--g-hover); border: none; box-shadow: none; color: var(--g-text); }
 .god .god-inv-main .god-toolbar { z-index: 6; }
+.god .god-portrait-wrap { position: relative; }
+.god .god-token-sync {
+  position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 2; white-space: nowrap;
+  padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--g-text);
+  background: rgba(20, 24, 34, .8); border: 1px solid var(--g-line2); backdrop-filter: blur(4px);
+}
+.god .god-token-sync:hover { border-color: var(--g-accent); color: var(--g-accent); }
+
+/* ═══ v0.9.2: стан свідомості, непритомність ═══ */
+.god .god-res { position: relative; }
+.god .god-res-state {
+  grid-column: 2; justify-self: start; margin-top: -2px; padding: 1px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: #ffd6a8; background: rgba(232, 138, 71, .22); border: 1px solid rgba(232, 138, 71, .6);
+}
+.god .god-res-state.state-paranoia { color: #ffbdb2; background: rgba(232, 71, 71, .22); border-color: rgba(232, 71, 71, .6); }
+.god .god-res-state.state-psychosis { color: #fff; background: rgba(150, 30, 60, .55); border-color: #e84747; }
+.god .god-down {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: 8px;
+  background: linear-gradient(90deg, rgba(126, 34, 40, .35), rgba(79, 89, 137, .2)); border: 1px solid rgba(232, 71, 71, .6);
+  font-size: 12px;
+}
+.god .god-down b { color: #ffbdb2; }
+.god .god-down.dead { background: rgba(10, 10, 14, .8); border-color: #555; }
+.god .god-down.dead b { color: #bbb; }
+.god .god-saves { display: flex; gap: 3px; }
+.god .god-saves i { color: rgba(255, 255, 255, .18); font-size: 13px; }
+.god .god-saves i.on { color: #7fd18b; }
+.god .god-saves i.fail.on { color: #ef6a5c; }
+.god .god-down .god-btn { margin-left: auto; }
+.god-card .god-warn { border-left: 3px solid var(--g-red, #ef6a5c); padding-left: 8px; }
+.god-card .god-list-plain { margin: 6px 0 0; padding-left: 18px; font-size: 12px; }
+.god-card .god-checks { display: flex; flex-direction: column; gap: 4px; }
+.god .god-npc-fields select { width: 140px; height: 24px; font-size: 11px; }
+.god .god-over b, .god .god-over { color: var(--g-red); }
+.god .god-stats-tools { display: flex; justify-content: flex-end; margin-bottom: 8px; }

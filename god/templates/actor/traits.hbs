@@ -1,4 +1,14 @@
 <section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="traits">
+  <section class="god-panel god-list">
+    <header><h3><i class="fa-solid fa-skull-crossbones"></i> Дебафи</h3>
+      <span class="god-dim {{#if debuffPts.over}}god-over{{/if}}" data-tooltip="Створення: 60 очок умінь + очки за дебафи (до 15 за один, до 50 усього)">очок за дебафи: <b>{{debuffPts.total}}</b> / {{debuffPts.max}}</span>
+      {{#if editable}}<a class="god-head-add" data-action="itemCreate" data-type="trait" data-kind="debuff" data-tooltip="Новий дебаф"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
+    <ol class="god-rows">
+      {{#each debuffs}}
+      {{#> god-row}}{{#if system.controlled}}<span class="god-cost-badge" data-tooltip="Контрольований: спрацьовує, якщо не викинуто 12+">К</span>{{/if}}{{#if system.points}}<span class="god-cost-badge" data-tooltip="Очок умінь">+{{system.points}}</span>{{/if}}{{/god-row}}
+      {{else}}<p class="god-empty">Дебафів немає. Погодь їх з майстром при створенні персонажа.</p>{{/each}}
+    </ol>
+  </section>
   <div class="god-grid-2">
     <section class="god-panel god-list">
       <header><h3><i class="fa-solid fa-sun"></i> Риси</h3>

@@ -12,5 +12,6 @@
     <span class="god-res-max">/ {{max}}</span>
     <a class="god-res-step plus" data-res-step="1" data-tooltip="+1 · Shift +10 · Ctrl +100 (не вище максимуму)" aria-label="Збільшити">+</a>
   </div>
+  {{#if state}}<span class="god-res-state state-{{state.key}}" data-tooltip="{{state.note}}">{{state.label}}</span>{{/if}}
   {{#if @partial-block}}{{> @partial-block}}{{/if}}
 </div>

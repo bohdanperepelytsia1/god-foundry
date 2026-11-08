@@ -52,7 +52,7 @@ assert.equal(sys.resources.pr.max, 40)
 assert.equal(d.equippedWeight, 5); assert.equal(d.totalWeight, 7)
 assert.equal(d.dodgeAuto, 8 + 2, 'навантаження 5 ≤ 25% бази 20 → 8, +Ухиляння 2')
 
-assert.equal(d.dodge, 9, 'правка майстра −1 поверх авто')
+assert.equal(d.dodge, 10, 'без класу обладунку +1 ШУ, правка майстра −1')
 assert.equal(d.speed, 4); assert.equal(d.initiative, 2)
 assert.equal(d.maxWeight, 20 + 2 * 5 + 15, 'база + Мул + рюкзак')
 assert.equal(d.belt.used, 1); assert.equal(d.spellStatMult, true)

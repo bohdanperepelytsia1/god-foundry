@@ -16,7 +16,7 @@ const moneyField = () => new f.SchemaField(
 
 /** Спільні похідні від предметів (використовуються і персонажем, і НІП) */
 function itemTotals(actor) {
-  const t = { equippedWeight: 0, totalWeight: 0, pr: 0, mr: 0, bagBonus: 0, beltSlots: 0, beltUsed: 0, spellStatMult: false }
+  const t = { equippedWeight: 0, totalWeight: 0, pr: 0, mr: 0, bagBonus: 0, beltSlots: 0, beltUsed: 0, spellStatMult: false, armorKeys: [] }
   for (const it of actor.items) {
     const s = it.system
     const w = (Number(s.weight) || 0) * (Number(s.quantity) || 1)
@@ -25,6 +25,7 @@ function itemTotals(actor) {
     if (!s.equipped) continue
     if (it.type === 'weapon' || it.type === 'armor') t.equippedWeight += w
     if (it.type === 'armor') {
+      t.armorKeys.push(R.armorClassKey(s.armorClass, s.fitted))
       t.pr += Number(s.phys) || 0
       t.mr += Number(s.mag) || 0
       if (s.slot === 'Рюкзак') t.bagBonus += Number(s.bagBonus) || 0
@@ -32,6 +33,7 @@ function itemTotals(actor) {
     }
     if (s.spellStatMult) t.spellStatMult = true
   }
+  t.armor = R.armorDodgeMod(t.armorKeys)
   t.equippedWeight = Math.round(t.equippedWeight * 100) / 100
   t.totalWeight = Math.round(t.totalWeight * 100) / 100
   return t
@@ -60,7 +62,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       )),
       progress: new f.SchemaField({
         xp: int(0, { min: 0 }),
-        skillPoints: int(0),
+        skillPoints: int(GOD.BALANCE.START_SKILL_PTS),
         statPoints: int(0),
       }),
       combat: new f.SchemaField({
@@ -154,7 +156,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       maxWeight: R.calcMaxWeight({ override: this.encumbrance.override, muleLvl: this.skill('Мул'), bagBonus: t.bagBonus }),
       belt: { slots: t.beltSlots, used: t.beltUsed },
       dodgeAuto,
-      dodge: dodgeAuto + (this.combat.dodgeBonus || 0),
+      armorDodge: t.armor.mod, armorWorst: t.armor.worst,
+      dodge: Math.max(0, Math.min(R.MAX_DODGE, dodgeAuto + t.armor.mod + (this.combat.dodgeBonus || 0))),
       dodgeParts: R.dodgeParts({
         equippedWeight: t.equippedWeight, enduranceCurrent: this.resources.ed.value,
         dodgeSkill: this.skill('Ухиляння'), bonus: this.combat.dodgeBonus,
@@ -190,6 +193,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         Object.keys(GOD.SPELL_SCHOOLS).map(k => [k, int(0, { min: 0, max: 10 })])
       )),
       dodge: int(5),
+      size: new f.StringField({ required: true, initial: 'medium', choices: () => Object.keys(GOD.CREATURE_SIZES) }),
+      rank: new f.StringField({ required: true, initial: 'regular', choices: () => Object.keys(GOD.CREATURE_RANKS) }),
       initiative: int(0),
       speed: int(3),
       attack: new f.SchemaField({
@@ -229,7 +234,9 @@ export class NpcData extends foundry.abstract.TypeDataModel {
     this.resources.pr.max = (this.resources.pr.base || 0) + t.pr
     this.resources.mr.max = (this.resources.mr.base || 0) + t.mr
     this.derived = {
-      dodge: (this.dodge || 0) + (this.combat.dodgeBonus || 0),
+      armorDodge: t.armor.worst ? t.armor.mod : 0,
+      // НІП: база + клас обладунку (лише якщо щось одягнено) + ефекти, × розмір
+      dodge: Math.max(0, Math.round(((this.dodge || 0) + (t.armor.worst ? t.armor.mod : 0) + (this.combat.dodgeBonus || 0)) * (R.SIZE_DODGE[this.size] ?? 1))),
       initiative: this.initiative,
       speed: this.speed,
       equippedWeight: t.equippedWeight,

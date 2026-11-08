@@ -58,7 +58,10 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       if (s.twoHanded) f.push({ label: 'дворучна' })
     } else if (item.type === 'armor') {
       f.push({ label: GOD.ARMOR_SLOTS[s.slot] })
-      if (s.armorClass !== 'none') f.push({ label: GOD.ARMOR_CLASSES[s.armorClass] })
+      if (s.armorClass !== 'none') {
+        const k = R.armorClassKey(s.armorClass, s.fitted)
+        f.push({ label: `${GOD.ARMOR_CLASSES[s.armorClass]}${s.fitted ? ', підігнаний' : ''} · ШУ ${R.ARMOR_DODGE[k] >= 0 ? '+' : ''}${R.ARMOR_DODGE[k]}` })
+      }
       if (s.phys) f.push({ label: `PR ${s.phys}`, cls: 'phys' })
       if (s.mag) f.push({ label: `MR ${s.mag}`, cls: 'mag' })
     } else if (item.type === 'spell') {
@@ -77,7 +80,8 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       for (const r of R.restoreList(s.restore)) f.push({ label: `${GOD.RESOURCES[r.key]?.abbr ?? r.key.toUpperCase()} ${r.value > 0 ? '+' : ''}${r.value}`, cls: r.key === 'mp' ? 'mag' : '' })
     }
     if (item.type === 'trait') {
-      f.push({ label: s.kind === 'quirk' ? 'Особливість' : 'Риса' })
+      f.push({ label: s.kind === 'quirk' ? 'Особливість' : s.kind === 'debuff' ? `Дебаф${s.controlled ? ', контрольований' : ''}` : 'Риса' })
+      if (s.kind === 'debuff' && s.points) f.push({ label: `+${s.points} очок умінь` })
       if (s.cost) f.push({ label: `вартість ${s.cost}` })
     }
     if (['weapon', 'armor', 'gear'].includes(item.type) && s.weight) f.push({ label: `${s.weight} кг` })
@@ -92,7 +96,7 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       item, system: item.system, config: GOD,
       isWeapon: item.type === 'weapon', isArmor: item.type === 'armor', isGear: item.type === 'gear',
       isSpell: item.type === 'spell', isAbility: item.type === 'ability', isTrait: item.type === 'trait',
-      traitKinds: { trait: 'Риса', quirk: 'Особливість' },
+      traitKinds: { trait: 'Риса', quirk: 'Особливість (квірк)', debuff: 'Дебаф' },
       isPhysical: ['weapon', 'armor', 'gear'].includes(item.type),
       typeLabel: game.i18n.localize(`TYPES.Item.${item.type}`),
       description: await enrich(item.system.description),

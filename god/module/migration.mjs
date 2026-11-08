@@ -32,7 +32,23 @@ async function migrateIcons() {
   return n
 }
 
-const STEPS = [['0.4.0', migrateIcons]]
+/**
+ * 0.9.2: ШУ від класу обладунку тепер рахується автоматично — старі ефекти «−1/−2 ШУ»
+ * на кольчузі й латах дали б подвійний штраф. Прибираємо їх.
+ */
+async function migrateArmorDodgeEffects() {
+  let n = 0
+  const isOld = e => ['Середній обладунок', 'Тяжкий обладунок'].includes(e.name)
+    && e.changes.length === 1 && e.changes[0].key === 'system.combat.dodgeBonus'
+  const items = [...game.items, ...game.actors.contents.flatMap(a => a.items.contents)].filter(i => i.type === 'armor')
+  for (const item of items) {
+    const ids = item.effects.filter(isOld).map(e => e.id)
+    if (ids.length) { await item.deleteEmbeddedDocuments('ActiveEffect', ids); n += ids.length }
+  }
+  return n
+}
+
+const STEPS = [['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects]]
 
 export async function migrateWorld() {
   if (!game.user.isGM) return

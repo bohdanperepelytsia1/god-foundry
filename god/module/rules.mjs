@@ -79,23 +79,23 @@ export const damageTier = ({ total, natural, skillLvl = 0 }) => {
   const lvl = num(skillLvl)
   const master = lvl >= 5
   const proficient = lvl >= 1
-  let key, note = ''
+  let key, note = '', chance = null
 
   if (natural === 1) key = 'none'
   else if (natural === 20) { key = 'deadly'; if (master) note = 'Безкоштовна додаткова дія' }
   else {
     const t = Math.max(1, Math.min(20, Math.trunc(num(total))))
     if (t >= 20)      key = master ? 'deadly' : 'crit'
-    else if (t === 19) { key = 'crit'; if (master) note = 'Шанс смертельного урону' }
-    else if (t === 18) { key = 't100'; note = 'Шанс критичного урону' }
+    else if (t === 19) { key = 'crit'; if (master) chance = 'deadly' }
+    else if (t === 18) { key = 't100'; chance = 'crit' }
     else if (t >= 15) key = 't100'
-    else if (t === 14) { key = 't75'; note = 'Шанс 100% урону' }
+    else if (t === 14) { key = 't75'; chance = 't100' }
     else if (t === 13) key = 't75'
-    else if (t === 12) { key = 't50'; note = 'Шанс 75% урону' }
+    else if (t === 12) { key = 't50'; chance = 't75' }
     else if (t >= 10) key = 't50'
-    else if (t === 9)  { key = 't25'; note = 'Шанс 50% урону' }
+    else if (t === 9)  { key = 't25'; chance = 't50' }
     else if (t >= 6)  key = 't25'
-    else if (t === 5)  { key = 't10'; note = 'Шанс 25% урону' }
+    else if (t === 5)  { key = 't10'; chance = 't25' }
     else if (t >= 2)  key = 't10'
     else key = 'none'
   }
@@ -103,11 +103,115 @@ export const damageTier = ({ total, natural, skillLvl = 0 }) => {
   if (!proficient && (key === 'crit' || key === 'deadly')) {
     key = 't100'; note = 'Без володіння: крит/смертельний → 100%'
   }
-  return { tier: key, pct: TIER[key].pct, label: TIER[key].label, note }
+  if (!proficient && (chance === 'crit' || chance === 'deadly')) chance = null
+  if (chance) note = `ШАНС: ${TIER[chance].label}`
+  return { tier: key, pct: TIER[key].pct, label: TIER[key].label, note, chance }
 }
 
-/** v4.5.0 §2.4: модифікатор кидка урону від володіння (рівень 0 → −5, інакше +1) */
-export const proficiencyDamageMod = skillLvl => num(skillLvl) >= 1 ? 1 : -5
+/** Порядок тирів — щоб брати кращий із двох */
+export const TIER_ORDER = ['none', 't10', 't25', 't50', 't75', 't100', 'crit', 'deadly']
+export const betterTier = (a, b) => TIER_ORDER.indexOf(a) >= TIER_ORDER.indexOf(b) ? a : b
+
+/** ШАНС: кидок 1d4, спрацьовує лише на 3 */
+export const CHANCE_HIT = 3
+export const chanceSucceeds = d4 => num(d4) === CHANCE_HIT
+
+/**
+ * Сітка попадання (Combat manual): число на кубі попадання важливіше за ШУ.
+ * 20 — гарантований критичний урон, 19/18/17 — гарантований урон 100/75/50%,
+ * 3 — ШАНС промаху (1d4 = 3), 2 — 50% промаху, 1 — гарантований промах.
+ * Інакше — влучання, якщо результат більше за ШУ.
+ * → { hit, auto, guaranteed: тир|null, missCheck: 'chance'|'half'|null, reason }
+ */
+export const hitCheck = ({ total, natural, dodge }) => {
+  const n = num(natural)
+  if (n === 1) return { hit: false, auto: true, guaranteed: null, missCheck: null, reason: 'Натуральна 1 — гарантований промах' }
+  const G = { 20: 'crit', 19: 't100', 18: 't75', 17: 't50' }
+  if (G[n]) return { hit: true, auto: true, guaranteed: G[n], missCheck: null, reason: `Натуральна ${n} — гарантований ${TIER[G[n]].label.toLowerCase()}` }
+  const hit = num(total) > num(dodge)
+  if (!hit) return { hit: false, auto: false, guaranteed: null, missCheck: null, reason: '' }
+  if (n === 2) return { hit: true, auto: false, guaranteed: null, missCheck: 'half', reason: 'Натуральна 2 — шанс промаху 50%' }
+  if (n === 3) return { hit: true, auto: false, guaranteed: null, missCheck: 'chance', reason: 'Натуральна 3 — ШАНС промаху' }
+  return { hit: true, auto: false, guaranteed: null, missCheck: null, reason: '' }
+}
+
+/** Найбільший позитивний модифікатор героя — +12 */
+export const MAX_MOD = 12
+export const capMod = m => Math.min(num(m), MAX_MOD)
+/** Найбільший ШУ героя — 15 */
+export const MAX_DODGE = 15
+
+/** Прицільність: рівень 0 → МОД−5, інакше +рівень */
+export const accuracyMod = lvl => num(lvl) >= 1 ? num(lvl) : -5
+
+/**
+ * Модифікатор кидка урону від рівня володіння («Формула ГМ-а» з Combat manual):
+ * 0 → −5; 1 +1; 2 +2; 3 +3; 4–5 +3 (здібність зброї); 6 +4; 7 +5; 8 +6; 9 +6; 10 +8
+ */
+export const PROF_DMG_MOD = [-5, 1, 2, 3, 3, 3, 4, 5, 6, 6, 8]
+export const proficiencyDamageMod = skillLvl => PROF_DMG_MOD[Math.max(0, Math.min(10, Math.trunc(num(skillLvl))))]
+/** Кулачний бій: плоский бонус до урону на рівнях 4/5/8/9 (+50/+150/+300/+500) */
+export const fistFlatBonus = lvl => { const l = num(lvl); return l >= 9 ? 500 : l >= 8 ? 300 : l >= 5 ? 150 : l >= 4 ? 50 : 0 }
+
+/**
+ * Клас обладунку → ШУ (Combat manual, «Види обладунків»). Змішаний комплект — штраф
+ * найтяжчого елемента, бонуси зникають. Без жодного обладунку — ШУ +1.
+ */
+export const ARMOR_DODGE = { light: 0, mediumFit: 0, medium: -1, heavyFit: -1, heavy: -2 }
+const ARMOR_WEIGHT = ['light', 'mediumFit', 'medium', 'heavyFit', 'heavy']
+export const armorClassKey = (cls, fitted) => cls === 'none' || !cls ? null : (fitted && cls !== 'light' ? `${cls}Fit` : cls)
+export const armorDodgeMod = keys => {
+  const list = keys.filter(Boolean)
+  if (!list.length) return { mod: 1, worst: null }
+  const worst = list.reduce((a, b) => ARMOR_WEIGHT.indexOf(b) > ARMOR_WEIGHT.indexOf(a) ? b : a)
+  return { mod: ARMOR_DODGE[worst], worst }
+}
+
+/** Розмір створіння → множник ШУ */
+export const SIZE_DODGE = { tiny: 1.6, small: 1.3, medium: 1, large: 0.5, huge: 0.2, gargantuan: 0.1 }
+
+/** Витривалість за бій: 10 за кожен раунд, якщо бій дійшов хоча б до 2-го раунду */
+export const combatStamina = rounds => num(rounds) >= 2 ? 10 * num(rounds) : 0
+
+/**
+ * Що має статися після удару (розділ «Тілобудова»):
+ * HP ≤ 300 — перевірка 12+ від Тілобудови (калітство); HP ≤ 100 — 12+ від Витривалості (свідомість);
+ * HP ≤ 0 — без свідомості: вище −½max — 1d2 (2 = автоуспіх, 1 = спаскидки), вище −max — спаскидки, −max і нижче — смерть.
+ */
+export const afterHit = (hp, maxHp) => {
+  const v = num(hp), m = num(maxHp), out = { checks: [], state: 'ok' }
+  if (v <= -m) return { checks: [], state: 'dead' }
+  if (v <= 0) {
+    out.state = 'down'
+    out.death = v > -m / 2 ? 'coin' : 'saves'
+    return out
+  }
+  if (v <= 300) out.checks.push({ stat: 'con', dc: 12, label: 'Тілобудова 12+ — не отримати калітства' })
+  if (v <= 100) out.checks.push({ stat: 'end', dc: 12, label: 'Витривалість 12+ — не втратити свідомість' })
+  return out
+}
+
+/** Спаскидки: 11+ успіх, 1 — два провали, 20 — два успіхи; до трьох */
+export const deathSave = (state, d20) => {
+  const s = { ok: num(state?.ok), fail: num(state?.fail) }
+  const n = num(d20)
+  if (n === 20) s.ok += 2
+  else if (n === 1) s.fail += 2
+  else if (n >= 11) s.ok += 1
+  else s.fail += 1
+  s.ok = Math.min(3, s.ok); s.fail = Math.min(3, s.fail)
+  s.result = s.ok >= 3 ? 'stable' : s.fail >= 3 ? 'dead' : null
+  return s
+}
+
+/** Стан свідомості за поточною MT */
+export const mentalState = mt => {
+  const v = num(mt)
+  if (v <= 5) return { key: 'psychosis', label: 'Психоз', note: 'Усі дії МОД−5, ГМ керує більшістю дій' }
+  if (v <= 9) return { key: 'paranoia', label: 'Паранойя', note: 'МОД−3 на всі дії, страх 16+ від волі' }
+  if (v <= 14) return { key: 'anxiety', label: 'Тривожність', note: 'МОД−1 на дії, −2 на урон, страх 12+ від волі' }
+  return null
+}
 
 export const applyPct = ({ phys, mag }, pct) => ({
   phys: Math.floor(num(phys) * pct / 100),

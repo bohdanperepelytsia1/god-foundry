@@ -10,38 +10,7 @@
     "armorClass": "medium",
     "weight": 9
   },
-  "effects": [
-    {
-      "_id": "zcZXesxhC0DQ4w5A",
-      "_key": "!items.effects!bhWw2dIuZ8JZgoPk.zcZXesxhC0DQ4w5A",
-      "name": "Середній обладунок",
-      "img": "systems/god/assets/icons/stances/defense.svg",
-      "type": "base",
-      "system": {},
-      "disabled": false,
-      "transfer": true,
-      "changes": [
-        {
-          "key": "system.combat.dodgeBonus",
-          "mode": 2,
-          "value": "-1",
-          "priority": null
-        }
-      ],
-      "duration": {},
-      "origin": null,
-      "description": "",
-      "statuses": [],
-      "tint": "#ffffff",
-      "sort": 0,
-      "flags": {},
-      "_stats": {
-        "coreVersion": "13.345",
-        "systemId": "god",
-        "systemVersion": "0.5.0"
-      }
-    }
-  ],
+  "effects": [],
   "folder": "YJcyS05D7NyGgtAR",
   "sort": 1500,
   "ownership": {

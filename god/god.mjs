@@ -11,6 +11,7 @@ import { GodItem } from './module/documents/item.mjs'
 import { GodCharacterSheet, GodNpcSheet } from './module/sheets/actor-sheets.mjs'
 import { GodItemSheet } from './module/sheets/item-sheet.mjs'
 import * as R from './module/rules.mjs'
+import * as Dice from './module/dice/rolls.mjs'
 import { GodDiceTray } from './module/apps/dice-tray.mjs'
 import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
@@ -66,6 +67,10 @@ Hooks.once('init', () => {
   registerPinSettings()
   registerMigrationSettings()
   registerQuickbarSettings()
+  game.settings.register('god', 'combatStamina', {
+    name: 'Витривалість за бій', hint: 'Після бою списувати 10 ВС за кожен раунд (якщо бій дійшов до 2-го раунду), як у Combat manual.',
+    scope: 'world', config: true, type: Boolean, default: true,
+  })
   syncNativeHotbar()
   registerResourceSync()
 
@@ -114,6 +119,8 @@ Hooks.once('init', () => {
   Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
   Handlebars.registerHelper('god-eq', (a, b) => a === b)
   if (!Handlebars.helpers.and) Handlebars.registerHelper('and', (...a) => a.slice(0, -1).every(Boolean))
+  Handlebars.registerHelper('god-lte', (a, b) => Number(a) <= Number(b))
+  Handlebars.registerHelper('god-range', n => Array.from({ length: Number(n) || 0 }, (_, i) => i + 1))
   if (!Handlebars.helpers.or) Handlebars.registerHelper('or', (...a) => a.slice(0, -1).some(Boolean))
   // Секції з плаского списку: ("key", "Назва", "іконка", ...) → [{key, label, icon}]
   Handlebars.registerHelper('god-array', (...a) => {
@@ -203,6 +210,32 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       spell.use()
     })
   }
+  // Перевірки після удару і спаскидки — кидає власник героя або майстер
+  const ownedActor = async uuid => {
+    const a = await fromUuid(uuid)
+    const actor = a?.actor ?? a
+    if (!actor?.isOwner) { ui.notifications.warn('Кидати може власник персонажа або майстер'); return null }
+    return actor
+  }
+  for (const btn of html.querySelectorAll('[data-god-check]')) {
+    btn.addEventListener('click', async ev => {
+      ev.preventDefault()
+      const [uuid, stat, dc] = btn.dataset.godCheck.split('|')
+      const actor = await ownedActor(uuid)
+      if (actor) Dice.thresholdCheck(actor, stat, Number(dc), btn.dataset.tooltip ?? '')
+    })
+  }
+  for (const btn of html.querySelectorAll('[data-god-death]')) {
+    btn.addEventListener('click', async ev => {
+      ev.preventDefault()
+      const [uuid, kind] = btn.dataset.godDeath.split('|')
+      const actor = await ownedActor(uuid)
+      if (!actor) return
+      btn.disabled = true
+      kind === 'coin' ? Dice.deathCoin(actor) : Dice.deathSave(actor)
+    })
+  }
+
   // «Урон» — цілі атаки (або обраним токенам у старих картках): MR → PR → HP.
   // Натиснути можна один раз: після застосування кнопка гасне в усіх (прапорець на повідомленні).
   // Майстер може повторити Shift+кліком.
@@ -303,6 +336,33 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
 }
 
 // ── Старт світу: міграція і відновлення закріплених вікон ───────────────────
+// Витривалість на нулі — герой непритомніє (пише лише той, хто змінив значення)
+Hooks.on('updateActor', (actor, changes, options, userId) => {
+  if (userId !== game.user.id) return
+  const ed = foundry.utils.getProperty(changes, 'system.resources.ed.value')
+  if (ed !== undefined && ed <= 0 && (actor.system.resources.ed?.max ?? 0) > 0 && !actor.statuses?.has('unconscious')) {
+    actor.toggleStatusEffect?.('unconscious', { active: true })
+    ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card"><p><b>${foundry.utils.escapeHTML?.(actor.name) ?? actor.name}</b> знесилений: витривалість ${ed} — втрата свідомості.</p></div>` })
+  }
+})
+
+// Кожен раунд бою коштує 10 ВС (списується після бою, якщо бій дійшов до 2-го раунду)
+Hooks.on('deleteCombat', async combat => {
+  if (game.user !== game.users.activeGM || !game.settings.get('god', 'combatStamina')) return
+  const cost = R.combatStamina(combat.round)
+  if (!cost) return
+  const seen = new Set(), lines = []
+  for (const c of combat.combatants) {
+    const a = c.actor
+    if (!a || seen.has(a.uuid) || !(a.system.resources?.ed?.max > 0)) continue
+    seen.add(a.uuid)
+    const from = a.system.resources.ed.value
+    await a.update({ 'system.resources.ed.value': from - cost })
+    lines.push(`<li>${foundry.utils.escapeHTML?.(a.name) ?? a.name}: ВС ${from} → ${from - cost}</li>`)
+  }
+  if (lines.length) ChatMessage.create({ content: `<div class="god-card"><header class="god-card-head"><div><h3>Бій завершено</h3><span>${combat.round} раунд(и) × 10 ВС</span></div></header><ul class="god-list-plain">${lines.join('')}</ul></div>` })
+})
+
 /**
  * Урон по цілі: власник застосовує сам, інакше — через активного майстра (сокет системи),
  * тож гравець може натиснути «Урон» по ворогу, а ворог — по гравцю.

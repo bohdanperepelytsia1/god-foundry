@@ -4,6 +4,12 @@
     {{#if editMode}}розподіли кнопками «+».{{else}}увімкни режим редагування (замок).{{/if}}</div>
   {{/if}}
 
+  {{#if editMode}}
+  <div class="god-stats-tools">
+    <button type="button" class="god-toggle" data-action="rollStats" data-tooltip="Створення персонажа: 6 кидків 6d6 без найменшого куба, потім розподіл по характеристиках">
+      <i class="fa-solid fa-dice"></i> Кинути характеристики</button>
+  </div>
+  {{/if}}
   <div class="god-stats">
     {{#each stats}}
     <div class="god-stat-tile">

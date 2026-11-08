@@ -7,9 +7,11 @@
   <div class="god-portrait-wrap">
     <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" alt="" {{#if editMode}}data-action="editImage" data-tooltip="Змінити портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
     <span class="god-level-badge god-npc-badge" data-tooltip="Неігровий персонаж"><i class="fa-solid fa-skull"></i></span>
+    {{#if editMode}}<a class="god-token-sync" data-action="syncToken" data-tooltip="Поставити цей портрет і на токен (прототип і вже розставлені на сценах)"><i class="fa-solid fa-user-circle"></i> На токен</a>{{/if}}
   </div>
   {{#if editMode}}<input class="god-name-input" type="text" name="name" value="{{actor.name}}">
   {{else}}<h1 class="god-name">{{actor.name}}</h1>{{/if}}
+  <div class="god-subtitle">{{lookup config.CREATURE_RANKS system.rank}} · {{lookup config.CREATURE_SIZES system.size}}</div>
 
   <div class="god-res-list">
     {{#each resources}}
@@ -26,13 +28,27 @@
     </div>
   </div>
 
+
+  {{#if down}}
+  <div class="god-down {{#if down.dead}}dead{{/if}}">
+    {{#if down.dead}}<b><i class="fa-solid fa-skull"></i> Мертвий</b>
+    {{else}}
+    <b><i class="fa-solid fa-heart-crack"></i> Без свідомості</b>
+    <span class="god-saves" data-tooltip="Спаскидки: 11+ успіх, 1 — два провали, 20 — два успіхи">
+      {{#each (god-range 3)}}<i class="fa-solid fa-circle-check {{#if (god-lte this ../down.ok)}}on{{/if}}"></i>{{/each}}
+      {{#each (god-range 3)}}<i class="fa-solid fa-circle-xmark fail {{#if (god-lte this ../down.fail)}}on{{/if}}"></i>{{/each}}
+    </span>
+    {{#if editable}}<button type="button" class="god-btn god-btn-sm" data-action="deathSave"><i class="fa-solid fa-heart-pulse"></i> Спаскидок</button>{{/if}}
+    {{/if}}
+  </div>
+  {{/if}}
   <div class="god-side-buttons">
     <button type="button" class="god-tray-open" data-action="openTray"><i class="fa-solid fa-dice-d20"></i> Кидки</button>
     <button type="button" class="god-tray-open" data-action="openHud"><i class="fa-solid fa-id-badge"></i> Панель</button>
   </div>
 
   <div class="god-tiles">
-    <div class="god-tile god-tile-dodge" data-tooltip="Шанс ухилення: база {{system.dodge}}{{#if system.combat.dodgeBonus}}, ефекти {{god-signed system.combat.dodgeBonus}}{{/if}}"><b>{{system.derived.dodge}}</b><small>ШУ</small></div>
+    <div class="god-tile god-tile-dodge" data-tooltip="Шанс ухилення: база {{system.dodge}}{{#if system.derived.armorDodge}}, обладунок {{god-signed system.derived.armorDodge}}{{/if}}{{#if system.combat.dodgeBonus}}, ефекти {{god-signed system.combat.dodgeBonus}}{{/if}}, розмір {{lookup config.CREATURE_SIZES system.size}}"><b>{{system.derived.dodge}}</b><small>ШУ</small></div>
     <div class="god-tile"><b>{{system.speed}}</b><small>Швидкість</small></div>
     <div class="god-tile"><b>{{system.initiative}}</b><small>Ініціатива</small></div>
   </div>
@@ -41,6 +57,8 @@
     <label>ШУ (база) <input type="text" inputmode="numeric" data-delta="system.dodge" data-min="0" value="{{system.dodge}}"></label>
     <label>Швидкість <input type="text" inputmode="numeric" data-delta="system.speed" data-min="0" value="{{system.speed}}"></label>
     <label>Ініціатива <input type="text" inputmode="numeric" data-delta="system.initiative" value="{{system.initiative}}"></label>
+    <label>Розмір <select name="system.size">{{selectOptions config.CREATURE_SIZES selected=system.size}}</select></label>
+    <label>Ранг <select name="system.rank">{{selectOptions config.CREATURE_RANKS selected=system.rank}}</select></label>
   </div>
   {{/if}}
   <div class="god-side-block">

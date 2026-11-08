@@ -105,6 +105,9 @@ async function rollDialog({ title, fields, info }) {
         <label><input type="radio" name="mode" value="norm" checked><span>Звичайний</span></label>
         <label><input type="radio" name="mode" value="adv"><span>Перевага</span></label>
       </div>`
+    if (fd.type === 'select') return `
+      <label class="god-dlg-field"><span>${esc(fd.label)}</span>
+        <select name="${fd.name}">${Object.entries(fd.options).map(([k, v]) => `<option value="${k}" ${k === fd.value ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>`
     if (fd.type === 'check') return `
       <label class="god-dlg-check"><input type="checkbox" name="${fd.name}" ${fd.value ? 'checked' : ''}><span>${esc(fd.label)}</span></label>`
     if (fd.type === 'target') {
@@ -145,7 +148,7 @@ async function rollDialog({ title, fields, info }) {
         for (const fd of fields) {
           if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? 'norm'
           else if (fd.type === 'check') out[fd.name] = el[fd.name].checked
-          else if (fd.type === 'target') out[fd.name] = el[fd.name].value
+          else if (fd.type === 'target' || fd.type === 'select') out[fd.name] = el[fd.name].value
           else out[fd.name] = Number(el[fd.name].value) || 0
         }
         return out
@@ -234,6 +237,19 @@ export async function quickRoll(actor, { label = 'Кидок', sub = '', base = 
 }
 
 // ── Атака зброєю ─────────────────────────────────────────────────────────────
+const RANGED = new Set(['bow', 'throw', 'wand', 'staff'])
+const DIRECTIONS = { front: 'З фронту', flank: 'З флангу — попадання +1', back: 'З тилу — попадання з перевагою, урон +2' }
+/** Об'єднати переваги/недоліки: перевага + недолік = звичайний кидок */
+const mergeMode = (a, b) => (a === b || b === 'norm') ? a : a === 'norm' ? b : 'norm'
+const hasStatus = (actor, id) => !!actor?.statuses?.has?.(id)
+
+/** ШАНС (1d4 = 3) — окремий кидок, видно в чаті й на кубиках */
+async function rollChance(rolls) {
+  const r = await new Roll('1d4').evaluate()
+  rolls.push(r)
+  return { value: r.total, ok: R.chanceSucceeds(r.total) }
+}
+
 export async function weaponAttack(actor, item) {
   const sys = actor.system
   const ws = GOD.WEAPON_SKILLS[item.system.category] ?? {}
@@ -242,16 +258,21 @@ export async function weaponAttack(actor, item) {
   const profLvl = sys.skill?.(ws.prof) ?? 0
   const accLvl = sys.skill?.(ws.acc) ?? 0
   const cm = sys.combat ?? {}
+  const melee = !RANGED.has(item.system.category)
   const choices = targetChoices(actor)
   if (!choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
 
+  // Модифікатори за правилами: прицільність 0 → −5, урон від володіння за «формулою ГМ-а», максимум +12
+  const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0)
+  const dmgDefault = (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0)
   const p = await rollDialog({
     title: `Атака: ${item.name}`,
-    info: 'Урон кидається лише якщо попадання <b>більше</b> за ШУ цілі.',
+    info: 'Попадання має бути <b>більше</b> за ШУ цілі. Натуральні 17–20 — гарантоване влучання, 1 — промах.',
     fields: [
       { type: 'target', name: 'target', choices },
-      { name: 'hitMod', label: 'Модифікатор попадання', value: accLvl + (cm.hitMod || 0) },
-      { name: 'dmgMod', label: 'Модифікатор урону', value: (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0) },
+      { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
+      { name: 'hitMod', label: 'Модифікатор попадання', value: isChar ? R.capMod(hitDefault) : hitDefault },
+      { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
       { type: 'mode' },
     ],
   })
@@ -259,30 +280,71 @@ export async function weaponAttack(actor, item) {
   const target = resolveTarget(p.target)
   if (!target) return ui.notifications.warn('Ціль зникла зі сцени')
 
-  const hit = await new Roll(`${D20[p.mode]} + @m`, { m: p.hitMod }).evaluate()
-  const hitOk = R.isHit(hit.total, target.dodge)
-  const rolls = [hit]
+  // Положення: тил — перевага на попадання й +2 урону, фланг +1; сам лежиш −3, присів −1; ціль лежить — урон з перевагою (ближній бій)
+  const notes = []
+  let hitMod = p.hitMod, dmgMod = p.dmgMod, hitMode = p.mode, dmgMode = 'norm'
+  if (p.dir === 'flank') { hitMod += 1; notes.push('фланг +1') }
+  if (p.dir === 'back') { hitMode = mergeMode(hitMode, 'adv'); dmgMod += 2; notes.push('тил: перевага, урон +2') }
+  if (hasStatus(actor, 'prone')) { hitMod -= 3; notes.push('лежачи −3') }
+  if (melee && hasStatus(target.actor, 'prone')) { dmgMode = 'adv'; notes.push('ціль лежить: урон з перевагою') }
+  if (isChar) { hitMod = R.capMod(hitMod); dmgMod = R.capMod(dmgMod) }
+
+  const rolls = []
+  const hit = await new Roll(`${D20[hitMode]} + @m`, { m: hitMod }).evaluate()
+  rolls.push(hit)
+  const nat = naturalOf(hit)
+  const hc = R.hitCheck({ total: hit.total, natural: nat, dodge: target.dodge })
   const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[item.system.category] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
   let html = head(item.img ?? actor.img, item.name, sub)
+  let hitOk = hc.hit
   html += step('Попадання', hit.total,
-    `куб ${naturalOf(hit)} ${signed(p.hitMod)}${MODE_LABEL[p.mode] ? ` · ${MODE_LABEL[p.mode]}` : ''} · проти ШУ ${target.dodge}`,
-    { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+    `куб ${nat} ${signed(hitMod)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''} · проти ШУ ${target.dodge}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
+    { ok: hitOk, text: hitOk ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
+  if (hc.reason) html += `<div class="god-note">${esc(hc.reason)}</div>`
 
+  // 2 — 50% промаху (1d2 = 1), 3 — ШАНС промаху (1d4 = 3)
+  if (hitOk && hc.missCheck === 'half') {
+    const r = await new Roll('1d2').evaluate(); rolls.push(r)
+    if (r.total === 1) hitOk = false
+    html += step('Шанс промаху', r.total, '1d2: 1 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+  } else if (hitOk && hc.missCheck === 'chance') {
+    const ch = await rollChance(rolls)
+    if (ch.ok) hitOk = false
+    html += step('ШАНС промаху', ch.value, '1d4: 3 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+  }
   if (!hitOk) {
     html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
     return sendCard(actor, html, rolls)
   }
-  const dmg = await new Roll('1d20 + @m', { m: p.dmgMod }).evaluate()
+
+  const dmg = await new Roll(`${D20[dmgMode]} + @m`, { m: dmgMod }).evaluate()
   rolls.push(dmg)
   const tier = R.damageTier({ total: dmg.total, natural: naturalOf(dmg), skillLvl: profLvl })
+  let key = tier.tier
+  html += step('Урон', dmg.total, `куб ${naturalOf(dmg)} ${signed(dmgMod)}${MODE_LABEL[dmgMode] ? ` · ${MODE_LABEL[dmgMode]}` : ''}`, null)
+  if (tier.chance) {
+    const ch = await rollChance(rolls)
+    html += step('ШАНС', ch.value, `1d4: 3 — ${R.TIER[tier.chance].label.toLowerCase()}`, { ok: ch.ok, text: ch.ok ? 'Спрацював' : 'Ні' })
+    if (ch.ok) key = R.betterTier(key, tier.chance)
+  }
+  // Гарантований мінімум із сітки попадання (без володіння крит → 100%)
+  if (hc.guaranteed) {
+    const g = profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)
+    const before = key
+    key = R.betterTier(key, g)
+    if (key !== before) notes.push(`гарантовано ${R.TIER[key].label.toLowerCase()}`)
+  }
   const st = sys.stats
   const base = natural
     ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0 }
     : R.weaponBaseDamage({ str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off' })
-  const out = R.applyPct(base, tier.pct)
-  html += step('Урон', dmg.total, `куб ${naturalOf(dmg)} ${signed(p.dmgMod)}`, null)
-  html += `<div class="god-tier tier-${tier.tier}">${tier.label}<small>${tier.pct}%${tier.note ? ` · ${esc(tier.note)}` : ''}</small></div>`
-  html += damageBlock(out.phys, out.mag, `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}`, target)
+  const flat = isChar && item.system.category === 'fist' ? R.fistFlatBonus(profLvl) : 0
+  if (flat) base.phys += flat
+  const pct = R.TIER[key].pct
+  const out = R.applyPct(base, pct)
+  const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : ''].filter(Boolean).join(' · ')
+  html += `<div class="god-tier tier-${key}">${R.TIER[key].label}<small>${pct}%${tierNote ? ` · ${esc(tierNote)}` : ''}</small></div>`
+  html += damageBlock(out.phys, out.mag, `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${flat ? ` (кулачний бій +${flat})` : ''}`, target)
   return sendCard(actor, html, rolls)
 }
 
@@ -304,7 +366,9 @@ export async function castSpell(actor, spell) {
     fields: [
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },
-        { name: 'hitMod', label: 'Маг. прицільність', value: sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) },
+        { name: 'hitMod', label: 'Маг. прицільність', value: actor.type === 'character'
+          ? R.capMod(R.accuracyMod(sys.skill('Маг_прицільність')) + (sys.combat.hitMod || 0))
+          : sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) },
       ] : []),
       { name: 'threshold', label: 'Поріг (ПППС)', value: s.threshold },
       { name: 'statMult', type: 'check', label: 'Множник +МОДІНТ +МОДМУД (Кодекс)', value: sys.derived.spellStatMult },
@@ -315,27 +379,44 @@ export async function castSpell(actor, spell) {
   const target = needsHit ? resolveTarget(p.target) : null
   if (needsHit && !target) return ui.notifications.warn('Ціль зникла зі сцени')
 
+  // Мана може піти в мінус (прихована механіка): тоді — перевірка 12+ від Тілобудови на втрату свідомості.
+  // Витривалість — ні: на нулі герой непритомніє, тож нижче не пускаємо.
   const mp = sys.resources.mp.value, ed = sys.resources.ed.value
-  if (p.pay && (mp < s.manaCost || ed < s.staminaCost)) {
-    return ui.notifications.warn(`Недостатньо ресурсів: потрібно ${s.manaCost} OM / ${s.staminaCost} ВС, є ${mp} / ${ed}`)
+  if (p.pay && ed < s.staminaCost) {
+    return ui.notifications.warn(`Недостатньо витривалості: потрібно ${s.staminaCost} ВС, є ${ed}`)
   }
-  const pay = () => p.pay && actor.update({
-    'system.resources.mp.value': mp - s.manaCost,
-    'system.resources.ed.value': ed - s.staminaCost,
-  })
+  let paid = false
+  const pay = async () => {
+    if (!p.pay || paid) return
+    paid = true
+    const cur = actor.system.resources
+    await actor.update({ 'system.resources.mp.value': cur.mp.value - s.manaCost, 'system.resources.ed.value': cur.ed.value - s.staminaCost })
+  }
+  const manaWarn = () => p.pay && actor.system.resources.mp.value <= 0
+    ? `<div class="god-note god-warn">Мана ${actor.system.resources.mp.value} OM — перевірка <b>12+ від Тілобудови</b>, щоб не знепритомніти.
+       <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|con|12">Кинути Тілобудову</button></div></div>` : ''
 
   const rolls = []
   let html = head(spell.img, spell.name, `${school} · ${GOD.ATTACK_TYPES[s.attackType]}`)
 
   if (needsHit) {
-    const hit = await new Roll('1d20 + @m', { m: p.hitMod }).evaluate()
+    const hitMod = actor.type === 'character' ? R.capMod(p.hitMod) : p.hitMod
+    const hit = await new Roll('1d20 + @m', { m: hitMod }).evaluate()
     rolls.push(hit)
-    const ok = R.isHit(hit.total, target.dodge)
-    html += step('Попадання', hit.total, `куб ${naturalOf(hit)} ${signed(p.hitMod)} · ${esc(target.name)}, ШУ ${target.dodge}`,
-      { ok, text: ok ? 'Влучання' : 'Промах' })
+    const hc = R.hitCheck({ total: hit.total, natural: naturalOf(hit), dodge: target.dodge })
+    let ok = hc.hit
+    html += step('Попадання', hit.total, `куб ${naturalOf(hit)} ${signed(hitMod)} · ${esc(target.name)}, ШУ ${target.dodge}`,
+      { ok, text: ok ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
+    if (hc.reason && !hc.guaranteed) html += `<div class="god-note">${esc(hc.reason)}</div>`
+    if (ok && hc.missCheck) {
+      const r = await new Roll(hc.missCheck === 'half' ? '1d2' : '1d4').evaluate(); rolls.push(r)
+      if (hc.missCheck === 'half' ? r.total === 1 : R.chanceSucceeds(r.total)) ok = false
+      html += step(hc.missCheck === 'half' ? 'Шанс промаху' : 'ШАНС промаху', r.total, hc.missCheck === 'half' ? '1d2: 1 — промах' : '1d4: 3 — промах',
+        { ok, text: ok ? 'Влучання' : 'Промах' })
+    }
     if (!ok) {
       await pay()
-      html += `<div class="god-note">${p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>`
+      html += `<div class="god-note">${p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>` + manaWarn()
       return sendCard(actor, html, rolls)
     }
   }
@@ -360,7 +441,7 @@ export async function castSpell(actor, spell) {
     const mult = schoolLvl + (p.statMult ? sys.stats.int.mod + sys.stats.wis.mod : 0)
     html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target)
   }
-  if (p.pay) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>`
+  if (p.pay) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>` + manaWarn()
   return sendCard(actor, html, rolls)
 }
 
@@ -368,11 +449,11 @@ export async function useAbility(actor, item) {
   const s = item.system, r = actor.system.resources
   let note = ''
   if (s.manaCost || s.staminaCost) {
-    if (r.mp.value < s.manaCost || r.ed.value < s.staminaCost) {
-      return ui.notifications.warn(`Недостатньо ресурсів: ${s.manaCost} OM / ${s.staminaCost} ВС`)
-    }
-    await actor.update({ 'system.resources.mp.value': r.mp.value - s.manaCost, 'system.resources.ed.value': r.ed.value - s.staminaCost })
-    note = `Списано ${s.manaCost} OM, ${s.staminaCost} ВС`
+    // мана може піти в мінус (за правилами), витривалість — ні
+    if (r.ed.value < s.staminaCost) return ui.notifications.warn(`Недостатньо витривалості: потрібно ${s.staminaCost} ВС`)
+    const mp = r.mp.value - s.manaCost
+    await actor.update({ 'system.resources.mp.value': mp, 'system.resources.ed.value': r.ed.value - s.staminaCost })
+    note = `Списано ${s.manaCost} OM, ${s.staminaCost} ВС${mp < 0 ? ' · мана в мінусі' : ''}`
   }
   return postItem(actor, item, note)
 }
@@ -405,4 +486,102 @@ export async function consumeItem(actor, item) {
       ${lines ? `<div class="god-restore">${lines}</div>` : ''}
       ${desc ? `<div class="god-desc">${desc}</div>` : ''}</div>`,
   })
+}
+
+// ── Перевірки після удару, спаскидки ─────────────────────────────────────────
+const STAT_LABEL = k => GOD.STATS[k]?.label ?? k
+
+/** Перевірка «N+ від характеристики»: d20 + МОД, без діалогу */
+export async function thresholdCheck(actor, stat, dc, why = '') {
+  const mod = actor.system.stats?.[stat]?.mod ?? 0
+  const roll = await new Roll('1d20 + @m', { m: mod }).evaluate()
+  const ok = roll.total >= dc
+  let html = head(actor.img, `${STAT_LABEL(stat)} ${dc}+`, why || 'перевірка')
+  html += step('Кидок', roll.total, `куб ${naturalOf(roll)} ${signed(mod)}`, { ok, text: ok ? 'Успіх' : 'Провал' })
+  return sendCard(actor, html, [roll])
+}
+
+/** Спаскидок: 11+ успіх, 1 = два провали, 20 = два успіхи; три успіхи — стабільний, три провали — смерть */
+export async function deathSave(actor) {
+  const roll = await new Roll('1d20').evaluate()
+  const s = R.deathSave(actor.getFlag('god', 'deathSaves') ?? {}, roll.total)
+  let html = head(actor.img, 'Перевірка смерті', `${actor.name}: успіхи ${s.ok}/3 · провали ${s.fail}/3`)
+  html += step('Спаскидок', roll.total, roll.total === 20 ? 'двадцятка — два успіхи' : roll.total === 1 ? 'одиниця — два провали' : '11+ успіх',
+    { ok: roll.total >= 11, text: roll.total >= 11 ? 'Успіх' : 'Провал' })
+  if (s.result === 'stable') {
+    html += '<div class="god-tier tier-t100">Стабільний<small>живий, але без свідомості</small></div>'
+    await actor.unsetFlag('god', 'deathSaves')
+  } else if (s.result === 'dead') {
+    html += '<div class="god-tier tier-none">Смерть</div>'
+    await actor.unsetFlag('god', 'deathSaves')
+    await actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
+  } else {
+    await actor.setFlag('god', 'deathSaves', { ok: s.ok, fail: s.fail })
+    html += `<div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|saves"><i class="fa-solid fa-heart-pulse"></i> Наступний спаскидок</button></div>`
+  }
+  return sendCard(actor, html, [roll])
+}
+
+/** HP між 0 і −½max: 1d2 — 2 = автоматично пройдена перевірка смерті, 1 = спаскидки */
+export async function deathCoin(actor) {
+  const roll = await new Roll('1d2').evaluate()
+  let html = head(actor.img, 'Без свідомості', `${actor.name}: 1d2 — чи потрібні спаскидки`)
+  html += step('1d2', roll.total, '2 — перевірку смерті пройдено', { ok: roll.total === 2, text: roll.total === 2 ? 'Стабільний' : 'Спаскидки' })
+  if (roll.total === 1) html += `<div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|saves"><i class="fa-solid fa-heart-pulse"></i> Спаскидок</button></div>`
+  return sendCard(actor, html, [roll])
+}
+
+/** Картка наслідків удару (якщо після нього потрібні перевірки) */
+export async function hitConsequences(actor, out) {
+  const r = actor.system.resources.hp
+  const a = R.afterHit(r.value, r.max)
+  if (a.state === 'ok' && !a.checks.length) return
+  let html = head(actor.img, 'Після удару', `${actor.name}: HP ${r.value} / ${r.max}`)
+  if (a.state === 'dead') {
+    html += '<div class="god-tier tier-none">Смерть<small>HP впало до −максимуму</small></div>'
+    await actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
+  } else if (a.state === 'down') {
+    await actor.toggleStatusEffect?.('unconscious', { active: true })
+    await actor.unsetFlag('god', 'deathSaves')
+    html += '<div class="god-tier tier-t10">Без свідомості</div>'
+    html += a.death === 'coin'
+      ? `<div class="god-note">HP вище −½ максимуму: 1d2 — на 2 перевірку смерті пройдено автоматично.</div>
+         <div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|coin"><i class="fa-solid fa-coins"></i> Кинути 1d2</button></div>`
+      : `<div class="god-note">HP нижче −½ максимуму: спаскидки до трьох успіхів або провалів.</div>
+         <div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|saves"><i class="fa-solid fa-heart-pulse"></i> Спаскидок</button></div>`
+  } else {
+    html += '<div class="god-checks">' + a.checks.map(ch => `
+      <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|${ch.stat}|${ch.dc}" data-tooltip="${esc(ch.label)}">
+        <i class="fa-solid fa-dice-d20"></i> ${esc(ch.label)}</button></div>`).join('') + '</div>'
+  }
+  return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card">${html}</div>` })
+}
+
+/**
+ * Створення персонажа: 6 кидків 6d6 без найменшого куба, потім кожне число — в одну характеристику.
+ * Числа не діляться, кожне використовується рівно один раз.
+ */
+export async function rollStatArray(actor) {
+  const rolls = []
+  for (let i = 0; i < 6; i++) rolls.push(await new Roll('6d6dl1').evaluate())
+  const values = rolls.map(r => r.total)
+  let html = head(actor.img, 'Кидок характеристик', '6 × 6d6, найменший куб відкидається')
+  html += `<div class="god-faces">${values.map(v => `<span class="hit">${v}</span>`).join('')}</div>`
+  await sendCard(actor, html, rolls)
+
+  const stats = Object.entries(GOD.STATS)
+  const sorted = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v)
+  const opts = sel => sorted.map(o => `<option value="${o.i}" ${o.i === sel ? 'selected' : ''}>${o.v}</option>`).join('')
+  const res = await foundry.applications.api.DialogV2.wait({
+    window: { title: 'Розподіл характеристик', icon: 'fa-solid fa-dice' }, classes: ['god-dialog'], position: { width: 360 }, rejectClose: false,
+    content: `<p class="god-dlg-info">Випало: <b>${values.join(', ')}</b>. Кожне число — в одну характеристику.</p>` +
+      stats.map(([k, s], n) => `<label class="god-dlg-field"><span>${esc(s.label)}</span><select name="${k}">${opts(sorted[n].i)}</select></label>`).join(''),
+    buttons: [{ action: 'ok', label: 'Застосувати', default: true, callback: (e, btn) => Object.fromEntries(stats.map(([k]) => [k, Number(btn.form.elements[k].value)])) }],
+  })
+  if (!res || typeof res !== 'object') return
+  const used = Object.values(res)
+  if (new Set(used).size !== 6) return ui.notifications.warn('Кожне число можна використати лише один раз — спробуй розподілити ще раз')
+  const upd = Object.fromEntries(Object.entries(res).map(([k, i]) => [`system.stats.${k}.value`, values[i]]))
+  await actor.update(upd)
+  ui.notifications.info(`${actor.name}: характеристики розподілено`)
 }

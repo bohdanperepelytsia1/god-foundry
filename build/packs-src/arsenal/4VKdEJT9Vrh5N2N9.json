@@ -10,38 +10,7 @@
     "armorClass": "heavy",
     "weight": 14
   },
-  "effects": [
-    {
-      "_id": "i05bT7cXVcNW53NU",
-      "_key": "!items.effects!4VKdEJT9Vrh5N2N9.i05bT7cXVcNW53NU",
-      "name": "Тяжкий обладунок",
-      "img": "systems/god/assets/icons/stances/defense.svg",
-      "type": "base",
-      "system": {},
-      "disabled": false,
-      "transfer": true,
-      "changes": [
-        {
-          "key": "system.combat.dodgeBonus",
-          "mode": 2,
-          "value": "-2",
-          "priority": null
-        }
-      ],
-      "duration": {},
-      "origin": null,
-      "description": "",
-      "statuses": [],
-      "tint": "#ffffff",
-      "sort": 0,
-      "flags": {},
-      "_stats": {
-        "coreVersion": "13.345",
-        "systemId": "god",
-        "systemVersion": "0.5.0"
-      }
-    }
-  ],
+  "effects": [],
   "folder": "YJcyS05D7NyGgtAR",
   "sort": 1600,
   "ownership": {

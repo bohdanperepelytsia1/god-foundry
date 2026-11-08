@@ -78,6 +78,8 @@ export async function dealDamage(actor, amount) {
   if (r.mr && out.mr !== r.mr.value) upd['system.resources.mr.value'] = out.mr
   if (Object.keys(upd).length) await actor.update(upd)
   ui.notifications.info(damageSummary(actor.name, out))
+  // Наслідки удару по HP: перевірки калітства/свідомості, непритомність, смерть
+  if (out.toHp > 0) await import('./dice/rolls.mjs').then(m => m.hitConsequences(actor, out)).catch(e => console.warn('G.O.D. | наслідки удару', e))
   return out
 }
 

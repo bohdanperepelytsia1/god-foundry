@@ -7,6 +7,14 @@ export class GodActor extends Actor {
   /** Підвищення рівня → автоматично нараховуємо очки вмінь і характеристик */
   async _preUpdate(changes, options, user) {
     if ((await super._preUpdate(changes, options, user)) === false) return false
+    // Новий портрет → і токен, якщо токен був таким самим (або стандартним). Свій окремий токен-арт не чіпаємо.
+    if (changes.img && changes.img !== this.img && foundry.utils.getProperty(changes, 'prototypeToken.texture.src') === undefined) {
+      const tex = this.prototypeToken?.texture?.src
+      if (!tex || tex === this.img || tex === 'icons/svg/mystery-man.svg' || tex.startsWith('systems/god/assets/icons/')) {
+        foundry.utils.setProperty(changes, 'prototypeToken.texture.src', changes.img)
+        options.godTokenArt = { from: tex || this.img, to: changes.img }
+      }
+    }
     if (this.type !== 'character') return
     const newXp = foundry.utils.getProperty(changes, 'system.progress.xp')
     if (newXp === undefined) return
@@ -22,8 +30,31 @@ export class GodActor extends Actor {
 
   _onUpdate(changes, options, userId) {
     super._onUpdate(changes, options, userId)
+    if (options.godTokenArt && userId === game.user.id) this.#syncPlacedTokens(options.godTokenArt)
     if (options.godLevelUp && userId === game.user.id) {
       ui.notifications.info(`${this.name}: новий рівень! +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_SKILL_PTS} очок вмінь, +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_STAT_PTS} очок характеристик`)
+    }
+  }
+
+  /** Кнопка «Портрет → токен»: примусово поставити портрет на токен (прототип і вже розставлені) */
+  async syncTokenArt() {
+    const from = this.prototypeToken?.texture?.src
+    if (!this.isToken) await this.update({ 'prototypeToken.texture.src': this.img })
+    await this.#syncPlacedTokens({ from, to: this.img, force: true })
+    ui.notifications.info(`${this.name}: токен тепер з портретом`)
+  }
+
+  /**
+   * Токени, що вже стоять на сценах, з тією самою картинкою — теж оновити.
+   * Майстер оновлює на всіх сценах, гравець — лише свої токени поточної сцени.
+   */
+  async #syncPlacedTokens({ from, to, force = false }) {
+    const same = t => t.actorId === (this.isToken ? this.token?.actorId : this.id) && (force || !t.texture?.src || t.texture.src === from)
+    if (this.isToken) { if (this.token?.isOwner) await this.token.update({ 'texture.src': to }); return }
+    const scenes = game.user.isGM ? game.scenes.contents : (canvas?.scene ? [canvas.scene] : [])
+    for (const scene of scenes) {
+      const ups = scene.tokens.filter(t => same(t) && (t.actorLink || game.user.isGM) && t.isOwner).map(t => ({ _id: t.id, 'texture.src': to }))
+      if (ups.length) await scene.updateEmbeddedDocuments('Token', ups).catch(e => console.warn('G.O.D. | токен не оновлено', e))
     }
   }
 
@@ -35,7 +66,7 @@ export class GodActor extends Actor {
     const r = this.system.resources?.[key]
     if (!r || !delta) return
     let next = R.adjustValue(r.value, delta, r.max)
-    if (key !== 'hp') next = Math.max(0, next)
+    if (key !== 'hp' && key !== 'mp') next = Math.max(0, next)   // HP і мана можуть піти в мінус
     if (next === r.value) return
     return this.update({ [`system.resources.${key}.value`]: next })
   }

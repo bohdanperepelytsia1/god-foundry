@@ -43,7 +43,7 @@ assert.deepEqual(targetChoices(hero).map(t => t.label).sort(), ['Гоблін #1
 canvas.tokens.placeables = [goblin, ogre]
 
 // 1. Без цілі в діалозі — атака не відбувається
-dialogAnswer = { target: '', hitMod: 3, dmgMod: 1 }
+dialogAnswer = { target: '', dir: 'front', hitMod: 3, dmgMod: 1 }
 await weaponAttack(hero, sword)
 assert.equal(cards.length, 0); assert.match(warns.pop(), /ціль/i)
 assert.ok(lastDialog.includes('type="radio" name="target"') && lastDialog.includes('Гоблін') && lastDialog.includes('<b>8</b> ШУ'), 'список цілей у діалозі')
@@ -51,22 +51,45 @@ assert.ok(!/Token\.\w+" checked/.test(lastDialog), 'без позначеної 
 
 // 2. Попадання 8 проти ШУ 8 — промах (треба більше), урон не кидається
 rolled.length = 0; nextTotals = [8]
-dialogAnswer = { target: goblin.document.uuid, hitMod: 0, dmgMod: 0 }
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0 }
 await weaponAttack(hero, sword)
 assert.equal(rolled.length, 1, 'лише кидок попадання')
 assert.ok(cards.at(-1).includes('Промах') && !cards.at(-1).includes('data-god-apply'), 'промах без урону')
 
 // 3. Попадання 9 > 8 — урон з кнопкою на ціль
-rolled.length = 0; nextTotals = [9, 12]
+rolled.length = 0; nextTotals = [9, 15]
 await weaponAttack(hero, sword)
 assert.equal(rolled.length, 2, 'попадання + урон')
 assert.ok(cards.at(-1).includes('Влучання') && cards.at(-1).includes(`data-target="${goblin.document.uuid}"`) && cards.at(-1).includes('→ Гоблін'), 'урон на ціль')
+
+// 3а. Натуральна 20 проти ШУ 30 — гарантований крит, навіть якщо кидок урону слабкий
+ogre.actor.system.derived.dodge = 30
+rolled.length = 0; nextTotals = [20, 4]
+dialogAnswer = { target: ogre.document.uuid, dir: 'back', hitMod: 0, dmgMod: 0 }
+await weaponAttack(hero, sword)
+assert.ok(rolled[0].startsWith('2d20kh'), 'з тилу — попадання з перевагою')
+assert.ok(cards.at(-1).includes('Гарантовано') && cards.at(-1).includes('Критичний урон'), 'гарантований крит')
+assert.ok(cards.at(-1).includes('тил'), 'позиція видно в картці')
+ogre.actor.system.derived.dodge = 3
+
+// 3б. Урон 18 → 100% із ШАНСОМ на крит; 1d4 = 3 → крит
+rolled.length = 0; nextTotals = [10, 18, 3]
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0 }
+await weaponAttack(hero, sword)
+assert.deepEqual(rolled.slice(-1), ['1d4'], 'ШАНС кидається окремо')
+assert.ok(cards.at(-1).includes('Спрацював') && cards.at(-1).includes('Критичний урон'), 'ШАНС підняв до криту')
+
+// 3в. Натуральна 1 — промах навіть із модом +30
+rolled.length = 0; nextTotals = [1]
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 30, dmgMod: 0 }
+await weaponAttack(hero, sword)
+assert.equal(rolled.length, 1); assert.ok(cards.at(-1).includes('Промах'))
 
 // 4. Порожня сцена — попередження без діалогу
 canvas.tokens.placeables = []
 await weaponAttack(hero, sword)
 assert.match(warns.pop(), /немає цілей/)
-console.log('✓ бойовка: ціль обов\'язкова, урон лише при попаданні > ШУ, кнопка урону на ціль')
+console.log('✓ бойовка: ціль, попадання > ШУ, сітка попадання 1/17–20, ШАНС, позиції')
 
 // ── НІП: дані ──
 class Field { constructor(o = {}) { this.o = o } }

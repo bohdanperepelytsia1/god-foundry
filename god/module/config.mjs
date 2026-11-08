@@ -9,6 +9,9 @@ export const BALANCE = {
   XP_PER_LEVEL: 50,          // перехід N→N+1 коштує (N+1)·50 XP
   LEVEL_UP_SKILL_PTS: 8,
   LEVEL_UP_STAT_PTS: 6,
+  START_SKILL_PTS: 60,       // створення: 60 очок умінь + до 50 за дебафи
+  DEBUFF_MAX_TOTAL: 50,
+  DEBUFF_MAX_EACH: 15,
   STR_DMG_MULT: 5,           // 100% урону = стат·5 + урон зброї
   BASE_SPEED: 3,
   BASE_MAX_WEIGHT: 20,
@@ -110,6 +113,13 @@ export const ARMOR_CLASSES = {
   none: 'Не обладунок', light: 'Легкий', medium: 'Середній', heavy: 'Тяжкий',
 }
 
+/** Розміри створінь (Combat manual): клітини, швидкість, множник ШУ */
+export const CREATURE_SIZES = {
+  tiny: 'Крихітне (ШУ ×1.6)', small: 'Маленьке (ШУ ×1.3)', medium: 'Середнє', large: 'Велике (ШУ ×0.5)',
+  huge: 'Величезне (ШУ ×0.2)', gargantuan: 'Гігантське (ШУ ×0.1)',
+}
+export const CREATURE_RANKS = { weak: 'Слабкий', junior: 'Молодший', regular: 'Рядовий', senior: 'Старший', elite: 'Елітний', legendary: 'Легендарний' }
+
 export const INVENTORY_LOCATIONS = {
   main: 'Загальне', belt: 'Пояс', quest: 'Квестові', tools: 'Інструменти',
   books: 'Книги', ingredients: 'Інгредієнти', potions: 'Зілля',
@@ -197,7 +207,7 @@ export const MONEY = {
 
 export const GOD = {
   BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
-  INVENTORY_LOCATIONS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
+  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 
 // ── Іконки системи (assets/icons) ────────────────────────────────────────────
@@ -214,7 +224,7 @@ export function defaultIcon(type, system = {}) {
   if (type === 'armor') return I('armor', SLOT_ICON[system.slot] ?? 'cuirass')
   if (type === 'spell') return I('schools', system.school ?? 'fire')
   if (type === 'ability') return I('misc', 'ability')
-  if (type === 'trait') return I('misc', system.kind === 'quirk' ? 'quirk' : 'trait')
+  if (type === 'trait') return system.kind === 'debuff' ? I('status', 'cursed') : I('misc', system.kind === 'quirk' ? 'quirk' : 'trait')
   if (type === 'gear') return I('gear', GEAR_CATEGORIES[system.category]?.icon ?? 'item')
   return I('gear', 'item')
 }

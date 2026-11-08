@@ -42,7 +42,7 @@
     <div class="god-form-grid">
       <label><span>Слот</span><select name="system.slot">{{selectOptions config.ARMOR_SLOTS selected=system.slot}}</select></label>
       <label><span>Клас</span><select name="system.armorClass">{{selectOptions config.ARMOR_CLASSES selected=system.armorClass}}</select></label>
-      <span></span>
+      <label class="god-check" data-tooltip="Підігнаний: тяжкий −1 ШУ замість −2, середній без штрафу ШУ"><input type="checkbox" name="system.fitted" {{checked system.fitted}}><span>Підігнаний</span></label>
       <label><span>Фізичний захист</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
       <label><span>Магічний захист</span><input type="number" name="system.mag" value="{{system.mag}}"></label>
       {{#if (god-eq system.slot "Пояс")}}
@@ -93,7 +93,12 @@
   <fieldset><legend>Риса</legend>
     <div class="god-form-grid">
       <label><span>Вид</span><select name="system.kind">{{selectOptions traitKinds selected=system.kind}}</select></label>
+      {{#if (god-eq system.kind "debuff")}}
+      <label data-tooltip="Скільки очок умінь дає дебаф при створенні (до 15; усього до 50)"><span>Очок умінь</span><input type="number" name="system.points" value="{{system.points}}" min="0" max="15"></label>
+      <label class="god-check" data-tooltip="Контрольований: на 5 очок дешевший, спрацьовує, якщо не викинуто 12+ від уміння на розсуд ГМ"><input type="checkbox" name="system.controlled" {{checked system.controlled}}><span>Контрольований</span></label>
+      {{else}}
       <label data-tooltip="Вартість у очках створення, напр. +3 чи −2"><span>Вартість</span><input type="text" name="system.cost" value="{{system.cost}}"></label>
+      {{/if}}
     </div>
     <p class="god-hint">Щоб риса давала числовий бонус (ШУ, мана, попадання), додай їй активний ефект на вкладці ефектів предмета.</p>
   </fieldset>

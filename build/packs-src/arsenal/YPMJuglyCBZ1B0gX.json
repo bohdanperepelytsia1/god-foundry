@@ -1,0 +1,26 @@
+{
+  "_id": "YPMJuglyCBZ1B0gX",
+  "_key": "!items!YPMJuglyCBZ1B0gX",
+  "name": "Підігнана латна кираса",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/cuirass.svg",
+  "system": {
+    "description": "<p><b>Тяжкий обладунок.</b> −2 ШУ. Не можна плавати й спати; перешкода — скритність, маскування, акробатика.\n    Кирасу не вдягнути й не зняти самостійно. Одягання кираси/поножів у бою — 12/8 ПХ, знімання — 5/3 ПХ.\n    Бонус: травми та каліцтва з перешкодою.</p><p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "slot": "Кираса",
+    "armorClass": "heavy",
+    "fitted": true,
+    "weight": 14
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 1700,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

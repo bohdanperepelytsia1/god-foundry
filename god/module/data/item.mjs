@@ -43,6 +43,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       ...physical(),
       slot: choice(Object.keys(GOD.ARMOR_SLOTS), 'Кираса'),
       armorClass: choice(Object.keys(GOD.ARMOR_CLASSES), 'none'),
+      fitted: new f.BooleanField({ initial: false }),   // підігнаний під героя
       phys: int(0),
       mag: int(0),
       beltSlots: int(0, { min: 0 }),   // лише для слота «Пояс»
@@ -105,8 +106,10 @@ export class TraitData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
     return {
       description: new f.HTMLField({ initial: '' }),
-      kind: choice(['trait', 'quirk'], 'trait'),
+      kind: choice(['trait', 'quirk', 'debuff'], 'trait'),
       cost: new f.StringField({ initial: '' }),   // вартість у очках створення — як на сайті, довільний текст ("+3", "−2")
+      points: int(0, { min: 0, max: 15 }),        // дебаф: скільки очок умінь дав при створенні (до 15)
+      controlled: new f.BooleanField({ initial: false }),   // контрольований дебаф: спрацьовує, якщо не викинуто 12+
     }
   }
 }
