@@ -1,0 +1,31 @@
+{
+  "_id": "imhhZQZzS5n68ssd",
+  "_key": "!items!imhhZQZzS5n68ssd",
+  "name": "Вогняний джавелін",
+  "type": "spell",
+  "img": "systems/god/assets/icons/schools/fire.svg",
+  "system": {
+    "description": "<p>Герой сотворює в руках величезний спис з плазми, який може кинути в ціль.</p>\n  <p><b>Приклад:</b> ІНТ 45 (МОД +3), МУД 60 (МОД +4), Сила вогню 4, Великий кодекс мага в руках →\n  3d8 проти 6; при успіху 100 × (4 + 3 + 4) = <b>1100 маг. урону</b>.</p>",
+    "school": "fire",
+    "level": 1,
+    "threshold": 6,
+    "manaCost": 100,
+    "staminaCost": 0,
+    "attackType": "target",
+    "baseDamage": 100,
+    "damageKind": "mag",
+    "castTime": "миттєво"
+  },
+  "effects": [],
+  "folder": "kzhmsqkYCqH3qKZx",
+  "sort": 3800,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

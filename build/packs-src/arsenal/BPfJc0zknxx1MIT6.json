@@ -1,0 +1,26 @@
+{
+  "_id": "BPfJc0zknxx1MIT6",
+  "_key": "!items!BPfJc0zknxx1MIT6",
+  "name": "Смолоскип",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/torch.svg",
+  "system": {
+    "description": "<p>Горить близько години. Освітлює радіус у кілька клітинок.</p>",
+    "weight": 0.5,
+    "quantity": 3,
+    "location": "main",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 2800,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

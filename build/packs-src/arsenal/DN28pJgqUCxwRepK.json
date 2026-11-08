@@ -1,0 +1,25 @@
+{
+  "_id": "DN28pJgqUCxwRepK",
+  "_key": "!items!DN28pJgqUCxwRepK",
+  "name": "Шкіряна куртка",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/cuirass.svg",
+  "system": {
+    "description": "<p><b>Легкий обладунок.</b> Можна спати й плавати без штрафів. Одягання кожного елемента в бою — 2 ПХ, знімання — 1 ПХ.</p><p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "slot": "Кираса",
+    "armorClass": "light",
+    "weight": 3
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 1400,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

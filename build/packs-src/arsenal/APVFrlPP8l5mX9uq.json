@@ -1,0 +1,26 @@
+{
+  "_id": "APVFrlPP8l5mX9uq",
+  "_key": "!items!APVFrlPP8l5mX9uq",
+  "name": "Жезл",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/wand.svg",
+  "system": {
+    "description": "<p>Радіус ураження 5, в одну руку, далекобійна, наносить магічний урон. <b>Зменшує час касту будь-якого заклинання вдвічі</b>, якщо каст іде через жезл.</p><p><b>Рівні володіння:</b> 1 — +1 МОД · 2 — +2 МОД · 3 — +3 МОД · 4 — ЗДТН · 5 — ЗДТН + 1 СИЛА ·\n  6 — +4 МОД · 7 — +5 МОД + ПОТІК · 8 — +6 МОД · 9 — ЗДТН + 2 СИЛА · 10 — 8 МОД</p>",
+    "category": "wand",
+    "range": 5,
+    "weight": 0.5,
+    "isMagic": true
+  },
+  "effects": [],
+  "folder": "08EWQmS4Ef2q9cb2",
+  "sort": 800,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

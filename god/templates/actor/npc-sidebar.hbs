@@ -1,0 +1,54 @@
+<aside class="god-sidebar">
+  {{#if editable}}
+  <a class="god-edit-toggle {{#if editMode}}on{{/if}}" data-action="toggleEdit"
+     data-tooltip="{{#if editMode}}Завершити редагування{{else}}Режим редагування{{/if}}">
+    <i class="fa-solid {{#if editMode}}fa-lock-open{{else}}fa-lock{{/if}}"></i></a>
+  {{/if}}
+  <div class="god-portrait-wrap">
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" alt="" {{#if editMode}}data-action="editImage" data-tooltip="Змінити портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <span class="god-level-badge god-npc-badge" data-tooltip="Неігровий персонаж"><i class="fa-solid fa-skull"></i></span>
+  </div>
+  {{#if editMode}}<input class="god-name-input" type="text" name="name" value="{{actor.name}}">
+  {{else}}<h1 class="god-name">{{actor.name}}</h1>{{/if}}
+
+  <div class="god-res-list">
+    {{#each resources}}
+    {{#> god-res damage=(god-eq key "hp")}}
+      {{#if @root.editMode}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.max" data-min="0" value="{{max}}" data-tooltip="Максимум: число, або +10 / -10">{{/if}}
+    {{/god-res}}
+    {{/each}}
+    <div class="god-res-armor {{#if editMode}}editing{{/if}}">
+      {{#each armorRes}}
+      {{#> god-res}}
+        {{#if @root.editMode}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.base" data-min="0" value="{{base}}" data-tooltip="Природна {{abbr}} (шкура, луска) — без броні. Броня з предметів додається сама">{{/if}}
+      {{/god-res}}
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="god-side-buttons">
+    <button type="button" class="god-tray-open" data-action="openTray"><i class="fa-solid fa-dice-d20"></i> Кидки</button>
+    <button type="button" class="god-tray-open" data-action="openHud"><i class="fa-solid fa-id-badge"></i> Панель</button>
+  </div>
+
+  <div class="god-tiles">
+    <div class="god-tile god-tile-dodge" data-tooltip="Шанс ухилення: база {{system.dodge}}{{#if system.combat.dodgeBonus}}, ефекти {{god-signed system.combat.dodgeBonus}}{{/if}}"><b>{{system.derived.dodge}}</b><small>ШУ</small></div>
+    <div class="god-tile"><b>{{system.speed}}</b><small>Швидкість</small></div>
+    <div class="god-tile"><b>{{system.initiative}}</b><small>Ініціатива</small></div>
+  </div>
+  {{#if editMode}}
+  <div class="god-npc-fields">
+    <label>ШУ (база) <input type="text" inputmode="numeric" data-delta="system.dodge" data-min="0" value="{{system.dodge}}"></label>
+    <label>Швидкість <input type="text" inputmode="numeric" data-delta="system.speed" data-min="0" value="{{system.speed}}"></label>
+    <label>Ініціатива <input type="text" inputmode="numeric" data-delta="system.initiative" value="{{system.initiative}}"></label>
+  </div>
+  {{/if}}
+  <div class="god-side-block">
+    <h4>Стійка</h4>
+    <div class="god-stance">
+      {{#each stances}}
+      <button type="button" class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{title}}">{{label}}</button>
+      {{/each}}
+    </div>
+  </div>
+</aside>

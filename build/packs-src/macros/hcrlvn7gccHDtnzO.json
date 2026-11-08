@@ -1,0 +1,21 @@
+{
+  "_id": "hcrlvn7gccHDtnzO",
+  "_key": "!macros!hcrlvn7gccHDtnzO",
+  "name": "Панель персонажа",
+  "type": "script",
+  "img": "systems/god/assets/icons/misc/character.svg",
+  "command": "game.god.hud()",
+  "scope": "global",
+  "folder": null,
+  "sort": 100,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "author": null,
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

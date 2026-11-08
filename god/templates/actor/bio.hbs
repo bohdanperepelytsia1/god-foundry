@@ -1,0 +1,14 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="bio">
+  <div class="god-details">
+    {{#if editMode}}
+    <label><span>Раса</span><input type="text" name="system.details.race" value="{{system.details.race}}"></label>
+    <label><span>Походження</span><input type="text" name="system.details.origin" value="{{system.details.origin}}"></label>
+    <label><span>Вік</span><input type="text" name="system.details.age" value="{{system.details.age}}"></label>
+    {{else}}
+    <div><span>Раса</span><b>{{#if system.details.race}}{{system.details.race}}{{else}}—{{/if}}</b></div>
+    <div><span>Походження</span><b>{{#if system.details.origin}}{{system.details.origin}}{{else}}—{{/if}}</b></div>
+    <div><span>Вік</span><b>{{#if system.details.age}}{{system.details.age}}{{else}}—{{/if}}</b></div>
+    {{/if}}
+  </div>
+  <prose-mirror name="system.biography" value="{{system.biography}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{biography}}}</prose-mirror>
+</section>

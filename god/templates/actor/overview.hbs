@@ -1,0 +1,75 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="overview">
+  {{#if system.progress.statPoints}}
+  <div class="god-banner"><i class="fa-solid fa-dumbbell"></i> Є {{system.progress.statPoints}} очок характеристик —
+    {{#if editMode}}розподіли кнопками «+».{{else}}увімкни режим редагування (замок).{{/if}}</div>
+  {{/if}}
+
+  <div class="god-stats">
+    {{#each stats}}
+    <div class="god-stat-tile">
+      <a class="god-stat-roll" data-action="rollStat" data-stat="{{key}}" data-tooltip="Перевірка: d20 {{god-signed mod}}">
+        <span class="god-stat-abbr">{{abbr}}</span>
+        <b class="god-stat-mod">{{god-signed mod}}</b>
+        <span class="god-stat-label">{{label}}</span>
+      </a>
+      {{#if @root.editMode}}
+      <div class="god-stat-edit">
+        <button type="button" data-action="statDown" data-stat="{{key}}" data-tooltip="−1 (майстер: Shift — без повернення очка)">−</button>
+        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Число, або -5 / +3 — відняти чи додати">
+        <button type="button" data-action="statUp" data-stat="{{key}}" data-tooltip="+1 за очко характеристик (майстер: Shift — безкоштовно)">+</button>
+      </div>
+      {{else}}
+      <div class="god-stat-value" data-tooltip="{{hint}}">{{value}}</div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-swords"></i> У руках</h3></header>
+    {{#if equippedWeapons.length}}
+    <div class="god-weapon-cards">
+      {{#each equippedWeapons}}
+      {{> god-weapon-card}}
+      {{/each}}
+    </div>
+    {{else}}
+    <p class="god-empty">Нічого в руках. Візьми зброю на вкладці «Спорядження».</p>
+    {{/if}}
+  </section>
+
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-crown"></i> Репутація</h3></header>
+    <div class="god-rep">
+      {{#each reputation}}
+      <label class="god-rep-tile" style="--rep: {{color}}" data-tooltip="{{label}}. Введи +1 або -2">
+        <input type="text" data-delta="system.reputation.{{key}}" value="{{value}}"><span>{{label}}</span>
+      </label>
+      {{/each}}
+    </div>
+  </section>
+
+  {{#if readySpells.length}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-wand-sparkles"></i> Заклинання</h3></header>
+    <div class="god-chips">
+      {{#each readySpells}}
+      <button type="button" class="god-spell-chip" data-item-id="{{id}}" data-action="itemUse" {{#unless castable}}disabled{{/unless}}
+        data-tooltip="{{school}} · ПППС {{system.threshold}} · {{system.manaCost}} OM">
+        <img src="{{img}}" alt="">{{name}}</button>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  {{#if effectsActive.length}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-bolt"></i> Діють зараз</h3></header>
+    <div class="god-chips">
+      {{#each effectsActive}}
+      <span class="god-effect-chip" data-effect-uuid="{{uuid}}" data-tooltip="{{changes}}"><img src="{{img}}" alt="">{{name}}</span>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+</section>

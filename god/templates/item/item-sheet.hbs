@@ -1,0 +1,150 @@
+<div class="god-item-sheet">
+  <header class="god-item-head">
+    <img src="{{item.img}}" alt="" {{#if editable}}data-action="editImage" data-tooltip="Змінити іконку"{{/if}}>
+    <div class="god-item-title">
+      <input class="god-name-input" type="text" name="name" value="{{item.name}}" placeholder="Назва">
+      <div class="god-chips">
+        <span class="god-type-badge">{{typeLabel}}</span>
+        {{#each facts}}<span class="god-fact {{cls}}">{{label}}</span>{{/each}}
+      </div>
+    </div>
+  </header>
+
+  {{#if isWeapon}}
+  <fieldset><legend>Зброя</legend>
+    <div class="god-form-grid">
+      <label><span>Категорія</span><select name="system.category">{{selectOptions config.WEAPON_CATEGORIES selected=system.category}}</select></label>
+      <label><span>Рука</span><select name="system.hand">{{selectOptions handOptions selected=system.hand}}</select></label>
+      <label class="god-check"><input type="checkbox" name="system.twoHanded" {{checked system.twoHanded}}><span>Дворучна</span></label>
+      <label><span>Фізичний урон</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
+      <label><span>Магічний урон</span><input type="number" name="system.mag" value="{{system.mag}}"></label>
+      <label><span>Радіус ураження</span><input type="number" name="system.range" value="{{system.range}}" min="0"></label>
+    </div>
+    <p class="god-hint">100% урону: основна рука — СИЛ×5 + фіз; маг. частина (ІНТ×5 + маг) лише якщо маг. урон &gt; 0.</p>
+  </fieldset>
+  {{/if}}
+
+  {{#if isArmor}}
+  <fieldset><legend>Обладунок</legend>
+    <div class="god-form-grid">
+      <label><span>Слот</span><select name="system.slot">{{selectOptions config.ARMOR_SLOTS selected=system.slot}}</select></label>
+      <label><span>Клас</span><select name="system.armorClass">{{selectOptions config.ARMOR_CLASSES selected=system.armorClass}}</select></label>
+      <span></span>
+      <label><span>Фізичний захист</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
+      <label><span>Магічний захист</span><input type="number" name="system.mag" value="{{system.mag}}"></label>
+      {{#if (god-eq system.slot "Пояс")}}
+      <label><span>Слотів пояса</span><input type="number" name="system.beltSlots" value="{{system.beltSlots}}" min="0"></label>
+      {{/if}}
+      {{#if (god-eq system.slot "Рюкзак")}}
+      <label><span>+ до макс. ваги</span><input type="number" name="system.bagBonus" value="{{system.bagBonus}}" min="0" step="0.1"></label>
+      {{/if}}
+    </div>
+  </fieldset>
+  {{/if}}
+
+  {{#if isSpell}}
+  <fieldset><legend>Сотворення</legend>
+    <div class="god-form-grid">
+      <label><span>Школа</span><select name="system.school">{{selectOptions config.SPELL_SCHOOLS selected=system.school}}</select></label>
+      <label><span>Рівень</span><input type="number" name="system.level" value="{{system.level}}" min="1" max="10"></label>
+      <label data-tooltip="Поріг проходження перевірки сотворення: хоча б один куб має бути ≥"><span>ПППС</span>
+        <input type="number" name="system.threshold" value="{{system.threshold}}" min="1" max="20"></label>
+      <label><span>Мана (OM)</span><input type="number" name="system.manaCost" value="{{system.manaCost}}" min="0"></label>
+      <label><span>Витривалість (ВС)</span><input type="number" name="system.staminaCost" value="{{system.staminaCost}}" min="0"></label>
+      <label><span>Час дії (OD)</span><input type="text" name="system.castTime" value="{{system.castTime}}"></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Дія</legend>
+    <div class="god-form-grid">
+      <label><span>Вид атаки</span><select name="system.attackType">{{selectOptions config.ATTACK_TYPES selected=system.attackType}}</select></label>
+      <label><span>Радіус касту</span><input type="number" name="system.castRange" value="{{system.castRange}}" min="0"></label>
+      <label><span>Радіус дії</span><input type="number" name="system.areaRadius" value="{{system.areaRadius}}" min="0"></label>
+      <label><span>Базовий урон / сила</span><input type="number" name="system.baseDamage" value="{{system.baseDamage}}" min="0"></label>
+      <label><span>Тип урону</span><select name="system.damageKind">{{selectOptions damageKinds selected=system.damageKind}}</select></label>
+      <label><span>Кулдаун (CD)</span><input type="text" name="system.cooldown" value="{{system.cooldown}}"></label>
+    </div>
+  </fieldset>
+  {{/if}}
+
+  {{#if isAbility}}
+  <fieldset><legend>Вартість</legend>
+    <div class="god-form-grid">
+      <label><span>Мана (OM)</span><input type="number" name="system.manaCost" value="{{system.manaCost}}" min="0"></label>
+      <label><span>Витривалість (ВС)</span><input type="number" name="system.staminaCost" value="{{system.staminaCost}}" min="0"></label>
+      <label><span>Кулдаун</span><input type="text" name="system.cooldown" value="{{system.cooldown}}"></label>
+    </div>
+  </fieldset>
+  {{/if}}
+
+  {{#if isTrait}}
+  <fieldset><legend>Риса</legend>
+    <div class="god-form-grid">
+      <label><span>Вид</span><select name="system.kind">{{selectOptions traitKinds selected=system.kind}}</select></label>
+      <label data-tooltip="Вартість у очках створення, напр. +3 чи −2"><span>Вартість</span><input type="text" name="system.cost" value="{{system.cost}}"></label>
+    </div>
+    <p class="god-hint">Щоб риса давала числовий бонус (ШУ, мана, попадання), додай їй активний ефект на вкладці ефектів предмета.</p>
+  </fieldset>
+  {{/if}}
+
+  {{#if isGear}}
+  <fieldset><legend>Використання</legend>
+    <label class="god-check" data-tooltip="Кнопка «Використати» застосує відновлення і спише 1 шт"><input type="checkbox" name="system.consumable" {{checked system.consumable}}><span>Розхідне (зілля, їжа, бинт…)</span></label>
+    {{#if system.consumable}}
+    <div class="god-form-grid god-restore-grid">
+      {{#each restoreFields}}
+      <label class="god-res-{{key}}" data-tooltip="{{tip}}"><span>{{abbr}}</span><input type="number" name="system.restore.{{key}}" value="{{value}}"></label>
+      {{/each}}
+    </div>
+    <p class="god-hint">Скільки відновлює за 1 шт. Від'ємне — шкодить (отрута). Вище максимуму не піднімає.</p>
+    {{/if}}
+  </fieldset>
+  {{/if}}
+
+  {{#if isPhysical}}
+  <fieldset><legend>Інвентар</legend>
+    <div class="god-form-grid">
+      <label><span>Кількість</span><input type="number" name="system.quantity" value="{{system.quantity}}" min="0"></label>
+      <label><span>Вага за 1 шт, кг</span><input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.01"></label>
+      <label><span>Де лежить</span><select name="system.location">{{selectOptions config.INVENTORY_LOCATIONS selected=system.location}}</select></label>
+    </div>
+    <div class="god-price">
+      <span>Ціна</span>
+      {{#each config.MONEY as |m key|}}
+      <label class="god-coin god-coin-{{key}}" data-tooltip="{{m.label}}"><i></i>
+        <input type="number" name="system.price.{{key}}" value="{{lookup ../system.price key}}" min="0"><span>{{m.abbr}}</span></label>
+      {{/each}}
+    </div>
+    <div class="god-flags">
+      <label><input type="checkbox" name="system.isMagic" {{checked system.isMagic}}><span>Магічний</span></label>
+      <label><input type="checkbox" name="system.isBlessed" {{checked system.isBlessed}}><span>Благословенний</span></label>
+      <label><input type="checkbox" name="system.isCursed" {{checked system.isCursed}}><span>Проклятий</span></label>
+      <label data-tooltip="Урон заклинань ×(школа + МОДІНТ + МОДМУД), як «Великий кодекс мага»">
+        <input type="checkbox" name="system.spellStatMult" {{checked system.spellStatMult}}><span>Підсилює заклинання</span></label>
+    </div>
+  </fieldset>
+  {{/if}}
+
+  <fieldset class="god-item-effects"><legend>Ефекти</legend>
+    {{#each effects}}
+    <div class="god-effect {{#if disabled}}off{{/if}}" data-effect-id="{{id}}">
+      <img src="{{img}}" alt="">
+      <a class="god-row-name" data-action="effectEdit">{{name}}</a>
+      <span class="god-effect-changes">{{changes}}</span>
+      <a class="god-switch {{#unless disabled}}on{{/unless}}" data-action="effectToggle" data-tooltip="{{#if disabled}}Увімкнути{{else}}Вимкнути{{/if}}"><i></i></a>
+      <a data-action="effectDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>
+    </div>
+    {{else}}<p class="god-empty">Без ефектів.</p>{{/each}}
+    {{#if editable}}<a class="god-custom-add" data-action="effectCreate"><i class="fa-solid fa-plus"></i> Додати ефект</a>{{/if}}
+    <p class="god-hint">{{#if equipGated}}Ефекти діють на власника, лише поки предмет одягнений чи в руці.{{else}}Ефекти діють на власника постійно.{{/if}}
+      Корисні ключі: <code>system.combat.dodgeBonus</code>, <code>system.combat.hitMod</code>, <code>system.combat.damageMod</code>, <code>system.resources.mp.bonus</code>.</p>
+  </fieldset>
+
+  <fieldset class="god-desc-set"><legend>Опис</legend>
+    <prose-mirror name="system.description" value="{{system.description}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{description}}}</prose-mirror>
+  </fieldset>
+  {{#if isSpell}}
+  <fieldset class="god-desc-set"><legend>Покращення (2–5 рівні)</legend>
+    <prose-mirror name="system.upgrades" value="{{system.upgrades}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{upgrades}}}</prose-mirror>
+  </fieldset>
+  {{/if}}
+</div>

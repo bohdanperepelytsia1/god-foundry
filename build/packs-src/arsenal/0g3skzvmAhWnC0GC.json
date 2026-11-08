@@ -1,0 +1,56 @@
+{
+  "_id": "0g3skzvmAhWnC0GC",
+  "_key": "!items!0g3skzvmAhWnC0GC",
+  "name": "Магічне кільце",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/ring.svg",
+  "system": {
+    "description": "<p>Додатково дає <b>200 OM</b>, поки кільце на пальці. Ефект вимикається сам, якщо кільце зняти.</p>",
+    "slot": "Палець_л",
+    "weight": 0.05,
+    "isMagic": true
+  },
+  "effects": [
+    {
+      "_id": "gmIV7Gjbha2DV1H6",
+      "_key": "!items.effects!0g3skzvmAhWnC0GC.gmIV7Gjbha2DV1H6",
+      "name": "Магічне кільце: +200 OM",
+      "img": "systems/god/assets/icons/schools/odhi.svg",
+      "type": "base",
+      "system": {},
+      "disabled": false,
+      "transfer": true,
+      "changes": [
+        {
+          "key": "system.resources.mp.bonus",
+          "mode": 2,
+          "value": "200",
+          "priority": null
+        }
+      ],
+      "duration": {},
+      "origin": null,
+      "description": "",
+      "statuses": [],
+      "tint": "#ffffff",
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.345",
+        "systemId": "god",
+        "systemVersion": "0.5.0"
+      }
+    }
+  ],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 2600,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

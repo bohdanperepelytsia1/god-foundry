@@ -1,0 +1,25 @@
+{
+  "_id": "pqhrxayUX71Qb3NW",
+  "_key": "!items!pqhrxayUX71Qb3NW",
+  "name": "Дорожній рюкзак",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/backpack.svg",
+  "system": {
+    "description": "<p>Збільшує максимальну вагу на 10 кг, поки одягнений.</p>",
+    "slot": "Рюкзак",
+    "bagBonus": 10,
+    "weight": 1.5
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 2500,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

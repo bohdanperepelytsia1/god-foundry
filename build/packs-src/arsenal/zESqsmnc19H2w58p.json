@@ -1,0 +1,26 @@
+{
+  "_id": "zESqsmnc19H2w58p",
+  "_key": "!items!zESqsmnc19H2w58p",
+  "name": "Кресало",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/tools.svg",
+  "system": {
+    "description": "<p>Кремінь і кресало для розпалювання вогню.</p>",
+    "weight": 0.1,
+    "quantity": 1,
+    "location": "tools",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 2900,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

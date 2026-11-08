@@ -1,0 +1,26 @@
+{
+  "_id": "X1ccVgZCzfJXqUdQ",
+  "_key": "!items!X1ccVgZCzfJXqUdQ",
+  "name": "Похідний пайок",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/food.svg",
+  "system": {
+    "description": "<p>Сухарі, в’ялене м’ясо, сир. Один день харчування.</p>",
+    "weight": 0.5,
+    "quantity": 3,
+    "location": "main",
+    "consumable": true
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3100,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

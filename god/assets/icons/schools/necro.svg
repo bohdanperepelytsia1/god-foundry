@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5c9e45" stop-opacity=".42"/><stop offset=".55" stop-color="#171b28"/><stop offset="1" stop-color="#0e111a"/></linearGradient>
+  <radialGradient id="glow" cx="50%" cy="48%" r="50%"><stop offset="0" stop-color="#5c9e45" stop-opacity=".45"/><stop offset="1" stop-color="#5c9e45" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="470"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#c9eeb0"/><stop offset="1" stop-color="#5c9e45"/></linearGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".7"/></filter>
+</defs>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="url(#bg)"/>
+<circle cx="128" cy="124" r="110" fill="url(#glow)"/>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="none" stroke="#5c9e45" stroke-opacity=".55" stroke-width="3"/>
+<g filter="url(#sh)" transform="translate(40 36) scale(.34375)" fill="url(#gl)"><path  d="M255.997 16.004c-120 0-239.997 60-239.997 149.998C16 226.002 61 256 61 316c0 45-15 45-15 75c0 14.998 48.01 32.002 89.998 44.998v60h239.997v-60s90.567-27.957 90-45c-.933-27.947-15-30-15-74.998c0-30 45.642-91.42 44.998-149.998c0-90-119.998-149.998-239.996-149.998m-90 179.997c33.137 0 60 26.864 60 60s-26.863 60-60 60C132.863 316 106 289.136 106 256s26.862-60 59.998-60zm179.998 0c33.136 0 60 26.864 60 60s-26.864 60-60 60s-60-26.864-60-60s26.864-60 60-60m-89.998 105c15 0 45 60 45 75c0 29.998 0 29.998-15 29.998h-60c-15 0-15 0-15-30c0-15 30-74.998 45-74.998"/></g>
+</svg>

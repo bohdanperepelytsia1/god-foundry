@@ -1,0 +1,74 @@
+<aside class="god-sidebar">
+  {{#if editable}}
+  <a class="god-edit-toggle {{#if editMode}}on{{/if}}" data-action="toggleEdit"
+     data-tooltip="{{#if editMode}}Завершити редагування{{else}}Режим редагування{{/if}}">
+    <i class="fa-solid {{#if editMode}}fa-lock-open{{else}}fa-lock{{/if}}"></i></a>
+  {{/if}}
+
+  <div class="god-portrait-wrap">
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <div class="god-level-badge" data-tooltip="Рівень">{{system.derived.level}}</div>
+  </div>
+
+  {{#if editMode}}
+  <input class="god-name-input" type="text" name="name" value="{{actor.name}}" placeholder="Ім'я персонажа">
+  {{else}}
+  <h1 class="god-name">{{actor.name}}</h1>
+  {{/if}}
+  {{#if system.details.race}}<div class="god-subtitle">{{system.details.race}}{{#if system.details.origin}} · {{system.details.origin}}{{/if}}</div>{{/if}}
+
+  <div class="god-xp" data-tooltip="Досвід. Введи +120, щоб додати">
+    <div class="god-xp-bar"><div style="width: {{xpPct}}%"></div></div>
+    <label><span>XP</span>
+      <input type="text" data-delta="system.progress.xp" data-min="0" value="{{system.progress.xp}}">
+      <span class="god-dim">/ {{system.derived.xpNext}}</span></label>
+  </div>
+
+  <div class="god-res-list">
+    {{#each resources}}
+    {{#> god-res damage=(god-eq key "hp")}}
+      {{#if @root.editMode}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.bonus" value="{{bonus}}" data-tooltip="Бонус до максимуму: +10 / -10 — змінити, =30 — задати">{{/if}}
+    {{/god-res}}
+    {{/each}}
+    <div class="god-res-armor">
+      {{#each armorRes}}{{> god-res}}{{/each}}
+    </div>
+  </div>
+
+  <div class="god-side-buttons">
+    <button type="button" class="god-tray-open" data-action="openTray" data-tooltip="Панель кидків (Shift+R)">
+      <i class="fa-solid fa-dice-d20"></i> Кидки</button>
+    <button type="button" class="god-tray-open" data-action="openHud" data-tooltip="Компактна панель персонажа поверх сцени, можна закріпити (Shift+C)">
+      <i class="fa-solid fa-id-badge"></i> Панель</button>
+  </div>
+
+  <div class="god-tiles">
+    <div class="god-tile god-tile-dodge" data-tooltip="{{dodgeTip}}"><b>{{system.derived.dodge}}</b><small>ШУ</small></div>
+    <div class="god-tile" data-tooltip="Швидкість: 3 + Спринт"><b>{{system.derived.speed}}</b><small>Швидкість</small></div>
+    <div class="god-tile" data-tooltip="Ініціатива: ⌊витривалість / 100⌋"><b>{{system.derived.initiative}}</b><small>Ініціатива</small></div>
+  </div>
+  {{#if editMode}}{{#if isGM}}
+  <label class="god-inline-field" data-tooltip="Ручна правка майстра (±), додається до динамічного ШУ">
+    Правка ШУ <input type="number" name="system.combat.dodgeBonus" value="{{system.combat.dodgeBonus}}"></label>
+  {{/if}}{{/if}}
+
+  <div class="god-side-block">
+    <h4>Стійка</h4>
+    <div class="god-stance">
+      {{#each stances}}
+      <button type="button" class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{title}}">{{label}}</button>
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="god-side-block">
+    <h4>Гаманець</h4>
+    <div class="god-purse">
+      {{#each money}}
+      <label class="god-coin god-coin-{{key}}" data-tooltip="{{label}}. Введи +5 або -3">
+        <i></i><input type="text" data-delta="system.money.{{key}}" data-min="0" value="{{value}}"><span>{{abbr}}</span>
+      </label>
+      {{/each}}
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,1369 @@
+/* Шрифти системи — Montserrat (текст і заголовки) і Rubik (числа), OFL, з кирилицею */
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/montserrat-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/montserrat-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/montserrat-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/montserrat-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/montserrat-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/montserrat-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Montserrat'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/montserrat-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/rubik-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('../assets/fonts/rubik-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/rubik-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/rubik-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/rubik-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/rubik-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/rubik-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/rubik-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Montserrat'; font-style: italic; font-weight: 400; font-display: swap; src: url('../assets/fonts/montserrat-cyrillic-400-italic.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'Montserrat'; font-style: italic; font-weight: 400; font-display: swap; src: url('../assets/fonts/montserrat-latin-400-italic.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   G.O.D. — стилі системи для Foundry VTT v13–v14
+   v0.8: темне «скло» з індиго й золотом — у дусі Daggerheart Sleek UI.
+   Усі кольори — токени --g-*; вікна напівпрозорі з розмиттям фону.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.god, .god-card, .god-dialog, .god-quickbar {
+  --g-bg: #141822;
+  --g-glass: rgba(22, 26, 38, .86);
+  --g-panel: #1a1e2b;
+  --g-panel2: #232843;
+  --g-hover: rgba(79, 89, 137, .28);
+  --g-line: #2e3452;
+  --g-line2: #4f5989;
+  --g-text: #efe6d8;
+  --g-dim: #a9adc6;
+  --g-faint: #6c7194;
+  --g-accent: #f3c267;
+  --g-accent2: #ffd98e;
+  --g-accent-ink: #141822;
+  --g-red: #ef6a5c;
+  --g-green: #7fd18b;
+  --g-phys: #add0f1;
+  --g-mag: #d2bfff;
+  --g-hp: #d9534f;
+  --g-mp: #4f8fe6;
+  --g-mt: #9a6be8;
+  --g-ed: #58b06a;
+  --g-armor: #8792b8;
+  --g-teal: #68b0b5;
+  --g-card: linear-gradient(90deg, rgba(104, 79, 89, .14) 0%, rgba(79, 89, 137, .30) 100%);
+  --g-card-v: linear-gradient(0deg, rgba(104, 79, 89, .12) 0%, rgba(79, 89, 137, .30) 100%);
+  --g-fade-line: linear-gradient(90deg, rgba(79, 89, 137, 1) 0%, rgba(79, 89, 137, 0) 100%);
+  --g-fade-mid: linear-gradient(90deg, rgba(79, 89, 137, 0) 0%, rgba(79, 89, 137, 1) 50%, rgba(79, 89, 137, 0) 100%);
+  --g-glow: 0 0 10px -1px;
+  --g-shadow: none;
+  --g-font: 'Montserrat', var(--font-primary, 'Signika'), sans-serif;
+  --g-title: 'Rubik', 'Montserrat', sans-serif;
+  --g-radius: 8px;
+}
+
+/* ═══ Каркас вікна ═══ */
+.god.sheet .window-content {
+  padding: 0;
+  background: var(--g-bg);
+  color: var(--g-text);
+  font-family: var(--g-font);
+  font-size: 14px;
+  font-variant-numeric: lining-nums tabular-nums;
+  overflow: hidden;
+}
+/* Великі числа — рівні (lining), щоб не "стрибали" за висотою */
+.god .god-stat-mod, .god .god-tile b, .god .god-level-badge, .god-card .god-big, .god-card .god-step-total,
+.god-card .god-dmg > span, .god-card .god-faces span, .god .god-dmg-badge, .god-tray .god-tray-stats b, .god-tray .god-die {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.god.sheet.character .window-content {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.god.sheet.npc .window-content {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.god .god-sidebar { grid-row: 1 / -1; grid-column: 1; }
+.god .god-tabs { grid-column: 2; grid-row: 1; }
+.god .god-tab { grid-column: 2; grid-row: 2; display: none; overflow-y: auto; padding: 14px 16px 18px; }
+.god .god-tab.active { display: block; }
+.god .god-npc-body { grid-column: 2; overflow-y: auto; padding: 14px 16px 18px; }
+
+/* ═══ Базові елементи ═══ */
+.god input, .god select {
+  height: 28px;
+  background: var(--g-panel);
+  color: var(--g-text);
+  border: 1px solid var(--g-line);
+  border-radius: 4px;
+  font-family: var(--g-font);
+  font-size: 13px;
+}
+.god input:hover, .god select:hover { border-color: var(--g-line2); }
+.god input:focus, .god select:focus { outline: none; border-color: var(--g-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g-accent) 25%, transparent); }
+.god input[type="number"] { text-align: center; }
+.god input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--g-accent); }
+.god a { color: inherit; text-decoration: none; }
+.god a[data-action], .god [data-action]:not(button) { cursor: pointer; }
+.god a[data-action]:hover { color: var(--g-accent2); text-shadow: none; }
+.god button { font-family: var(--g-font); }
+.god .god-dim { color: var(--g-dim); font-size: 12px; white-space: nowrap; }
+.god .god-hint { color: var(--g-dim); font-size: 12px; font-style: italic; margin: 6px 0 10px; }
+.god .god-hint code { font-style: normal; font-size: 11px; }
+.god .god-empty { color: var(--g-faint); font-style: italic; text-align: center; margin: 10px 0; font-size: 13px; }
+.god .god-hidden, .god .god-hidden-learned { display: none !important; }
+.god h3 { font-family: var(--g-title); font-size: 19px; font-weight: 400; letter-spacing: .02em; color: var(--g-accent2); margin: 0; border: none; }
+
+/* ═══ Бічна панель ═══ */
+.god .god-sidebar {
+  position: relative;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 14px 16px;
+  background: linear-gradient(180deg, var(--g-panel2), var(--g-panel) 40%);
+  border-right: 1px solid var(--g-line);
+  overflow-y: auto;
+}
+.god .god-edit-toggle {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--g-bg); border: 1px solid var(--g-line);
+  color: var(--g-dim); font-size: 12px;
+}
+.god .god-edit-toggle:hover { color: var(--g-accent2); border-color: var(--g-accent); }
+.god .god-edit-toggle.on { color: var(--g-accent-ink); background: var(--g-accent); border-color: var(--g-accent); }
+.god .god-portrait-wrap { position: relative; align-self: center; }
+.god .god-portrait {
+  display: block; width: 156px; height: 156px; object-fit: cover;
+  border: 2px solid var(--g-line2); border-radius: 50%;
+  background: var(--g-bg); box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
+}
+.god .god-portrait[data-action]:hover { border-color: var(--g-accent); }
+.god .god-level-badge {
+  position: absolute; right: 4px; bottom: 4px;
+  min-width: 36px; height: 36px; padding: 0 6px; display: grid; place-items: center;
+  border-radius: 18px; background: var(--g-accent); color: var(--g-accent-ink);
+  font-family: var(--g-title); font-size: 21px; border: 2px solid var(--g-panel);
+}
+.god .god-name { font-family: var(--g-title); font-size: 26px; font-weight: 400; text-align: center; color: var(--g-accent2); margin: 0; line-height: 1.05; border: none; }
+.god .god-name-input { width: 100%; height: 34px; font-family: var(--g-title); font-size: 22px; text-align: center; color: var(--g-accent2); }
+.god .god-subtitle { text-align: center; color: var(--g-dim); font-size: 12px; margin-top: -6px; }
+
+.god .god-xp { display: flex; flex-direction: column; gap: 4px; }
+.god .god-xp-bar { height: 4px; border-radius: 2px; background: var(--g-bg); overflow: hidden; }
+.god .god-xp-bar > div { height: 100%; background: linear-gradient(90deg, var(--g-accent), var(--g-accent2)); }
+.god .god-xp label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--g-dim); }
+.god .god-xp input { width: 70px; height: 24px; text-align: center; }
+
+/* Ресурси: смуга з полем-дельтою поверх */
+.god .god-res-list { display: flex; flex-direction: column; gap: 6px; }
+.god .god-res { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.god .god-res-abbr { font-family: var(--g-title); font-size: 15px; color: var(--g-dim); text-align: center; }
+.god .god-res-bar {
+  position: relative; height: 26px; border-radius: 4px; overflow: hidden;
+  background: var(--g-bg); border: 1px solid var(--g-line);
+  display: flex; align-items: center;
+}
+.god .god-res-fill { position: absolute; inset: 0 auto 0 0; transition: width .3s ease; opacity: .85; }
+.god .god-res-hp .god-res-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--g-hp) 70%, black), var(--g-hp)); }
+.god .god-res-mp .god-res-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--g-mp) 70%, black), var(--g-mp)); }
+.god .god-res-mt .god-res-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--g-mt) 70%, black), var(--g-mt)); }
+.god .god-res-ed .god-res-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--g-ed) 70%, black), var(--g-ed)); }
+.god .god-res-pr .god-res-fill, .god .god-res-mr .god-res-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--g-armor) 60%, black), var(--g-armor)); }
+.god .god-res-bar input {
+  position: relative; z-index: 1; width: 56px; height: 100%;
+  background: transparent; border: none; border-radius: 0;
+  color: #fff; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); text-align: right; padding-right: 2px;
+}
+.god .god-res-bar input:focus { background: rgba(0, 0, 0, .45); box-shadow: none; }
+.god .god-res-max { position: relative; z-index: 1; color: rgba(255, 255, 255, .8); font-size: 12px; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.god .god-res-bonus { width: 44px; height: 24px; font-size: 12px; }
+.god .god-res-armor { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.god .god-res-armor .god-res { grid-template-columns: 22px minmax(0, 1fr); }
+.god .god-res-armor input { width: 40px; }
+
+.god .god-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.god .god-tile {
+  display: flex; flex-direction: column; align-items: center; padding: 6px 2px;
+  background: var(--g-bg); border: 1px solid var(--g-line); border-radius: var(--g-radius);
+}
+.god .god-tile b { font-family: var(--g-title); font-size: 26px; font-weight: 400; line-height: 1; color: var(--g-text); }
+.god .god-tile small { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--g-dim); }
+.god .god-tile-dodge { border-color: var(--g-accent); }
+.god .god-tile-dodge b { color: var(--g-accent2); }
+.god .god-inline-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--g-dim); }
+.god .god-inline-field input { width: 56px; height: 24px; }
+
+.god .god-side-block h4 {
+  margin: 0 0 5px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--g-faint); font-weight: 600;
+}
+.god .god-stance { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.god .god-stance button {
+  height: 26px; margin: 0; padding: 0; font-size: 11px; line-height: 1;
+  background: var(--g-bg); color: var(--g-dim); border: 1px solid var(--g-line); border-radius: 4px;
+}
+.god .god-stance button:hover { color: var(--g-text); border-color: var(--g-line2); box-shadow: none; }
+.god .god-stance button.active { background: var(--g-accent); color: var(--g-accent-ink); border-color: var(--g-accent); font-weight: 600; }
+
+.god .god-purse { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.god .god-coin { display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--g-bg); border: 1px solid var(--g-line); border-radius: 4px; }
+.god .god-coin i { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; box-shadow: inset 0 -1px 2px rgba(0, 0, 0, .35); }
+.god .god-coin input { flex: 1; width: 100%; min-width: 0; height: 22px; border: none; background: transparent; text-align: right; padding: 0; }
+.god .god-coin input:focus { box-shadow: none; }
+.god .god-coin span { font-size: 11px; color: var(--g-dim); }
+.god .god-coin-platinum i { background: radial-gradient(circle at 35% 30%, #d4e4f7, #6d8fbd); }
+.god .god-coin-gold i     { background: radial-gradient(circle at 35% 30%, #fbe7a1, #c69a2c); }
+.god .god-coin-silver i   { background: radial-gradient(circle at 35% 30%, #f2f2f2, #9a9ea6); }
+.god .god-coin-copper i   { background: radial-gradient(circle at 35% 30%, #f3bc8c, #a8612b); }
+
+/* ═══ Вкладки ═══ */
+.god .god-tabs {
+  display: flex; gap: 2px; padding: 0 10px;
+  border-bottom: 1px solid var(--g-line); background: var(--g-panel);
+  overflow-x: auto; scrollbar-width: none;
+}
+.god .god-tab-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 11px 12px 9px; border-bottom: 2px solid transparent;
+  color: var(--g-dim); font-size: 13px; white-space: nowrap;
+}
+.god .god-tab-link i { font-size: 12px; opacity: .8; }
+.god .god-tab-link:hover { color: var(--g-text); }
+.god .god-tab-link.active { color: var(--g-accent2); border-bottom-color: var(--g-accent); }
+
+/* ═══ Панелі ═══ */
+.god .god-panel {
+  background: var(--g-panel); border: 1px solid var(--g-line); border-radius: var(--g-radius);
+  padding: 10px 12px; margin-bottom: 12px; box-shadow: var(--g-shadow);
+}
+.god .god-panel > header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.god .god-panel > header h3 i { font-size: 14px; color: var(--g-dim); margin-right: 4px; }
+.god .god-head-add { margin-left: auto; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 4px; color: var(--g-dim); }
+.god .god-head-add:hover { background: var(--g-panel2); }
+.god .god-banner {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 12px; border-radius: var(--g-radius);
+  background: color-mix(in srgb, var(--g-accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--g-accent) 45%, transparent);
+  color: var(--g-accent2); font-size: 13px;
+}
+.god .god-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ═══ Огляд: характеристики ═══ */
+.god .god-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.god .god-stat-tile {
+  display: flex; flex-direction: column; align-items: stretch;
+  background: var(--g-panel); border: 1px solid var(--g-line); border-radius: var(--g-radius); overflow: hidden; box-shadow: var(--g-shadow);
+}
+.god .god-stat-roll { display: flex; flex-direction: column; align-items: center; padding: 8px 4px 4px; transition: background .15s; }
+.god .god-stat-roll:hover { background: var(--g-panel2); }
+.god .god-stat-abbr { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--g-dim); }
+.god .god-stat-mod { font-family: var(--g-title); font-size: 34px; font-weight: 400; line-height: 1; color: var(--g-accent2); }
+.god .god-stat-label { font-size: 11px; color: var(--g-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.god .god-stat-value {
+  text-align: center; font-size: 13px; font-weight: 600; padding: 3px 0;
+  background: var(--g-bg); border-top: 1px solid var(--g-line);
+}
+.god .god-stat-edit { display: grid; grid-template-columns: 22px 1fr 22px; border-top: 1px solid var(--g-line); }
+.god .god-stat-edit button { height: 26px; margin: 0; padding: 0; border: none; border-radius: 0; background: var(--g-bg); color: var(--g-accent); }
+.god .god-stat-edit button:hover { background: var(--g-panel2); box-shadow: none; }
+.god .god-stat-edit input { height: 26px; border: none; border-radius: 0; width: 100%; padding: 0; }
+
+/* Картки зброї */
+.god .god-weapon-cards { display: flex; flex-direction: column; gap: 6px; }
+.god .god-weapon-card {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+  padding: 6px 8px; border: 1px solid var(--g-line); border-radius: var(--g-radius); background: var(--g-bg);
+}
+.god .god-weapon-card img { width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--g-line); }
+.god .god-weapon-info { display: flex; flex-direction: column; min-width: 0; }
+.god .god-weapon-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god .god-dmg-badge { display: flex; gap: 10px; font-family: var(--g-title); font-size: 22px; line-height: 1; }
+.god .god-dmg-badge > span { display: inline-flex; align-items: baseline; gap: 2px; }
+.god .god-dmg-badge small { font-family: var(--g-font); font-size: 10px; color: var(--g-dim); }
+.god .phys { color: var(--g-phys); }
+.god .mag { color: var(--g-mag); }
+
+.god .god-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  width: auto; height: 30px; margin: 0; padding: 0 14px; line-height: 1;
+  background: var(--g-accent); color: var(--g-accent-ink); border: 1px solid var(--g-accent); border-radius: 4px;
+  font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.god .god-btn:hover:not(:disabled) { filter: brightness(1.1); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g-accent) 30%, transparent); }
+.god .god-btn:disabled { opacity: .35; cursor: not-allowed; }
+.god .god-btn-sm { height: 26px; padding: 0 9px; }
+
+.god .god-spell-chip, .god .god-effect-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 3px; margin: 0; width: auto;
+  background: var(--g-bg); color: var(--g-text); border: 1px solid var(--g-line); border-radius: 14px; font-size: 13px;
+}
+.god .god-spell-chip img, .god .god-effect-chip img { width: 22px; height: 22px; border-radius: 50%; border: none; }
+.god .god-spell-chip:hover:not(:disabled) { border-color: var(--g-mag); box-shadow: none; }
+.god .god-spell-chip:disabled { opacity: .4; }
+
+/* ═══ Тулбар ═══ */
+.god .god-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.god .god-search { flex: 1; position: relative; }
+.god .god-search i { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--g-faint); pointer-events: none; }
+.god .god-search input { width: 100%; height: 30px; padding-left: 28px; }
+.god .god-toggle {
+  width: auto; height: 30px; margin: 0; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  background: var(--g-panel); color: var(--g-dim); border: 1px solid var(--g-line); border-radius: 4px;
+}
+.god .god-toggle.on { color: var(--g-accent2); border-color: var(--g-accent); }
+.god .god-points-pill {
+  display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 15px;
+  background: var(--g-panel); border: 1px solid var(--g-line); color: var(--g-dim); font-weight: 600;
+}
+.god .god-points-pill.has { background: var(--g-accent); color: var(--g-accent-ink); border-color: var(--g-accent); }
+.god .god-create { display: flex; gap: 4px; }
+.god .god-create button {
+  width: 32px; height: 30px; margin: 0; padding: 0;
+  background: var(--g-panel); color: var(--g-dim); border: 1px solid var(--g-line); border-radius: 4px;
+}
+.god .god-create button:hover { color: var(--g-accent2); border-color: var(--g-accent); box-shadow: none; }
+
+/* ═══ Вміння ═══ */
+.god .god-skillcats { columns: 2 300px; column-gap: 12px; }
+.god .god-skillcat {
+  break-inside: avoid; margin-bottom: 12px;
+  background: var(--g-panel); border: 1px solid var(--g-line); border-radius: var(--g-radius); box-shadow: var(--g-shadow);
+}
+.god .god-skillcat > header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; user-select: none; border-bottom: 1px solid var(--g-line); }
+.god .god-skillcat > header:hover h3 { color: var(--g-accent); }
+.god .god-chev { font-size: 10px; color: var(--g-dim); transition: transform .15s; }
+.god .god-skillcat > header .god-dim { margin-left: auto; }
+.god .god-skillcat.collapsed > header { border-bottom: none; }
+.god .god-skillcat.collapsed .god-chev { transform: rotate(-90deg); }
+.god .god-skillcat.collapsed .god-skill-list { display: none; }
+.god .god-skill-list { list-style: none; margin: 0; padding: 4px 4px 6px; }
+.god .god-skill {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto auto; gap: 6px; align-items: center;
+  padding: 3px 6px; border-radius: 4px; min-height: 26px;
+}
+.god .god-skill:hover { background: var(--g-panel2); }
+.god .god-skill-name { color: var(--g-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god .god-skill.learned .god-skill-name { color: var(--g-text); }
+.god .god-skill-lvl { min-width: 16px; text-align: center; font-size: 13px; color: var(--g-faint); }
+.god .god-skill.learned .god-skill-lvl { color: var(--g-accent2); }
+.god .god-pips { display: inline-flex; gap: 2px; }
+.god .god-pips i { width: 5px; height: 9px; border-radius: 1px; background: var(--g-line); }
+.god .god-pips i.on { background: var(--g-accent); }
+.god .god-mini {
+  width: 20px; height: 20px; margin: 0; padding: 0; line-height: 1; font-size: 13px;
+  background: var(--g-bg); color: var(--g-accent); border: 1px solid var(--g-line); border-radius: 3px;
+}
+.god .god-mini:hover:not(:disabled) { border-color: var(--g-accent); box-shadow: none; }
+.god .god-mini:disabled { opacity: .25; }
+.god .god-cost { min-width: 18px; font-size: 10px; color: var(--g-dim); text-align: center; }
+
+/* ═══ Спорядження ═══ */
+.god .god-encumbrance { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.god .god-enc-bar {
+  flex: 1; position: relative; height: 26px; border-radius: 4px; overflow: hidden;
+  background: var(--g-panel); border: 1px solid var(--g-line);
+}
+.god .god-enc-bar > div { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--g-accent) 45%, transparent); transition: width .3s; }
+.god .god-enc-bar > span { position: relative; display: block; text-align: center; line-height: 24px; font-size: 13px; }
+.god .god-encumbrance.over .god-enc-bar > div { background: color-mix(in srgb, var(--g-red) 60%, transparent); }
+.god .god-encumbrance.over .god-enc-bar b { color: var(--g-red); }
+.god .god-enc-belt { font-size: 13px; color: var(--g-dim); white-space: nowrap; }
+.god .god-enc-belt.over { color: var(--g-red); }
+
+.god .god-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.god .god-slot {
+  position: relative; display: flex; flex-direction: column; gap: 2px; min-height: 46px; padding: 5px 8px;
+  border: 1px dashed var(--g-line); border-radius: 5px;
+}
+.god .god-slot.filled { border-style: solid; border-color: var(--g-line2); background: var(--g-bg); }
+.god .god-slot-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--g-faint); }
+.god .god-slot-item { display: flex; align-items: center; gap: 6px; font-size: 13px; padding-right: 16px; min-width: 0; }
+.god .god-slot-item img { width: 20px; height: 20px; border: none; border-radius: 3px; flex-shrink: 0; }
+.god .god-slot-empty { color: var(--g-faint); }
+.god .god-slot-off { position: absolute; top: 4px; right: 6px; color: var(--g-faint); font-size: 11px; }
+.god .god-slot-off:hover { color: var(--g-red) !important; }
+
+/* Списки предметів */
+.god .god-list > header .god-dim { margin-left: 2px; }
+.god .god-list-head, .god .god-list .god-row {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr) 54px 52px 118px 60px; gap: 8px; align-items: center;
+}
+.god .god-list-head {
+  padding: 0 6px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint);
+  border-bottom: 1px solid var(--g-line);
+}
+.god .god-list-head span:first-child { grid-column: 1 / 3; }
+.god .god-rows { list-style: none; margin: 0; padding: 0; }
+.god .god-row {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
+  padding: 4px 6px; border-radius: 4px; border-left: 3px solid transparent;
+}
+.god .god-row + .god-row { border-top: 1px solid color-mix(in srgb, var(--g-line) 50%, transparent); }
+.god .god-row:hover { background: var(--g-panel2); }
+.god .god-row.equipped { border-left-color: var(--g-accent); }
+.god .god-row-img img { display: block; width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--g-line); }
+.god .god-row-img:hover img { border-color: var(--g-accent); }
+.god .god-row-main { display: flex; flex-direction: column; min-width: 0; }
+.god .god-row-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god .god-row-sub { font-size: 11px; color: var(--g-dim); }
+.god .god-tag { font-size: 10px; margin-left: 5px; }
+.god .god-tag.magic { color: var(--g-mag); }
+.god .god-tag.blessed { color: var(--g-accent2); }
+.god .god-tag.cursed { color: var(--g-red); }
+.god .god-row-controls { display: flex; gap: 8px; justify-content: flex-end; color: var(--g-faint); font-size: 12px; }
+.god .god-row-controls .god-off { opacity: .35; }
+.god .god-qty { width: 54px; height: 24px; }
+.god .god-col-weight { font-size: 12px; color: var(--g-dim); text-align: center; }
+.god .god-col-loc { height: 24px; font-size: 12px; }
+.god .god-row-summary {
+  display: none; grid-column: 1 / -1; padding: 6px 8px 4px 40px;
+  font-size: 13px; color: var(--g-dim); border-top: 1px dashed var(--g-line); margin-top: 4px;
+}
+.god .god-row.expanded .god-row-summary { display: block; }
+.god .god-row-summary p { margin: 0 0 4px; }
+
+/* Магія */
+.god .god-list .god-rows .god-row:has(.god-spell-facts) { grid-template-columns: 32px minmax(0, 1fr) auto auto auto; }
+.god .god-spell-facts { display: flex; gap: 10px; font-size: 12px; color: var(--g-dim); white-space: nowrap; }
+.god .god-spell-facts b { color: var(--g-text); }
+.god .god-spell-facts small { font-size: 10px; }
+.god .god-school-chip {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 14px;
+  background: var(--g-bg); border: 1px solid var(--g-line); font-size: 13px;
+}
+.god .god-school-chip b { color: var(--g-accent2); }
+.god .god-school-chip small { color: var(--g-mag); }
+.god .god-schools-edit { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.god .god-schools-edit label { display: grid; grid-template-columns: minmax(0, 1fr) 46px 28px; gap: 6px; align-items: center; font-size: 13px; color: var(--g-dim); }
+.god .god-schools-edit label.learned { color: var(--g-text); }
+.god .god-schools-edit input { width: 46px; height: 24px; }
+
+/* Ефекти */
+.god .god-effect {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) auto 34px 16px; gap: 10px; align-items: center;
+  padding: 5px 6px; border-radius: 4px;
+}
+.god .god-effect:hover { background: var(--g-panel2); }
+.god .god-effect.off { opacity: .6; }
+.god .god-effect img { width: 28px; height: 28px; border: none; border-radius: 4px; }
+.god .god-effect-changes { font-size: 12px; color: var(--g-dim); }
+.god .god-effect > a:last-child { color: var(--g-faint); font-size: 12px; }
+.god .god-switch {
+  position: relative; width: 34px; height: 18px; border-radius: 9px; background: var(--g-line); transition: background .15s;
+}
+.god .god-switch i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--g-text); transition: left .15s; }
+.god .god-switch.on { background: var(--g-accent); }
+.god .god-switch.on i { left: 18px; background: var(--g-accent-ink); }
+
+/* Біографія */
+.god .god-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.god .god-details > * { display: flex; flex-direction: column; gap: 3px; }
+.god .god-details span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint); }
+.god .god-details b { font-weight: 400; font-size: 15px; }
+.god .god-editor {
+  display: block; min-height: 260px; padding: 8px 12px;
+  background: var(--g-panel); border: 1px solid var(--g-line); border-radius: var(--g-radius);
+}
+
+/* НІП */
+.god .god-npc-fields { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.god .god-npc-fields label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--g-dim); }
+.god .god-npc-fields input { width: 56px; height: 24px; }
+.god .god-npc-body .god-list .god-row { grid-template-columns: 32px minmax(0, 1fr) auto auto; }
+.god .god-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.god .god-form-grid > label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--g-dim); }
+.god .god-form-grid > label input, .god .god-form-grid > label select { width: 100%; }
+.god .god-form-grid > label.god-check { flex-direction: row; align-items: center; gap: 8px; height: 28px; color: var(--g-text); }
+
+/* ═══ Лист предмета ═══ */
+.god.sheet.item .window-content { overflow-y: auto; }
+.god .god-item-sheet { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.god .god-item-head { display: flex; gap: 12px; align-items: center; }
+.god .god-item-head img { width: 64px; height: 64px; border-radius: var(--g-radius); border: 1px solid var(--g-line2); background: var(--g-panel); flex-shrink: 0; }
+.god .god-item-head img[data-action]:hover { border-color: var(--g-accent); }
+.god .god-item-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.god .god-item-title .god-name-input { text-align: left; }
+.god .god-type-badge {
+  padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  background: var(--g-accent); color: var(--g-accent-ink);
+}
+.god .god-fact { padding: 2px 9px; border-radius: 10px; font-size: 11px; background: var(--g-panel2); border: 1px solid var(--g-line); }
+.god fieldset {
+  margin: 0; padding: 10px 12px 12px; border: 1px solid var(--g-line); border-radius: var(--g-radius); background: var(--g-panel);
+}
+.god legend { padding: 0 6px; font-family: var(--g-title); font-size: 17px; color: var(--g-accent2); }
+.god .god-price { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.god .god-price > span { font-size: 12px; color: var(--g-dim); margin-right: 4px; }
+.god .god-price .god-coin { width: 96px; }
+.god .god-flags { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 13px; }
+.god .god-flags label { display: inline-flex; align-items: center; gap: 6px; }
+.god .god-desc-set .god-editor { min-height: 160px; background: var(--g-bg); }
+
+/* ═══ Діалог кидка ═══ */
+.god-dialog .window-content { background: var(--g-bg); color: var(--g-text); font-family: var(--g-font); }
+.god-dialog .god-dlg-info { margin: 0 0 10px; padding: 8px 10px; border-radius: 5px; background: var(--g-panel); font-size: 13px; color: var(--g-dim); }
+.god-dialog .god-dlg-info b { color: var(--g-text); }
+.god-dialog .god-dlg-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.god-dialog .god-dlg-field input { width: 80px; text-align: center; }
+.god-dialog .god-dlg-check { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.god-dialog .god-mode { display: grid; grid-template-columns: repeat(3, 1fr); margin: 4px 0 6px; border: 1px solid var(--g-line); border-radius: 5px; overflow: hidden; }
+.god-dialog .god-mode label { position: relative; cursor: pointer; }
+.god-dialog .god-mode input { position: absolute; opacity: 0; pointer-events: none; }
+.god-dialog .god-mode span { display: block; padding: 6px 0; text-align: center; font-size: 12px; color: var(--g-dim); background: var(--g-panel); }
+.god-dialog .god-mode label + label span { border-left: 1px solid var(--g-line); }
+.god-dialog .god-mode input:checked + span { background: var(--g-accent); color: var(--g-accent-ink); font-weight: 600; }
+.god-dialog .god-mode input:focus-visible + span { outline: 2px solid var(--g-accent2); outline-offset: -2px; }
+
+/* ═══ Картки в чаті ═══ */
+.god-card {
+  color: var(--g-text); background: var(--g-bg); font-family: var(--g-font);
+  border: 1px solid var(--g-line2); border-radius: var(--g-radius); padding: 8px 10px; font-variant-numeric: tabular-nums;
+}
+.god-card .god-card-head { display: flex; gap: 8px; align-items: center; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--g-line); }
+.god-card .god-card-head img { width: 34px; height: 34px; border-radius: 4px; border: 1px solid var(--g-line); flex-shrink: 0; }
+.god-card .god-card-head h3 { margin: 0; font-family: var(--g-title); font-size: 20px; font-weight: 400; color: var(--g-accent2); border: none; line-height: 1.05; }
+.god-card .god-card-head span { font-size: 11px; color: var(--g-dim); }
+.god-card .god-big { font-family: var(--g-title); font-size: 40px; text-align: center; line-height: 1.1; color: var(--g-accent2); }
+.god-card .god-big.nat20 { color: #ffd76a; text-shadow: 0 0 12px rgba(255, 215, 106, .45); }
+.god-card .god-big.nat1 { color: var(--g-red); }
+.god-card .god-step {
+  display: grid; grid-template-columns: auto auto 1fr auto; gap: 4px 8px; align-items: baseline;
+  padding: 5px 0; border-bottom: 1px dashed var(--g-line);
+}
+.god-card .god-step-label { font-size: 12px; color: var(--g-dim); }
+.god-card .god-step-total { font-family: var(--g-title); font-size: 24px; font-weight: 400; color: var(--g-text); }
+.god-card .god-step-detail { font-size: 11px; color: var(--g-faint); }
+.god-card .god-verdict { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 1px 7px; border-radius: 3px; }
+.god-card .god-verdict.ok { color: var(--g-green); background: color-mix(in srgb, var(--g-green) 15%, transparent); }
+.god-card .god-verdict.fail { color: var(--g-red); background: color-mix(in srgb, var(--g-red) 15%, transparent); }
+.god-card .god-tier { display: flex; flex-direction: column; align-items: center; padding: 6px 0 2px; font-family: var(--g-title); font-size: 20px; color: var(--g-accent2); }
+.god-card .god-tier small { font-family: var(--g-font); font-size: 11px; color: var(--g-dim); }
+.god-card .tier-crit { color: #f2a64a; }
+.god-card .tier-deadly { color: #ff6a50; text-shadow: 0 0 10px rgba(255, 106, 80, .35); }
+.god-card .tier-none { color: var(--g-faint); }
+.god-card .god-dmg { display: flex; justify-content: center; gap: 16px; padding: 2px 0; }
+.god-card .god-dmg > span { font-family: var(--g-title); font-size: 30px; line-height: 1; display: flex; align-items: baseline; gap: 4px; }
+.god-card .god-dmg small { font-family: var(--g-font); font-size: 11px; color: var(--g-dim); }
+.god-card .god-dmg .phys { color: var(--g-phys); }
+.god-card .god-dmg .mag { color: var(--g-mag); }
+.god-card .god-dmg .none { color: var(--g-faint); }
+.god-card .god-note { text-align: center; font-size: 11px; color: var(--g-dim); font-style: italic; margin-top: 3px; }
+.god-card .god-faces { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.god-card .god-faces span {
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 5px;
+  border: 1px solid var(--g-line); color: var(--g-faint); font-family: var(--g-title); font-size: 18px;
+}
+.god-card .god-faces span.hit { border-color: var(--g-accent); color: var(--g-accent2); background: color-mix(in srgb, var(--g-accent) 15%, transparent); }
+.god-card .god-apply { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 8px; }
+.god-card .god-apply button {
+  height: 26px; margin: 0; padding: 0 4px; font-size: 11px; line-height: 1;
+  background: var(--g-panel); color: var(--g-text); border: 1px solid var(--g-line); border-radius: 4px;
+}
+.god-card .god-apply button:hover { border-color: var(--g-accent); box-shadow: none; }
+.god-card .god-desc { font-size: 13px; }
+.god-card .god-desc p { margin: 0 0 4px; }
+
+/* Менше руху для тих, хто просить */
+@media (prefers-reduced-motion: reduce) {
+  .god *, .god-card * { transition: none !important; }
+}
+
+/* ═══ Кнопка панелі кидків у бічній панелі ═══ */
+.god .god-tray-open {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 32px; margin: 0;
+  background: var(--g-bg); color: var(--g-accent2); border: 1px solid var(--g-accent); border-radius: var(--g-radius);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.god .god-tray-open:hover { background: color-mix(in srgb, var(--g-accent) 15%, var(--g-bg)); box-shadow: none; }
+
+/* ═══ Панель кидків ═══ */
+.god-tray .window-content { padding: 0; background: var(--g-bg); color: var(--g-text); font-family: var(--g-font); }
+.god-tray .god-tray-body { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 12px; }
+.god-tray .god-tray-actor { display: flex; align-items: center; gap: 8px; }
+.god-tray .god-tray-actor img { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--g-line2); object-fit: cover; }
+.god-tray .god-tray-actor select { flex: 1; height: 30px; }
+.god-tray .god-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--g-line); border-radius: 5px; overflow: hidden; }
+.god-tray .god-seg button {
+  height: 28px; margin: 0; border: none; border-radius: 0; background: var(--g-panel); color: var(--g-dim); font-size: 12px; line-height: 1;
+}
+.god-tray .god-seg button + button { border-left: 1px solid var(--g-line); }
+.god-tray .god-seg button:hover { color: var(--g-text); box-shadow: none; }
+.god-tray .god-seg button.active { background: var(--g-accent); color: var(--g-accent-ink); font-weight: 600; }
+.god-tray .god-tray-mode button.active.mode-dis { background: var(--g-red); color: #fff; }
+.god-tray .god-tray-mode button.active.mode-adv { background: var(--g-green); color: #10200a; }
+.god-tray .god-disabled { opacity: .35; pointer-events: none; }
+.god-tray .god-tray-picks { flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.god-tray .god-tray-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.god-tray .god-pick {
+  margin: 0; cursor: pointer; background: var(--g-panel); color: var(--g-text);
+  border: 1px solid var(--g-line); border-radius: 5px; line-height: 1.1;
+}
+.god-tray .god-pick:hover { border-color: var(--g-line2); box-shadow: none; }
+.god-tray .god-pick.active { border-color: var(--g-accent); background: color-mix(in srgb, var(--g-accent) 18%, var(--g-panel)); box-shadow: 0 0 0 1px var(--g-accent) inset; }
+.god-tray .god-tray-stats .god-pick { display: flex; flex-direction: column; align-items: center; padding: 6px 0; height: auto; }
+.god-tray .god-tray-stats small { font-size: 11px; color: var(--g-dim); letter-spacing: .06em; }
+.god-tray .god-tray-stats b { font-family: var(--g-title); font-size: 26px; font-weight: 400; color: var(--g-accent2); }
+.god-tray .god-tray-group h4 { margin: 0 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--g-faint); font-weight: 600; }
+.god-tray .god-tray-skills { display: flex; flex-wrap: wrap; gap: 4px; }
+.god-tray .god-pick-skill { display: inline-flex; align-items: center; gap: 6px; width: auto; height: 26px; padding: 0 8px; font-size: 12px; }
+.god-tray .god-pick-skill b { color: var(--g-accent2); font-size: 12px; }
+.god-tray .god-search { position: relative; flex: 0 0 auto; }
+.god-tray .god-search i { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--g-faint); }
+.god-tray .god-search input { width: 100%; height: 28px; padding-left: 28px; }
+.god-tray .god-tray-dice { display: flex; flex-wrap: wrap; gap: 4px; }
+.god-tray .god-die {
+  position: relative; flex: 1; min-width: 40px; height: 34px; margin: 0; padding: 0;
+  background: var(--g-panel); color: var(--g-text); border: 1px solid var(--g-line); border-radius: 5px;
+  font-family: var(--g-title); font-size: 17px; cursor: pointer;
+}
+.god-tray .god-die:hover { border-color: var(--g-accent); box-shadow: none; }
+.god-tray .god-die.has { border-color: var(--g-accent); color: var(--g-accent2); }
+.god-tray .god-die em {
+  position: absolute; top: -6px; right: -4px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  background: var(--g-accent); color: var(--g-accent-ink); font: 600 10px/16px var(--g-font); font-style: normal;
+}
+.god-tray .god-die-clear { flex: 0 0 34px; height: 34px; margin: 0; background: none; border: 1px solid var(--g-line); border-radius: 5px; color: var(--g-dim); }
+.god-tray .god-tray-mod { display: grid; grid-template-columns: 1fr auto 30px 64px 30px; gap: 6px; align-items: center; }
+.god-tray .god-tray-mod button { height: 30px; margin: 0; padding: 0; background: var(--g-panel); color: var(--g-accent); border: 1px solid var(--g-line); border-radius: 5px; font-size: 16px; }
+.god-tray .god-tray-mod input { width: 64px; height: 30px; text-align: center; }
+.god-tray .god-tray-base { padding: 3px 8px; border-radius: 10px; background: var(--g-panel2); color: var(--g-accent2); font-size: 12px; font-weight: 600; }
+.god-tray .god-tray-roll {
+  display: flex; align-items: center; justify-content: center; gap: 12px; height: 54px; margin: 0;
+  background: linear-gradient(180deg, var(--g-accent2), var(--g-accent)); color: var(--g-accent-ink);
+  border: none; border-radius: var(--g-radius); cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+}
+.god-tray .god-tray-roll:hover { filter: brightness(1.08); }
+.god-tray .god-tray-roll:active { transform: translateY(1px); }
+.god-tray .god-tray-roll i { font-size: 24px; }
+.god-tray .god-tray-roll span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.god-tray .god-tray-roll b { font-size: 16px; }
+.god-tray .god-tray-roll small { font-size: 12px; opacity: .8; }
+.god-card .god-apply-one { grid-template-columns: 1fr; }
+
+/* Поля вводу не успадковують налаштування цифр — задаємо явно */
+.god input, .god select, .god-tray input, .god-dialog input { font-variant-numeric: lining-nums tabular-nums; }
+.god .god-spell-chip img, .god .god-effect-chip img { border-radius: 4px; }
+
+/* ═══ v0.5 — ключі гілок і фіксація ═══ */
+.god .god-skill-gate { background: color-mix(in srgb, var(--g-accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--g-accent) 30%, transparent); margin-bottom: 3px; }
+.god .god-skill-gate .god-skill-name { color: var(--g-accent2); font-weight: 600; }
+.god .god-skill-gate .god-skill-name i { font-size: 11px; margin-right: 2px; }
+.god .god-skill.locked .god-skill-name { color: var(--g-faint); opacity: .7; }
+.god .god-skill.locked .god-skill-name i { font-size: 10px; }
+.god .god-skillcat.closed > header h3 { color: var(--g-dim); }
+.god .god-cat-lock { margin-left: auto; font-size: 11px; color: var(--g-faint); }
+.god .god-pips i.on { background: color-mix(in srgb, var(--g-accent) 55%, transparent); }   /* новий, ще не зафіксований */
+.god .god-pips i.on.fixed { background: var(--g-accent); }                                 /* зафіксований */
+.god .god-skill-lvl.fixed { text-decoration: underline dotted var(--g-accent); text-underline-offset: 3px; }
+.god .god-banner-build { justify-content: flex-start; }
+.god .god-banner-build span { flex: 1; }
+.god .god-custom-mark { font-size: 9px; color: var(--g-mag); }
+.god .god-custom-name { height: 24px; font-size: 13px; }
+.god .god-custom-edit { display: flex; align-items: center; gap: 10px; padding: 0 6px 4px 18px; font-size: 11px; color: var(--g-dim); }
+.god .god-custom-edit input { width: 44px; height: 22px; }
+.god .god-custom-edit a { margin-left: auto; color: var(--g-faint); }
+.god .god-custom-add { display: block; padding: 4px 12px 8px; font-size: 12px; color: var(--g-dim); }
+.god .god-custom-add:hover { color: var(--g-accent2); }
+
+/* ═══ Риси та знання ═══ */
+.god .god-cost-badge { padding: 1px 8px; border-radius: 9px; font-size: 11px; background: var(--g-panel2); border: 1px solid var(--g-line); }
+.god .god-grid-2 .god-list .god-row { grid-template-columns: 32px minmax(0, 1fr) auto auto; }
+.god .god-lang-chip { padding: 3px 10px; border-radius: 12px; background: var(--g-bg); border: 1px solid var(--g-line); font-size: 13px; }
+.god .god-lang-chip small { color: var(--g-dim); }
+.god .god-know-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px; border-radius: 6px; background: var(--g-bg); border: 1px solid var(--g-line); }
+.god .god-know-chip input { width: 110px; height: 24px; }
+.god .god-know-chip .god-know-level { width: 70px; }
+.god .god-know-chip a { color: var(--g-faint); padding: 0 4px; }
+.god .god-know-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 4px; border-bottom: 1px dashed var(--g-line); }
+.god .god-know-row:last-child { border-bottom: none; }
+.god .god-know-row input { width: 150px; height: 26px; }
+.god .god-know-row .god-know-desc { flex: 1; }
+.god .god-know-row a { color: var(--g-faint); }
+.god .god-know-text { color: var(--g-dim); font-size: 13px; }
+
+/* ═══ Репутація ═══ */
+.god .god-rep { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.god .god-rep-tile {
+  display: flex; flex-direction: column; align-items: center; padding: 4px 2px 5px; border-radius: var(--g-radius);
+  background: var(--g-bg); border: 1px solid var(--g-line); border-top: 2px solid var(--rep);
+}
+.god .god-rep-tile input { width: 100%; height: 30px; border: none; background: transparent; text-align: center;
+  font-family: var(--g-title); font-size: 22px; color: var(--rep); }
+.god .god-rep-tile input:focus { box-shadow: none; background: var(--g-panel2); }
+.god .god-rep-tile span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-dim); }
+
+/* ═══ Таблиця урону ═══ */
+.god .god-dmg-table { grid-column: 1 / -1; font-size: 12px; }
+.god .god-dmg-table summary { cursor: pointer; color: var(--g-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.god .god-dmg-table summary:hover { color: var(--g-accent2); }
+.god .god-dmg-table table { width: 100%; margin: 6px 0 2px; border-collapse: collapse; background: none; border: none; }
+.god .god-dmg-table th { font-size: 10px; text-transform: uppercase; color: var(--g-faint); text-align: left; padding: 2px 6px; border-bottom: 1px solid var(--g-line); background: none; }
+.god .god-dmg-table td { padding: 2px 6px; border-bottom: 1px dotted var(--g-line); }
+.god .god-dmg-table tr.tier-crit td:first-child { color: #f2a64a; }
+.god .god-dmg-table tr.tier-deadly td:first-child { color: #ff6a50; }
+.god .god-dmg-table tbody tr:hover { background: var(--g-panel2); }
+
+/* ═══ Кнопки бічної панелі ═══ */
+.god .god-side-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.god .god-side-buttons .god-tray-open { width: auto; }
+
+/* ═══ Закріплення ═══ */
+.god .god-hud-pin, .god-tray .god-hud-pin {
+  width: 28px; height: 28px; display: grid; place-items: center; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--g-line); color: var(--g-faint); transform: rotate(35deg); transition: transform .15s;
+}
+.god .god-hud-pin:hover, .god-tray .god-hud-pin:hover { color: var(--g-accent2); border-color: var(--g-accent); }
+.god .god-hud-pin.on, .god-tray .god-hud-pin.on { transform: none; color: var(--g-accent-ink); background: var(--g-accent); border-color: var(--g-accent); }
+.god.god-pinned .window-header, .god-tray.god-pinned .window-header { box-shadow: inset 0 -2px 0 var(--g-accent); }
+
+/* ═══ Панель персонажа ═══ */
+.god-hud .window-content { padding: 0; background: var(--g-bg); color: var(--g-text); font-family: var(--g-font); }
+.god-hud .god-hud-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+.god-hud .god-hud-head { display: flex; align-items: center; gap: 8px; }
+.god-hud .god-hud-head > img { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--g-line2); object-fit: cover; cursor: pointer; }
+.god-hud .god-hud-head > img:hover { border-color: var(--g-accent); }
+.god-hud .god-hud-tiles { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.god-hud .god-tile { padding: 3px 0; }
+.god-hud .god-tile b { font-size: 20px; }
+.god-hud .god-tile small { font-size: 9px; }
+.god-hud .god-res-bar { height: 22px; }
+.god-hud .god-res-bar input { width: 48px; font-size: 12px; }
+.god-hud .god-hud-warn { font-size: 12px; color: var(--g-red); text-align: center; }
+.god-hud .god-hud-stance button { height: 24px; }
+.god-hud .god-hud-actions { display: flex; flex-direction: column; gap: 4px; }
+.god-hud .god-hud-act {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 8px; height: 32px; margin: 0; padding: 0 8px 0 3px;
+  background: var(--g-panel); color: var(--g-text); border: 1px solid var(--g-line); border-radius: 5px; text-align: left; font-size: 13px;
+}
+.god-hud .god-hud-act:hover { border-color: var(--g-accent); box-shadow: none; }
+.god-hud .god-hud-act img { width: 26px; height: 26px; border: none; border-radius: 4px; }
+.god-hud .god-hud-act span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god-hud .god-hud-act i { color: var(--g-accent); }
+.god-hud .god-hud-spells { display: flex; flex-wrap: wrap; gap: 4px; }
+.god-hud .god-hud-spells button { width: 34px; height: 34px; margin: 0; padding: 0; border: 1px solid var(--g-line); border-radius: 5px; background: none; }
+.god-hud .god-hud-spells button:hover { border-color: var(--g-mag); box-shadow: none; }
+.god-hud .god-hud-spells img { width: 100%; height: 100%; border: none; border-radius: 4px; }
+.god .god-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.god .god-grid-2 > .god-panel { margin-bottom: 0; }
+.god .god-grid-2 + .god-panel { margin-top: 12px; }
+
+/* ═══ v0.6: кнопки ± на смугах ресурсів ═══ */
+.god .god-res-bar { justify-content: center; }
+.god .god-res-step {
+  position: absolute; top: 0; bottom: 0; z-index: 2; width: 22px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 700; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .12s ease, background .12s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+.god .god-res-step.minus { left: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .55), transparent); }
+.god .god-res-step.plus { right: 0; background: linear-gradient(270deg, rgba(0, 0, 0, .55), transparent); }
+.god .god-res-bar:hover .god-res-step, .god .god-res-bar:focus-within .god-res-step { opacity: .8; }
+.god .god-res-step:hover { opacity: 1 !important; background-color: rgba(0, 0, 0, .35); }
+.god .god-res-bar input { text-align: right; }
+.god a.god-res-hit { display: flex; flex-direction: column; align-items: center; line-height: 1; cursor: pointer; text-decoration: none; }
+.god a.god-res-hit i { font-size: 9px; opacity: 0; color: var(--g-hp); transition: opacity .12s; margin-top: 1px; }
+.god .god-res:hover a.god-res-hit i { opacity: 1; }
+.god a.god-res-hit:hover span { color: var(--g-hp); }
+.god .god-res-armor .god-res-step { width: 16px; }
+.god input::placeholder { color: var(--g-dim); opacity: .55; }
+
+/* ═══ v0.6: швидка панель внизу екрана ═══ */
+.god-quickbar {
+  position: fixed; z-index: 70; left: 50%; bottom: 84px; transform: translateX(-50%);
+  max-width: calc(100vw - 340px);
+  font-family: var(--g-font); color: var(--g-text); pointer-events: auto;
+}
+.god-quickbar.drop-hover .god-qb { border-color: var(--g-accent); box-shadow: 0 0 0 1px var(--g-accent), 0 6px 22px rgba(0, 0, 0, .55); }
+.god-quickbar .god-qb {
+  display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 4px;
+  background: color-mix(in srgb, var(--g-bg) 92%, transparent); backdrop-filter: blur(6px);
+  border: 1px solid var(--g-line2); border-radius: 10px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+.god-quickbar .god-qb-grip { align-self: stretch; display: flex; align-items: center; padding: 0 2px; color: var(--g-dim); cursor: grab; font-size: 12px; }
+.god-quickbar .god-qb-grip:active { cursor: grabbing; }
+.god-quickbar .god-qb-hint { font-size: 13px; color: var(--g-dim); padding: 4px 6px; }
+.god-quickbar .god-qb-portrait {
+  width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%; object-fit: cover; cursor: pointer;
+  border: 2px solid var(--g-line2); box-shadow: 0 0 0 2px var(--g-bg);
+}
+.god-quickbar .god-qb-portrait:hover { border-color: var(--g-accent); }
+.god-quickbar .god-qb-collapse {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  width: 34px; height: 14px; display: flex; align-items: center; justify-content: center;
+  background: var(--g-panel); border: 1px solid var(--g-line2); border-radius: 7px 7px 0 0; border-bottom: none;
+  color: var(--g-dim); font-size: 9px; cursor: pointer;
+}
+.god-quickbar .god-qb-collapse:hover { color: var(--g-accent); }
+
+.god-quickbar .god-qb-res { display: grid; grid-template-columns: repeat(2, 168px); gap: 4px 8px; }
+.god-quickbar .god-qb-armor { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.god-quickbar .god-res { grid-template-columns: 24px minmax(0, 1fr); gap: 4px; }
+.god-quickbar .god-res-abbr { font-size: 13px; }
+.god-quickbar .god-res-bar { height: 20px; }
+.god-quickbar .god-res-bar input { width: 46px; font-size: 12px; }
+.god-quickbar .god-res-max { font-size: 11px; }
+.god-quickbar a.god-res-hit i { display: none; }
+
+.god-quickbar .god-qb-side { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.god-quickbar .god-qb-dodge { display: flex; align-items: baseline; gap: 4px; line-height: 1; }
+.god-quickbar .god-qb-dodge b { font-family: var(--g-title); font-size: 22px; color: var(--g-accent2); }
+.god-quickbar .god-qb-dodge small { font-size: 10px; color: var(--g-dim); letter-spacing: .05em; }
+.god-quickbar .god-qb-stance { display: flex; gap: 2px; }
+.god-quickbar .god-qb-stance a {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--g-line); border-radius: 4px; opacity: .5; cursor: pointer;
+}
+.god-quickbar .god-qb-stance a img { width: 18px; height: 18px; border: none; }
+.god-quickbar .god-qb-stance a:hover { opacity: .9; }
+.god-quickbar .god-qb-stance a.active { opacity: 1; border-color: var(--g-accent); background: color-mix(in srgb, var(--g-accent) 18%, transparent); }
+
+.god-quickbar .god-qb-slots { display: flex; align-items: center; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: thin; padding: 2px; }
+.god-quickbar .god-qb-gap { flex: 0 0 1px; align-self: stretch; margin: 4px 3px; background: var(--g-line2); }
+.god-quickbar .god-qb-slot {
+  position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--g-line2); background: var(--g-panel); overflow: hidden;
+  transition: transform .1s ease, border-color .1s ease;
+}
+.god-quickbar .god-qb-slot img { width: 100%; height: 100%; border: none; border-radius: 0; object-fit: cover; }
+.god-quickbar .god-qb-slot:hover { border-color: var(--g-accent); transform: translateY(-2px); }
+.god-quickbar .god-qb-slot:active { transform: translateY(0); }
+.god-quickbar .god-qb-atk { box-shadow: inset 0 -2px 0 var(--g-hp); }
+.god-quickbar .god-qb-mag { box-shadow: inset 0 -2px 0 var(--g-mp); }
+.god-quickbar .god-qb-abl { box-shadow: inset 0 -2px 0 var(--g-ed); }
+.god-quickbar .god-qb-slot.dim img { filter: grayscale(.85) brightness(.6); }
+.god-quickbar .god-qb-slot em {
+  position: absolute; right: 1px; bottom: 1px; padding: 0 3px; border-radius: 3px;
+  background: rgba(0, 0, 0, .75); color: #fff; font-size: 10px; font-style: normal; font-weight: 600; line-height: 14px;
+}
+.god-quickbar .god-qb-drop {
+  flex: 0 0 auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--g-line2); border-radius: 6px; color: var(--g-dim); font-size: 12px;
+}
+.god-quickbar.drop-hover .god-qb-drop { border-color: var(--g-accent); color: var(--g-accent); }
+.god-quickbar .god-qb-reset, .god-quickbar .god-qb-tray { color: var(--g-dim); cursor: pointer; padding: 4px; }
+.god-quickbar .god-qb-tray { font-size: 20px; }
+.god-quickbar .god-qb-reset:hover, .god-quickbar .god-qb-tray:hover { color: var(--g-accent); }
+
+.god-quickbar.collapsed .god-qb { gap: 8px; padding-right: 8px; }
+.god-quickbar.collapsed .god-qb-portrait { width: 36px; height: 36px; }
+@media (max-width: 1100px) { .god-quickbar { max-width: calc(100vw - 24px); } .god-quickbar .god-qb-res { grid-template-columns: repeat(2, 140px); } }
+
+/* ═══ v0.6.1: швидка панель замість хотбара Foundry ═══ */
+body.god-no-hotbar #hotbar { display: none !important; }
+body.god-no-hotbar .god-quickbar { bottom: 12px; }
+.god-quickbar .god-qb-slot u {
+  position: absolute; left: 2px; top: 1px; z-index: 1; text-decoration: none;
+  font-size: 10px; font-weight: 700; line-height: 1; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; opacity: .8;
+}
+.god-quickbar .god-qb-macro { box-shadow: inset 0 -2px 0 var(--g-dim); }
+.god-quickbar .god-qb-user { color: var(--g-dim); font-size: 16px; padding: 0 4px; }
+
+/* ═══ v0.7: інвентар — список ліворуч, інспектор праворуч, кожен гортається сам ═══ */
+.god .god-tab[data-tab-panel="gear"] { container-type: inline-size; }
+.god .god-tab[data-tab-panel="gear"].active { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.god .god-inv { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 248px; }
+.god .god-inv-main { overflow-y: auto; padding: 12px 12px 18px 16px; min-width: 0; }
+.god .god-inv-detail {
+  overflow-y: auto; padding: 14px 14px 18px; border-left: 1px solid var(--g-line);
+  background: color-mix(in srgb, var(--g-panel) 70%, var(--g-bg));
+}
+.god .god-inv-main .god-encumbrance { margin-bottom: 8px; }
+
+/* Одягнене — компактно і згортається */
+.god .god-equip { padding: 6px 10px 8px; margin-bottom: 8px; }
+.god .god-inv-toggle { cursor: pointer; user-select: none; }
+.god .god-equip > header { margin: 0; padding: 0; border: none; }
+.god .god-equip > header h3 { font-size: 14px; margin: 0; }
+.god .god-equip .god-slots { margin-top: 6px; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 4px; }
+.god .god-equip .god-slot { padding: 3px 6px; min-height: 0; }
+.god .god-chev { font-size: 10px; color: var(--g-faint); transition: transform .15s ease; width: 12px; }
+.god [data-collapsible].collapsed > header .god-chev { transform: rotate(-90deg); }
+.god .god-equip.collapsed .god-slots { display: none; }
+
+/* Пошук + сортування + типи — завжди видно при гортанні */
+.god .god-inv-main .god-toolbar, .god .god-inv-types {
+  position: sticky; z-index: 3; background: var(--g-bg);
+}
+.god .god-inv-main .god-toolbar { top: -12px; margin: 0; padding: 12px 0 6px; }
+.god .god-inv-sort { height: 30px; width: auto; max-width: 130px; font-size: 12px; }
+.god .god-inv-types { top: 36px; display: flex; flex-wrap: wrap; gap: 4px; padding: 2px 0 8px; }
+.god .god-inv-types a {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 12px;
+  border: 1px solid var(--g-line); color: var(--g-dim); font-size: 12px; cursor: pointer;
+}
+.god .god-inv-types a i { font-size: 10px; }
+.god .god-inv-types a small { color: var(--g-faint); font-size: 11px; }
+.god .god-inv-types a:hover { color: var(--g-text); border-color: var(--g-line2); }
+.god .god-inv-types a.active { color: var(--g-accent-ink); background: var(--g-accent); border-color: var(--g-accent); }
+.god .god-inv-types a.active small { color: inherit; opacity: .7; }
+
+/* Розділи за місцем зберігання */
+.god .god-inv-list { outline: none; }
+.god .god-inv-list:focus-visible .god-inv-row.selected { box-shadow: inset 0 0 0 1px var(--g-accent); }
+.god .god-inv-sec { margin-bottom: 6px; border: 1px solid transparent; border-radius: var(--g-radius); }
+.god .god-inv-sec.drop-hover { border-color: var(--g-accent); background: color-mix(in srgb, var(--g-accent) 6%, transparent); }
+.god .god-inv-sec > header {
+  display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 4px;
+  border-bottom: 1px solid var(--g-line); margin-bottom: 2px;
+}
+.god .god-inv-sec > header h4 { margin: 0; font-family: var(--g-title); font-size: 15px; font-weight: 400; color: var(--g-text); }
+.god .god-inv-loc-icon { font-size: 11px; color: var(--g-faint); width: 14px; text-align: center; }
+.god .god-inv-meta { font-size: 11px; color: var(--g-faint); }
+.god .god-inv-meta b { font-weight: 600; color: var(--g-dim); }
+.god .god-inv-meta b.over { color: var(--g-red); }
+.god .god-inv-sec > header .god-head-add { width: 22px; height: 22px; opacity: 0; }
+.god .god-inv-sec > header:hover .god-head-add { opacity: 1; }
+.god .god-inv-sec.collapsed .god-inv-rows, .god .god-inv-sec.collapsed .god-empty { display: none; }
+.god .god-inv-list.searching .god-inv-sec.collapsed .god-inv-rows { display: block; }
+.god .god-inv-sec .god-empty { margin: 6px 0; font-size: 12px; }
+
+/* Рядок: щільний, щоб влізло багато */
+.god .god-inv-rows { list-style: none; margin: 0; padding: 0; }
+.god .god-inv-row {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) 66px 40px 18px; align-items: center; gap: 8px;
+  min-height: 36px; padding: 3px 6px 3px 4px; border-radius: 4px; border-left: 2px solid transparent; cursor: pointer;
+}
+.god .god-inv-row:hover { background: var(--g-panel2); }
+.god .god-inv-row.selected { background: color-mix(in srgb, var(--g-accent) 14%, var(--g-panel)); }
+.god .god-inv-row.equipped { border-left-color: var(--g-accent); }
+.god .god-inv-row.empty { opacity: .5; }
+.god .god-inv-img img { display: block; width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--g-line); }
+.god .god-inv-img:hover img { border-color: var(--g-accent); }
+.god .god-inv-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.god .god-inv-name > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13.5px; }
+.god .god-inv-name small { font-size: 11px; color: var(--g-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god .god-inv-consumable .god-inv-name small { color: var(--g-hp); }
+.god .god-inv-qty { display: flex; align-items: center; justify-content: center; gap: 2px; font-variant-numeric: tabular-nums lining-nums; }
+.god .god-inv-qty b { min-width: 22px; text-align: center; font-weight: 600; font-size: 13px; }
+.god .god-inv-qty a, .god .god-insp-qty a {
+  width: 18px; height: 20px; display: grid; place-items: center; border-radius: 3px; color: var(--g-dim); font-weight: 700; cursor: pointer;
+}
+.god .god-inv-qty a { opacity: 0; }
+.god .god-inv-row:hover .god-inv-qty a, .god .god-inv-row.selected .god-inv-qty a { opacity: 1; }
+.god .god-inv-qty a:hover, .god .god-insp-qty a:hover { background: var(--g-line); color: var(--g-text); }
+.god .god-inv-w { font-size: 12px; color: var(--g-dim); text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+.god .god-inv-eq { color: var(--g-faint); font-size: 12px; text-align: center; }
+.god .god-inv-eq .god-off { opacity: .35; }
+.god .god-inv-row.equipped .god-inv-eq { color: var(--g-accent); }
+
+/* Інспектор */
+.god .god-insp-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: center; margin-bottom: 10px; }
+.god .god-insp-head img { width: 56px; height: 56px; border-radius: 6px; border: 1px solid var(--g-line2); cursor: pointer; object-fit: cover; }
+.god .god-insp-head img:hover { border-color: var(--g-accent); }
+.god .god-insp-head h3 { margin: 0; font-family: var(--g-title); font-size: 17px; font-weight: 400; line-height: 1.15; border: none; }
+.god .god-insp-head span { font-size: 12px; color: var(--g-dim); }
+.god .god-insp-on { color: var(--g-accent); font-weight: 600; }
+.god .god-insp-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+.god .god-insp-actions button {
+  flex: 1; height: 30px; margin: 0; font-size: 13px; border-radius: 5px;
+  background: var(--g-panel); color: var(--g-text); border: 1px solid var(--g-line2);
+}
+.god .god-insp-actions button:hover { border-color: var(--g-accent); box-shadow: none; }
+.god .god-insp-actions .god-insp-main { background: var(--g-accent); color: var(--g-accent-ink); border-color: var(--g-accent); font-weight: 600; }
+.god .god-insp-actions .god-insp-main:hover { background: var(--g-accent2); }
+.god .god-insp-restore { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.god .god-res-chip {
+  display: inline-flex; gap: 4px; align-items: baseline; padding: 3px 9px; border-radius: 12px; font-size: 12px;
+  color: #fff; background: color-mix(in srgb, var(--chip, var(--g-dim)) 75%, black);
+}
+.god .god-res-chip b { font-size: 14px; }
+.god .god-res-chip.god-res-hp { --chip: var(--g-hp); } .god .god-res-chip.god-res-mp { --chip: var(--g-mp); }
+.god .god-res-chip.god-res-ed { --chip: var(--g-ed); } .god .god-res-chip.god-res-mt { --chip: var(--g-mt); }
+.god .god-res-chip.god-res-pr, .god .god-res-chip.god-res-mr { --chip: var(--g-armor); }
+.god .god-res-chip.neg { outline: 1px dashed var(--g-red); }
+.god .god-insp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 0 0 10px; }
+.god .god-insp-stats > div { padding: 5px 8px; border-radius: 5px; background: var(--g-bg); border: 1px solid var(--g-line); min-width: 0; }
+.god .god-insp-stats > div.big { grid-column: 1 / -1; }
+.god .god-insp-stats dt { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint); }
+.god .god-insp-stats dd { margin: 0; font-size: 14px; font-weight: 600; font-variant-numeric: lining-nums; overflow-wrap: anywhere; }
+.god .god-insp-stats > div.big dd { font-family: var(--g-title); font-size: 19px; font-weight: 400; color: var(--g-accent2); }
+.god .god-insp-stats > div.phys dd { color: var(--g-phys); } .god .god-insp-stats > div.mag dd { color: var(--g-mag); }
+.god .god-insp-inv { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.god .god-insp-inv label { display: flex; flex-direction: column; gap: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint); }
+.god .god-insp-inv select { height: 28px; font-size: 12px; text-transform: none; letter-spacing: 0; }
+.god .god-insp-qty { display: grid; grid-template-columns: 20px minmax(0, 1fr) 20px; align-items: center; height: 28px; border: 1px solid var(--g-line); border-radius: 4px; background: var(--g-bg); }
+.god .god-insp-qty a { width: 20px; height: 26px; }
+.god .god-insp-qty input { height: 26px; border: none; background: none; text-align: center; padding: 0; font-weight: 600; font-variant-numeric: lining-nums; -moz-appearance: textfield; }
+.god .god-insp-qty input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.god .god-insp-h { margin: 0 0 5px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--g-faint); font-weight: 600; }
+.god .god-insp-effects { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.god .god-insp-effects li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; align-items: center; font-size: 12px; }
+.god .god-insp-effects li.off { opacity: .55; }
+.god .god-insp-effects img { width: 22px; height: 22px; border: none; }
+.god .god-insp-effects span { display: flex; flex-direction: column; min-width: 0; }
+.god .god-insp-effects small { color: var(--g-dim); }
+.god .god-insp-desc { font-size: 13px; line-height: 1.45; margin-bottom: 12px; }
+.god .god-insp-desc p { margin: 0 0 6px; }
+.god .god-insp-desc .god-empty { text-align: left; margin: 0; }
+.god .god-insp-foot { display: flex; flex-wrap: wrap; gap: 4px 12px; padding-top: 8px; border-top: 1px solid var(--g-line); font-size: 12px; }
+.god .god-insp-foot a { color: var(--g-dim); }
+.god .god-insp-foot a:hover { color: var(--g-accent); }
+.god .god-insp-foot a.danger:hover { color: var(--g-red); }
+.god .god-insp-none { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--g-faint); gap: 8px; padding: 20px; }
+.god .god-insp-none i { font-size: 26px; }
+
+/* Вузьке вікно: інспектор під списком */
+@container (max-width: 560px) {
+  .god .god-inv { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .god .god-inv-detail { max-height: 300px; border-left: none; border-top: 1px solid var(--g-line); }
+}
+
+/* Картка розхідного в чаті */
+.god-card .god-restore { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0; }
+.god-card .god-restore span { font-size: 13px; }
+.god-card .god-restore span.up b { color: #6fbf73; }
+.god-card .god-restore span.down b { color: var(--g-red); }
+.god-card .god-restore small { color: var(--g-dim); }
+/* Лист предмета: поля відновлення */
+.god .god-restore-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); margin-top: 6px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   v0.8 SLEEK — скло, індиго, золото. Перекриває базові правила вище.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Вікна: напівпрозоре скло з розмиттям ── */
+.application.god:not(.god-quickbar), .application.god-tray, .application.god-dialog {
+  --background: var(--g-glass);
+  background: var(--g-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(79, 89, 137, .55);
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .04);
+  color: var(--g-text);
+}
+.application.god .window-header, .application.god-tray .window-header, .application.god-dialog .window-header {
+  background: transparent; border-bottom: 1px solid rgba(79, 89, 137, .35);
+  font-family: var(--g-font); font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim);
+}
+.application.god .window-header .window-title { font-family: var(--g-font); }
+.application.god .window-header button, .application.god .window-header .header-control { color: var(--g-dim); }
+.god.sheet .window-content, .god-tray .window-content, .god-hud .window-content, .god-dialog .window-content {
+  background: transparent; font-size: 13px;
+}
+.god ::-webkit-scrollbar, .god-tray ::-webkit-scrollbar { width: 6px; height: 6px; }
+.god ::-webkit-scrollbar-thumb, .god-tray ::-webkit-scrollbar-thumb { background: rgba(79, 89, 137, .8); border-radius: 3px; border: none; }
+.god ::-webkit-scrollbar-track, .god-tray ::-webkit-scrollbar-track { background: transparent; }
+.god *, .god-tray * { scrollbar-color: rgba(79, 89, 137, .8) transparent; scrollbar-width: thin; }
+
+/* ── Типографіка ── */
+.god h3, .god legend, .god .god-side-block h4, .god .god-insp-h, .god-tray .god-tray-group h4 {
+  font-family: var(--g-font); font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+}
+.god h3 { font-size: 12px; color: var(--g-accent); }
+.god h3 i { color: var(--g-accent) !important; opacity: .8; }
+.god legend { font-size: 12px; color: var(--g-accent); }
+.god .god-side-block h4, .god .god-insp-h, .god-tray .god-tray-group h4 { font-size: 10px; color: var(--g-faint); }
+.god .god-stat-mod, .god .god-tile b, .god .god-level-badge, .god .god-dmg-badge, .god .god-rep-tile input,
+.god-card .god-big, .god-card .god-step-total, .god-card .god-dmg > span, .god-card .god-faces span,
+.god-tray .god-tray-stats b, .god-tray .god-die, .god .god-insp-stats > div.big dd, .god-quickbar .god-qb-dodge b {
+  font-family: 'Rubik', var(--g-font); font-weight: 600;
+}
+
+/* ── Поля і кнопки ── */
+.god input, .god select, .god-tray input, .god-tray select, .god-dialog input, .god-dialog select {
+  background: var(--g-panel); border: 1px solid var(--g-line); border-radius: 6px; color: var(--g-text);
+}
+.god input:focus, .god select:focus, .god-tray input:focus, .god-dialog input:focus {
+  border-color: var(--g-accent); box-shadow: 0 0 0 2px rgba(243, 194, 103, .18);
+}
+.god .god-btn, .god .god-insp-actions .god-insp-main {
+  background: var(--g-accent); color: var(--g-accent-ink); border: none; border-radius: 6px; font-weight: 700; letter-spacing: .02em;
+}
+.god .god-btn:hover:not(:disabled), .god .god-insp-actions .god-insp-main:hover { filter: none; background: var(--g-accent2); box-shadow: var(--g-glow) var(--g-accent); }
+.god .god-tray-open, .god .god-insp-actions button, .god .god-create button, .god .god-toggle, .god-card .god-apply button {
+  background: transparent; color: var(--g-text); border: 1px solid var(--g-line2); border-radius: 6px;
+}
+.god .god-tray-open:hover, .god .god-insp-actions button:hover, .god .god-create button:hover, .god .god-toggle:hover,
+.god-card .god-apply button:hover { background: var(--g-hover); border-color: var(--g-line2); box-shadow: var(--g-glow) var(--g-line2); color: var(--g-text); }
+.god .god-tray-open { color: var(--g-accent); }
+
+/* ── Панелі як картки з градієнтом і згасаючою лінією під заголовком ── */
+.god .god-panel, .god .god-skillcat, .god fieldset {
+  background: var(--g-card); border: 1px solid var(--g-line2); border-radius: var(--g-radius); box-shadow: none;
+}
+.god .god-panel > header, .god .god-skillcat > header { position: relative; border-bottom: none; }
+.god .god-panel > header::after, .god .god-skillcat > header::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: var(--g-fade-line);
+}
+.god .god-skillcat.collapsed > header::after { display: none; }
+.god .god-panel > header { margin-bottom: 12px; }
+.god .god-banner { background: linear-gradient(90deg, rgba(232, 138, 71, .12), rgba(243, 194, 103, .26)); border: 1px solid rgba(243, 194, 103, .55); border-radius: var(--g-radius); color: var(--g-accent2); }
+
+/* ── Бічна панель: портрет на всю ширину, що розчиняється донизу ── */
+.god .god-sidebar {
+  background: linear-gradient(180deg, rgba(20, 24, 34, .35), rgba(20, 24, 34, .75));
+  border-right: 1px solid rgba(79, 89, 137, .45); padding-top: 0; gap: 12px;
+}
+.god .god-portrait-wrap { align-self: stretch; margin: 0 -14px; }
+.god .god-portrait {
+  width: 100%; height: 260px; border: none; border-radius: 0; box-shadow: none; background: transparent;
+  object-fit: cover; object-position: top;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  transition: transform .3s ease;
+}
+.god .god-portrait.is-icon { object-fit: contain; padding: 34px 40px 20px; height: 230px; }
+.god .god-portrait-wrap:hover .god-portrait { transform: scale(1.02); }
+.god.npc .god-portrait { height: 220px; }
+.god .god-level-badge {
+  left: 14px; right: auto; top: 14px; bottom: auto; min-width: 40px; height: 40px; border-radius: 8px;
+  background: var(--g-accent); color: var(--g-accent-ink); border: none; font-size: 20px; box-shadow: 0 4px 14px rgba(0, 0, 0, .5);
+}
+.god .god-edit-toggle { top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 8px; background: rgba(20, 24, 34, .7); border-color: var(--g-line2); backdrop-filter: blur(4px); }
+.god .god-edit-toggle.on { background: var(--g-accent); color: var(--g-accent-ink); border-color: var(--g-accent); box-shadow: var(--g-glow) var(--g-accent); }
+.god .god-name {
+  margin-top: -58px; position: relative; z-index: 1; padding: 0 6px;
+  font-family: var(--g-font); font-weight: 700; font-size: 22px; color: var(--g-text); line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .9);
+}
+.god .god-name-input { margin-top: -58px; position: relative; z-index: 1; font-family: var(--g-font); font-weight: 700; font-size: 18px; color: var(--g-text); background: rgba(20, 24, 34, .8); }
+.god .god-subtitle { margin-top: -8px; color: var(--g-dim); position: relative; z-index: 1; }
+.god .god-xp-bar { height: 5px; border-radius: 3px; background: rgba(79, 89, 137, .3); }
+.god .god-xp-bar > div { background: linear-gradient(90deg, #e88a47, var(--g-accent)); box-shadow: 0 0 8px rgba(243, 194, 103, .6); }
+
+/* Смуги ресурсів */
+.god .god-res-abbr { font-family: 'Rubik', var(--g-font); font-weight: 600; font-size: 12px; letter-spacing: .04em; color: var(--g-dim); }
+.god .god-res-bar { border-radius: 6px; background: rgba(10, 12, 20, .75); border: 1px solid var(--g-line); }
+.god .god-res-fill { opacity: 1; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+.god .god-res-hp .god-res-fill { background: linear-gradient(90deg, #7e2228, var(--g-hp)); }
+.god .god-res-mp .god-res-fill { background: linear-gradient(90deg, #1e3f7a, var(--g-mp)); }
+.god .god-res-mt .god-res-fill { background: linear-gradient(90deg, #45277a, var(--g-mt)); }
+.god .god-res-ed .god-res-fill { background: linear-gradient(90deg, #22532c, var(--g-ed)); }
+.god .god-res-pr .god-res-fill, .god .god-res-mr .god-res-fill { background: linear-gradient(90deg, #343b5c, var(--g-armor)); }
+.god .god-res-bar input, .god .god-res-max { font-family: 'Rubik', var(--g-font); }
+.god .god-res-bar input { font-weight: 600; }
+
+/* Плитки ШУ / швидкість / ініціатива */
+.god .god-tile { background: var(--g-card-v); border: 1px solid var(--g-line2); border-radius: var(--g-radius); }
+.god .god-tile b { font-size: 24px; color: var(--g-text); }
+.god .god-tile small { font-size: 9px; letter-spacing: .1em; font-weight: 600; }
+.god .god-tile-dodge { border-color: var(--g-accent); background: linear-gradient(0deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .22)); }
+.god .god-tile-dodge b { color: var(--g-accent); }
+.god .god-stance button { background: transparent; border: 1px solid var(--g-line); border-radius: 6px; color: var(--g-dim); }
+.god .god-stance button:hover { background: var(--g-hover); }
+.god .god-stance button.active { background: var(--g-accent); border-color: var(--g-accent); color: var(--g-accent-ink); box-shadow: var(--g-glow) var(--g-accent); }
+.god .god-coin { background: linear-gradient(90deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .2)); border: 1px solid rgba(243, 194, 103, .35); border-radius: 6px; }
+.god .god-coin input { font-family: 'Rubik', var(--g-font); font-weight: 600; }
+
+/* ── Вкладки ── */
+.god .god-tabs { background: transparent; border-bottom: 1px solid rgba(79, 89, 137, .45); padding: 0 12px; gap: 4px; }
+.god .god-tab-link {
+  position: relative; padding: 13px 10px 11px; border: none; color: var(--g-dim);
+  font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em;
+}
+.god .god-tab-link i { font-size: 12px; }
+.god .god-tab-link:hover { color: var(--g-text); }
+.god .god-tab-link.active { color: var(--g-accent); }
+.god .god-tab-link.active::after {
+  content: ''; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px;
+  background: var(--g-accent); box-shadow: 0 0 8px var(--g-accent);
+}
+
+/* ── Характеристики ── */
+.god .god-stat-tile { background: var(--g-card-v); border: 1px solid var(--g-line2); border-radius: var(--g-radius); }
+.god .god-stat-tile:hover { box-shadow: var(--g-glow) var(--g-line2); }
+.god .god-stat-roll:hover { background: var(--g-hover); }
+.god .god-stat-abbr { color: var(--g-accent); font-weight: 700; letter-spacing: .14em; font-size: 10px; }
+.god .god-stat-mod { font-size: 30px; color: var(--g-text); }
+.god .god-stat-value, .god .god-stat-edit, .god .god-stat-edit button { background: rgba(10, 12, 20, .45); border-color: var(--g-line); }
+.god .god-stat-value { font-family: 'Rubik', var(--g-font); }
+
+/* ── Картки предметів: широка іконка, що розчиняється вправо (як у Sleek UI) ── */
+.god .god-weapon-card { background: var(--g-card); border: 1px solid var(--g-line2); border-radius: var(--g-radius); padding: 0 10px 0 0; overflow: hidden; grid-template-columns: 72px minmax(0, 1fr) auto auto; min-height: 52px; }
+.god .god-weapon-card:hover { box-shadow: var(--g-glow) var(--g-line2); }
+.god .god-weapon-card > img {
+  width: 72px; height: 52px; border: none; border-radius: 0; object-fit: cover;
+  -webkit-mask-image: linear-gradient(90deg, #000 45%, transparent); mask-image: linear-gradient(90deg, #000 45%, transparent);
+}
+.god .god-weapon-card .god-dmg-table { padding: 0 0 8px 12px; }
+.god .god-weapon-name { font-weight: 700; }
+.god .god-dmg-badge { font-size: 20px; }
+
+.god .god-row { border-radius: 6px; }
+.god .god-row-img img, .god .god-inv-img img { border: none; border-radius: 6px; }
+.god .god-row:hover, .god .god-inv-row:hover, .god .god-skill:hover, .god .god-effect:hover { background: var(--g-hover); }
+.god .god-row + .god-row { border-top-color: rgba(79, 89, 137, .2); }
+.god .god-spell-chip, .god .god-effect-chip { background: var(--g-card); border-color: var(--g-line2); }
+.god .god-spell-chip:hover:not(:disabled) { border-color: var(--g-mag); box-shadow: var(--g-glow) var(--g-mag); }
+
+/* Мітки-«таблетки» */
+.god .god-fact, .god .god-type-badge, .god .god-cost-badge, .god .god-school-chip, .god .god-lang-chip {
+  padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  color: #add0f1; background: rgba(78, 106, 165, .3); border: 1px solid #4e6aa5;
+}
+.god .god-type-badge { color: var(--g-accent-ink); background: var(--g-accent); border-color: var(--g-accent); }
+.god .god-fact.phys { color: #ffd6a8; background: rgba(232, 138, 71, .28); border-color: #e88a47; }
+.god .god-fact.mag, .god .god-school-chip { color: #d2bfff; background: rgba(119, 71, 232, .28); border-color: #7747e8; }
+.god .god-school-chip b { color: #fff; }
+.god .god-school-chip small { color: #d2bfff; }
+
+/* ── Вміння ── */
+.god .god-skillcat > header { padding: 9px 12px; }
+.god .god-pips i { width: 6px; height: 10px; border-radius: 2px; background: rgba(79, 89, 137, .35); }
+.god .god-pips i.on { background: rgba(243, 194, 103, .5); }
+.god .god-pips i.on.fixed { background: var(--g-accent); box-shadow: 0 0 4px rgba(243, 194, 103, .6); }
+.god .god-mini { background: transparent; border-color: var(--g-line2); color: var(--g-accent); border-radius: 5px; }
+.god .god-mini:hover:not(:disabled) { background: var(--g-hover); }
+.god .god-skill-gate { background: linear-gradient(90deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .2)); border-color: rgba(243, 194, 103, .45); }
+.god .god-skill-lvl { font-family: 'Rubik', var(--g-font); font-weight: 600; }
+
+/* ── Інвентар у новому стилі ── */
+.god .god-tab[data-tab-panel="gear"] .god-inv-main .god-toolbar, .god .god-inv-types { background: linear-gradient(180deg, rgba(20, 24, 34, .96) 70%, rgba(20, 24, 34, 0)); }
+.god .god-inv-detail { background: linear-gradient(180deg, rgba(79, 89, 137, .16), rgba(20, 24, 34, .35)); border-left: 1px solid rgba(79, 89, 137, .45); }
+.god .god-inv-types a { border-color: var(--g-line2); border-radius: 14px; }
+.god .god-inv-types a:hover { background: var(--g-hover); }
+.god .god-inv-types a.active { background: var(--g-accent); color: var(--g-accent-ink); border-color: var(--g-accent); box-shadow: var(--g-glow) var(--g-accent); }
+.god .god-inv-sec > header { border-bottom: none; position: relative; }
+.god .god-inv-sec > header::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--g-fade-line); }
+.god .god-inv-sec > header h4 { font-family: var(--g-font); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--g-accent); }
+.god .god-inv-row { grid-template-columns: 46px minmax(0, 1fr) 66px 40px 18px; padding: 0 6px 0 0; min-height: 38px; overflow: hidden; border-left: none; border-radius: 6px; margin-bottom: 2px; }
+.god .god-inv-img { position: relative; align-self: stretch; display: block; }
+.god .god-inv-img img {
+  width: 46px; height: 100%; min-height: 38px; object-fit: cover; border-radius: 0;
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent); mask-image: linear-gradient(90deg, #000 40%, transparent);
+  transition: filter .15s;
+}
+.god .god-inv-img::after {
+  content: '\f6cf'; font-family: 'Font Awesome 6 Pro', 'Font Awesome 6 Free'; font-weight: 900;
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%) translateX(-4px); opacity: 0; color: var(--g-accent);
+  transition: opacity .15s, transform .15s; font-size: 15px; pointer-events: none;
+}
+.god .god-inv-img:hover img { filter: brightness(.25); }
+.god .god-inv-img:hover::after { opacity: 1; transform: translateY(-50%); }
+.god .god-inv-row.selected { background: var(--g-card); box-shadow: inset 0 0 0 1px var(--g-line2); }
+.god .god-inv-row.equipped { box-shadow: inset 2px 0 0 #9d7c40; }
+.god .god-inv-row.selected.equipped { box-shadow: inset 0 0 0 1px var(--g-line2), inset 2px 0 0 var(--g-accent); }
+.god .god-inv-name > span { font-weight: 600; font-size: 12.5px; }
+.god .god-inv-name small { color: #add0f1; opacity: .8; }
+.god .god-inv-consumable .god-inv-name small { color: #ffbdb2; }
+.god .god-inv-qty b, .god .god-inv-w { font-family: 'Rubik', var(--g-font); }
+.god .god-insp-head h3 { font-family: var(--g-font); font-weight: 700; font-size: 15px; text-transform: none; letter-spacing: 0; color: var(--g-text); }
+.god .god-insp-head img { border: none; border-radius: 8px; box-shadow: 0 6px 16px rgba(0, 0, 0, .5); }
+.god .god-insp-stats > div { background: var(--g-card-v); border-color: var(--g-line2); border-radius: 8px; }
+.god .god-insp-stats dd { font-family: 'Rubik', var(--g-font); font-weight: 600; }
+.god .god-insp-stats > div.big { background: linear-gradient(0deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .22)); border-color: rgba(243, 194, 103, .55); }
+.god .god-insp-stats > div.big dd { color: var(--g-accent); }
+.god .god-res-chip { border-radius: 12px; border: 1px solid var(--chip); background: color-mix(in srgb, var(--chip) 28%, transparent); color: #fff; }
+.god .god-insp-qty { background: var(--g-panel); border-color: var(--g-line); border-radius: 6px; }
+.god .god-insp-foot { border-top: none; position: relative; }
+.god .god-insp-foot::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--g-fade-mid); }
+.god .god-equip .god-slot.filled { background: var(--g-card); border: 1px solid var(--g-line2); border-radius: 6px; }
+.god .god-enc-bar { background: rgba(10, 12, 20, .7); border-color: var(--g-line); border-radius: 6px; }
+.god .god-enc-bar > div { background: linear-gradient(90deg, rgba(232, 138, 71, .35), rgba(243, 194, 103, .6)); }
+.god .god-enc-bar > span { font-family: 'Rubik', var(--g-font); }
+
+/* ── Ефекти, перемикачі ── */
+.god .god-switch { background: rgba(79, 89, 137, .4); }
+.god .god-switch.on { background: var(--g-accent); box-shadow: var(--g-glow) var(--g-accent); }
+
+/* ── Репутація ── */
+.god .god-rep-tile { background: var(--g-card-v); border-color: var(--g-line2); border-top: 2px solid var(--rep); border-radius: 8px; }
+
+/* ── Лист предмета ── */
+.god .god-item-head img { width: 72px; height: 72px; border: none; border-radius: 10px; box-shadow: 0 8px 20px rgba(0, 0, 0, .5); }
+.god .god-item-title .god-name-input { font-family: var(--g-font); font-weight: 700; font-size: 18px; background: transparent; border-color: transparent; padding-left: 4px; }
+.god .god-item-title .god-name-input:hover { background: var(--g-panel); }
+.god fieldset { padding: 12px 14px 14px; }
+
+/* ── Діалоги ── */
+.god-dialog .god-dlg-info { background: var(--g-card); border: 1px solid var(--g-line2); border-radius: 8px; }
+.god-dialog .god-mode { border-color: var(--g-line2); border-radius: 8px; }
+.god-dialog .god-mode span { background: transparent; }
+.god-dialog .god-mode input:checked + span { background: var(--g-accent); color: var(--g-accent-ink); }
+.god-dialog .form-footer button, .god-dialog footer button { border-radius: 6px; }
+.god-dialog footer button[data-action="ok"], .god-dialog footer button.default { background: var(--g-accent); color: var(--g-accent-ink); border: none; font-weight: 700; }
+
+/* ── Картки в чаті ── */
+.god-card {
+  background: linear-gradient(160deg, rgba(79, 89, 137, .32), rgba(20, 24, 34, .95) 60%), #141822;
+  border: 1px solid #4f5989; border-radius: 10px; padding: 0 10px 10px; overflow: hidden; font-family: var(--g-font); color: #efe6d8;
+}
+.god-card .god-card-head { margin: 0 -10px 8px; padding: 0 10px 0 0; gap: 0; border-bottom: none; position: relative; min-height: 52px; }
+.god-card .god-card-head::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, #4f5989, transparent); }
+.god-card .god-card-head img {
+  width: 76px; height: 52px; border: none; border-radius: 0; object-fit: cover; margin-right: -14px;
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent); mask-image: linear-gradient(90deg, #000 40%, transparent);
+}
+.god-card .god-card-head h3 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; color: #efe6d8; text-transform: none; letter-spacing: 0; }
+.god-card .god-card-head span { color: #a9adc6; }
+.god-card .god-step { border-bottom: 1px solid rgba(79, 89, 137, .3); }
+.god-card .god-step-total, .god-card .god-big { color: #f3c267; }
+.god-card .god-verdict { border-radius: 10px; padding: 2px 9px; }
+.god-card .god-verdict.ok { color: #abede7; background: rgba(104, 176, 181, .25); border: 1px solid #68b0b5; }
+.god-card .god-verdict.fail { color: #ffbdb2; background: rgba(232, 71, 71, .22); border: 1px solid #e84747; }
+.god-card .god-faces span { border-radius: 7px; border-color: #4f5989; background: rgba(10, 12, 20, .5); }
+.god-card .god-faces span.hit { border-color: #f3c267; color: #141822; background: #f3c267; box-shadow: 0 0 8px rgba(243, 194, 103, .5); }
+.god-card .god-tier { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .08em; }
+.god-card .god-dmg .phys { color: #ffd6a8; } .god-card .god-dmg .mag { color: #d2bfff; }
+.god-card .god-apply button { background: rgba(79, 89, 137, .2); border: 1px solid #4f5989; border-radius: 6px; color: #efe6d8; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+.god-card .god-apply button:hover { background: #f3c267; color: #141822; border-color: #f3c267; box-shadow: 0 0 9px -1px #f3c267; }
+
+/* ── Панель кидків ── */
+.god-tray .god-pick, .god-tray .god-die, .god-tray .god-tray-mod button { background: var(--g-card-v); border-color: var(--g-line2); border-radius: 8px; }
+.god-tray .god-pick.active, .god-tray .god-die.has { border-color: var(--g-accent); box-shadow: var(--g-glow) var(--g-accent); background: linear-gradient(0deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .25)); }
+.god-tray .god-tray-stats b { color: var(--g-text); }
+.god-tray .god-seg { border-color: var(--g-line2); border-radius: 8px; }
+.god-tray .god-seg button { background: transparent; }
+.god-tray .god-tray-roll { background: var(--g-accent); border-radius: 10px; box-shadow: 0 0 18px -4px var(--g-accent); }
+.god-tray .god-tray-roll:hover { background: var(--g-accent2); filter: none; }
+
+/* ── Панель персонажа (HUD) ── */
+.god-hud .god-hud-act { background: var(--g-card); border-color: var(--g-line2); border-radius: 8px; padding: 0 10px 0 0; overflow: hidden; grid-template-columns: 44px minmax(0, 1fr) auto; }
+.god-hud .god-hud-act img { width: 44px; height: 32px; object-fit: cover; border-radius: 0; -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent); mask-image: linear-gradient(90deg, #000 40%, transparent); }
+.god-hud .god-hud-head > img { border-color: var(--g-line2); }
+.god-hud .god-hud-spells button { border-color: var(--g-line2); border-radius: 8px; overflow: hidden; }
+
+/* ── Швидка панель: те саме скло ── */
+.god-quickbar .god-qb {
+  background: rgba(22, 26, 38, .82); backdrop-filter: blur(10px);
+  border: 1px solid rgba(79, 89, 137, .6); border-radius: 12px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+.god-quickbar .god-qb-portrait { border-color: var(--g-accent); box-shadow: 0 0 0 3px rgba(20, 24, 34, .9), 0 0 14px -2px var(--g-accent); }
+.god-quickbar .god-qb-slot { border-color: var(--g-line2); border-radius: 8px; background: var(--g-panel); }
+.god-quickbar .god-qb-slot:hover { border-color: var(--g-accent); box-shadow: var(--g-glow) var(--g-accent); }
+.god-quickbar .god-qb-collapse { background: rgba(22, 26, 38, .9); border-color: rgba(79, 89, 137, .6); }
+.god-quickbar .god-qb-stance a { border-color: var(--g-line2); border-radius: 6px; }
+.god-quickbar .god-qb-stance a.active { box-shadow: var(--g-glow) var(--g-accent); }
+.god-quickbar .god-qb-dodge b { color: var(--g-accent); }
+.god-quickbar .god-qb-gap { background: linear-gradient(180deg, transparent, var(--g-line2), transparent); }
+.god h3 .god-inv-meta { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.god-card .god-verdict { font-size: 9.5px; letter-spacing: .04em; padding: 2px 7px; white-space: nowrap; }
+.god-card .god-step-detail { font-size: 10.5px; line-height: 1.25; }
+.god-card .god-tier small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* Рядки списків (магія, риси, НІП): та сама широка іконка з розчиненням і кубиком при наведенні */
+.god .god-row { padding: 0 8px 0 0; overflow: hidden; grid-template-columns: 46px minmax(0, 1fr) auto auto; min-height: 38px; }
+.god .god-list .god-rows .god-row:has(.god-spell-facts) { grid-template-columns: 46px minmax(0, 1fr) auto auto auto; }
+.god .god-npc-body .god-list .god-row, .god .god-grid-2 .god-list .god-row { grid-template-columns: 46px minmax(0, 1fr) auto auto; }
+.god .god-row-img { position: relative; align-self: stretch; display: block; }
+.god .god-row-img img {
+  width: 46px; height: 100%; min-height: 38px; object-fit: cover; border-radius: 0;
+  -webkit-mask-image: linear-gradient(90deg, #000 40%, transparent); mask-image: linear-gradient(90deg, #000 40%, transparent);
+  transition: filter .15s;
+}
+.god .god-row-img::after {
+  content: '\f6cf'; font-family: 'Font Awesome 6 Pro', 'Font Awesome 6 Free'; font-weight: 900;
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%) translateX(-4px); opacity: 0; color: var(--g-accent);
+  transition: opacity .15s, transform .15s; font-size: 15px; pointer-events: none;
+}
+.god .god-row-img:hover img { filter: brightness(.25); }
+.god .god-row-img:hover::after { opacity: 1; transform: translateY(-50%); }
+.god .god-row-name { font-weight: 600; }
+.god .god-row-summary { padding-left: 54px; border-top-color: rgba(79, 89, 137, .3); }
+.god .god-row.equipped { box-shadow: inset 2px 0 0 #9d7c40; }
+
+/* ═══ v0.9: НІП ═══ */
+.god .god-npc-badge { font-size: 16px; background: var(--g-red); color: #fff; }
+.god .god-stat-edit-npc { display: block; }
+.god .god-stat-edit-npc input { width: 100%; text-align: center; height: 26px; font-family: 'Rubik', var(--g-font); font-weight: 600; }
+.god .god-npc-attack { margin-top: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.god .god-npc-attack .wide { grid-column: 1 / -1; }
+.god .god-weapon-card.god-natural > img { object-position: top; }
+.god .god-res-armor .god-res-bonus { width: 44px; }
+.god .god-npc-fields input { width: 64px; text-align: center; }
+/* Ціль у діалозі атаки */
+.god-dialog .god-dlg-target select { width: 100%; height: 32px; font-weight: 600; }
+.god-dialog .god-dlg-target select:invalid { border-color: var(--g-red); color: var(--g-dim); }
+.god .god-res-armor.editing { grid-template-columns: 1fr; }
+.god .god-res-armor.editing .god-res { grid-template-columns: 26px minmax(0, 1fr) 52px; }
+.god .god-res-armor.editing .god-res-bonus { width: 52px; }

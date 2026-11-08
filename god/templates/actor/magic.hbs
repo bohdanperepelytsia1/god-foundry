@@ -1,0 +1,64 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="magic">
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-book-sparkles"></i> Школи</h3>
+      <span class="god-dim" data-tooltip="Кількість кубів сотворення = МОД Інтелекту">кубів сотворення: <b>{{castDice}}</b></span></header>
+    {{#if editMode}}
+    <div class="god-schools-edit">
+      {{#each schools}}
+      <label class="{{#if lvl}}learned{{/if}}"><span>{{label}}</span>
+        <input type="number" name="system.schools.{{key}}" value="{{lvl}}" min="0" max="10">
+        <small>{{#if die}}d{{die}}{{else}}—{{/if}}</small></label>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="god-chips">
+      {{#each learnedSchools}}
+      <span class="god-school-chip" data-tooltip="Рівень {{lvl}} → кістка d{{die}}">{{label}} <b>{{lvl}}</b> <small>d{{die}}</small></span>
+      {{else}}
+      <p class="god-empty">Шкіл немає. Познач рівні в режимі редагування (замок).</p>
+      {{/each}}
+    </div>
+    {{/if}}
+  </section>
+
+  <section class="god-panel god-list">
+    <header><h3><i class="fa-solid fa-wand-sparkles"></i> Заклинання</h3>
+      <a class="god-head-add" data-action="itemCreate" data-type="spell" data-tooltip="Нове заклинання"><i class="fa-solid fa-plus"></i></a></header>
+    <ol class="god-rows">
+      {{#each spells}}
+      {{#> god-row}}
+      <div class="god-spell-facts">
+        <span data-tooltip="Поріг проходження перевірки сотворення">ПППС <b>{{system.threshold}}</b></span>
+        <span data-tooltip="Вартість мани">{{system.manaCost}} <small>OM</small></span>
+        {{#if system.staminaCost}}<span data-tooltip="Вартість витривалості">{{system.staminaCost}} <small>ВС</small></span>{{/if}}
+        <span data-tooltip="Куби сотворення">{{castDice}}</span>
+        {{#if expectDmg}}<span class="mag" data-tooltip="Урон при успіху">{{expectDmg}}</span>{{/if}}
+      </div>
+      <button type="button" class="god-btn god-btn-sm" data-action="itemUse" {{#unless castable}}disabled data-tooltip="Немає володіння школою «{{school}}»"{{/unless}}>
+        <i class="fa-solid fa-wand-sparkles"></i> Сотворити</button>
+      {{/god-row}}
+      {{else}}
+      <p class="god-empty">Заклинань немає.</p>
+      {{/each}}
+    </ol>
+  </section>
+
+  <section class="god-panel god-list">
+    <header><h3><i class="fa-solid fa-hand-sparkles"></i> Здібності</h3>
+      <a class="god-head-add" data-action="itemCreate" data-type="ability" data-tooltip="Нова здібність"><i class="fa-solid fa-plus"></i></a></header>
+    <ol class="god-rows">
+      {{#each abilities}}
+      {{#> god-row}}
+      <div class="god-spell-facts">
+        {{#if system.manaCost}}<span>{{system.manaCost}} <small>OM</small></span>{{/if}}
+        {{#if system.staminaCost}}<span>{{system.staminaCost}} <small>ВС</small></span>{{/if}}
+        {{#if system.cooldown}}<span data-tooltip="Кулдаун">CD {{system.cooldown}}</span>{{/if}}
+      </div>
+      <button type="button" class="god-btn god-btn-sm" data-action="itemUse"><i class="fa-solid fa-hand-sparkles"></i> Використати</button>
+      {{/god-row}}
+      {{else}}
+      <p class="god-empty">Здібностей немає.</p>
+      {{/each}}
+    </ol>
+  </section>
+</section>

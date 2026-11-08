@@ -1,0 +1,133 @@
+{
+  "id": "god",
+  "title": "G.O.D.",
+  "description": "Ігрова система G.O.D. — лист персонажа, вміння, сітка урону v4.5, перевірка сотворення заклинань, стійки.",
+  "version": "0.9.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14",
+    "maximum": "14"
+  },
+  "authors": [
+    {
+      "name": "Bohdan"
+    }
+  ],
+  "esmodules": [
+    "god.mjs"
+  ],
+  "styles": [
+    "styles/god.css"
+  ],
+  "languages": [
+    {
+      "lang": "uk",
+      "name": "Українська",
+      "path": "lang/uk.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/uk.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": {
+        "htmlFields": [
+          "biography"
+        ]
+      },
+      "npc": {
+        "htmlFields": [
+          "notes"
+        ]
+      }
+    },
+    "Item": {
+      "weapon": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "armor": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "gear": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "spell": {
+        "htmlFields": [
+          "description",
+          "upgrades"
+        ]
+      },
+      "ability": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "trait": {
+        "htmlFields": [
+          "description"
+        ]
+      }
+    }
+  },
+  "grid": {
+    "distance": 1,
+    "units": "кл"
+  },
+  "primaryTokenAttribute": "resources.hp",
+  "secondaryTokenAttribute": "resources.mp",
+  "socket": true,
+  "packs": [
+    {
+      "name": "arsenal",
+      "label": "Арсенал G.O.D.",
+      "path": "packs/arsenal",
+      "type": "Item",
+      "system": "god",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "rules",
+      "label": "Довідник G.O.D.",
+      "path": "packs/rules",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "macros",
+      "label": "Макроси G.O.D.",
+      "path": "packs/macros",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "G.O.D.",
+      "sorting": "m",
+      "color": "#7a5410",
+      "packs": [
+        "rules",
+        "arsenal",
+        "macros"
+      ]
+    }
+  ]
+}

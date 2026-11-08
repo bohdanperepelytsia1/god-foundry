@@ -1,0 +1,26 @@
+{
+  "_id": "A5a93D4cj44qSnmo",
+  "_key": "!items!A5a93D4cj44qSnmo",
+  "name": "Кодекс мага",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/codex.svg",
+  "system": {
+    "description": "<p>Підсилювальний предмет, в одну чи обидві руки. Містить 0–10 заклинань, підвищує ефективність заклинань, дає магічний захист.</p><p><b>Рівні володіння:</b> 1 — +1 МОД · 2 — +2 МОД · 3 — +3 МОД · 4 — ЗДТН · 5 — ЗДТН + 1 СИЛА ·\n  6 — +4 МОД · 7 — +5 МОД + ПОТІК · 8 — +6 МОД · 9 — ЗДТН + 2 СИЛА · 10 — 8 МОД</p>",
+    "category": "codex",
+    "range": 0,
+    "weight": 1.5,
+    "isMagic": true
+  },
+  "effects": [],
+  "folder": "08EWQmS4Ef2q9cb2",
+  "sort": 900,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

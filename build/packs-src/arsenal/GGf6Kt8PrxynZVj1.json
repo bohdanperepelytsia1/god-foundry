@@ -1,0 +1,26 @@
+{
+  "_id": "GGf6Kt8PrxynZVj1",
+  "_key": "!items!GGf6Kt8PrxynZVj1",
+  "name": "Дворучний меч",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/twohand.svg",
+  "system": {
+    "description": "<p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "category": "twohand",
+    "weight": 3.5,
+    "range": 1,
+    "twoHanded": true
+  },
+  "effects": [],
+  "folder": "a0MupHzakHuoBPjl",
+  "sort": 400,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

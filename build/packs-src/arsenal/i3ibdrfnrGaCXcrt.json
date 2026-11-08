@@ -1,0 +1,26 @@
+{
+  "_id": "i3ibdrfnrGaCXcrt",
+  "_key": "!items!i3ibdrfnrGaCXcrt",
+  "name": "Лікувальні трави",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/herb.svg",
+  "system": {
+    "description": "<p>Сировина для травництва і зіллєварства.</p>",
+    "weight": 0.1,
+    "quantity": 3,
+    "location": "ingredients",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3500,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

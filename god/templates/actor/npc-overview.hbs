@@ -1,0 +1,83 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="overview">
+  <div class="god-stats">
+    {{#each stats}}
+    <div class="god-stat-tile">
+      <a class="god-stat-roll" data-action="rollStat" data-stat="{{key}}" data-tooltip="Перевірка: d20 {{god-signed mod}}">
+        <span class="god-stat-abbr">{{abbr}}</span>
+        <b class="god-stat-mod">{{god-signed mod}}</b>
+        <span class="god-stat-label">{{label}}</span>
+      </a>
+      {{#if @root.editMode}}
+      <div class="god-stat-edit god-stat-edit-npc">
+        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Число, або -5 / +3 — відняти чи додати">
+      </div>
+      {{else}}
+      <div class="god-stat-value">{{value}}</div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-swords"></i> Атаки</h3>
+      <span class="god-dim">попадання — більше за ШУ цілі, тоді урон</span></header>
+    <div class="god-weapon-cards">
+      <div class="god-weapon-card god-natural">
+        <img src="{{actor.img}}" alt="">
+        <div class="god-weapon-info">
+          <span class="god-weapon-name">{{system.attack.name}}</span>
+          <span class="god-dim">попадання {{god-signed system.attack.hitMod}} · урон {{god-signed system.attack.damageMod}} · володіння {{system.attack.skillLvl}}</span>
+        </div>
+        <div class="god-dmg-badge" data-tooltip="100% урону природної атаки">
+          <span class="phys">{{system.attack.phys}}<small>фіз</small></span>{{#if system.attack.mag}}<span class="mag">{{system.attack.mag}}<small>маг</small></span>{{/if}}
+        </div>
+        <button type="button" class="god-btn" data-action="npcAttack"><i class="fa-solid fa-dice-d20"></i> Атака</button>
+      </div>
+      {{#each equippedWeapons}}{{> god-weapon-card}}{{/each}}
+    </div>
+    {{#if editMode}}
+    <div class="god-form-grid god-npc-attack">
+      <label class="wide"><span>Назва природної атаки</span><input type="text" name="system.attack.name" value="{{system.attack.name}}"></label>
+      <label data-tooltip="Додається до кидка попадання будь-якою зброєю й закляттям"><span>Влучність</span><input type="number" name="system.attack.hitMod" value="{{system.attack.hitMod}}"></label>
+      <label data-tooltip="Додається до кидка урону"><span>Мод урону</span><input type="number" name="system.attack.damageMod" value="{{system.attack.damageMod}}"></label>
+      <label data-tooltip="Рівень володіння для сітки урону (крит/смертельний)"><span>Володіння</span><input type="number" name="system.attack.skillLvl" value="{{system.attack.skillLvl}}" min="0" max="10"></label>
+      <label><span>Фіз 100%</span><input type="text" inputmode="numeric" data-delta="system.attack.phys" data-min="0" value="{{system.attack.phys}}"></label>
+      <label><span>Маг 100%</span><input type="text" inputmode="numeric" data-delta="system.attack.mag" data-min="0" value="{{system.attack.mag}}"></label>
+    </div>
+    <p class="god-hint">Зброю з предметів НІП бере в руки на вкладці «Спорядження»; її урон рахується як у гравців: СИЛ×5 + урон зброї.</p>
+    {{/if}}
+  </section>
+
+  {{#if readySpells.length}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-wand-sparkles"></i> Заклинання</h3></header>
+    <div class="god-chips">
+      {{#each readySpells}}
+      <button type="button" class="god-spell-chip" data-item-id="{{id}}" data-action="itemUse" {{#unless castable}}disabled{{/unless}}
+        data-tooltip="{{school}} · ПППС {{system.threshold}} · {{system.manaCost}} OM{{#unless castable}} · немає рівня школи{{/unless}}">
+        <img src="{{img}}" alt="">{{name}}</button>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  {{#if abilities.length}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-hand-sparkles"></i> Здібності</h3></header>
+    <div class="god-chips">
+      {{#each abilities}}
+      <button type="button" class="god-spell-chip" data-item-id="{{id}}" data-action="itemUse"><img src="{{img}}" alt="">{{name}}</button>
+      {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  {{#if effectsActive.length}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-bolt"></i> Діють зараз</h3></header>
+    <div class="god-chips">
+      {{#each effectsActive}}<span class="god-effect-chip" data-tooltip="{{changes}}"><img src="{{img}}" alt="">{{name}}</span>{{/each}}
+    </div>
+  </section>
+  {{/if}}
+</section>

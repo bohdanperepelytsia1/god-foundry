@@ -1,0 +1,19 @@
+{{!-- Картка зброї в руках: 100% урону, атака, сітка урону --}}
+<div class="god-weapon-card" data-item-id="{{id}}">
+  <img src="{{img}}" alt="">
+  <div class="god-weapon-info">
+    <a class="god-weapon-name" data-action="itemEdit">{{name}}</a>
+    <span class="god-dim">{{category}}{{#if (god-eq system.hand "off")}} · друга рука{{/if}}</span>
+  </div>
+  <div class="god-dmg-badge" data-tooltip="{{dmgTip}}">
+    <span class="phys">{{base.phys}}<small>фіз</small></span>{{#if base.mag}}<span class="mag">{{base.mag}}<small>маг</small></span>{{/if}}
+  </div>
+  <button type="button" class="god-btn" data-action="itemUse" data-tooltip="{{rollTip}}"><i class="fa-solid fa-dice-d20"></i> Атака</button>
+  <details class="god-dmg-table">
+    <summary>Таблиця урону</summary>
+    <table>
+      <thead><tr><th>Результат</th><th>%</th><th class="phys">Фіз</th>{{#if base.mag}}<th class="mag">Маг</th>{{/if}}</tr></thead>
+      <tbody>{{#each table}}<tr class="tier-{{tier}}"><td>{{label}}</td><td>{{pct}}</td><td class="phys">{{phys}}</td>{{#if ../base.mag}}<td class="mag">{{mag}}</td>{{/if}}</tr>{{/each}}</tbody>
+    </table>
+  </details>
+</div>

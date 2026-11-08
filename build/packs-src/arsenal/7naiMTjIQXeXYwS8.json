@@ -1,0 +1,25 @@
+{
+  "_id": "7naiMTjIQXeXYwS8",
+  "_key": "!items!7naiMTjIQXeXYwS8",
+  "name": "Пояс з підсумками",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/belt.svg",
+  "system": {
+    "description": "<p>Дає 3 слоти пояса: предмети з пояса використовуються за 1 додаткову дію без відкриття інвентарю.</p>",
+    "slot": "Пояс",
+    "beltSlots": 3,
+    "weight": 0.5
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 2400,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

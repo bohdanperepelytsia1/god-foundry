@@ -1,0 +1,21 @@
+{
+  "_id": "LmQUCw7BrdizwF4E",
+  "_key": "!macros!LmQUCw7BrdizwF4E",
+  "name": "Відновити броню",
+  "type": "script",
+  "img": "systems/god/assets/icons/armor/cuirass.svg",
+  "command": "game.god.repairArmor()",
+  "scope": "global",
+  "folder": null,
+  "sort": 300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "author": null,
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

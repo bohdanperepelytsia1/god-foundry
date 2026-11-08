@@ -1,0 +1,6 @@
+node_modules/
+*.zip
+god/packs/*/LOG
+god/packs/*/LOG.old
+god/packs/*/LOCK
+.DS_Store

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4912e" stop-opacity=".42"/><stop offset=".55" stop-color="#171b28"/><stop offset="1" stop-color="#0e111a"/></linearGradient>
+  <radialGradient id="glow" cx="50%" cy="48%" r="50%"><stop offset="0" stop-color="#c4912e" stop-opacity=".45"/><stop offset="1" stop-color="#c4912e" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="470"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#f6d58a"/><stop offset="1" stop-color="#c4912e"/></linearGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".7"/></filter>
+</defs>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="url(#bg)"/>
+<circle cx="128" cy="124" r="110" fill="url(#glow)"/>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="none" stroke="#c4912e" stroke-opacity=".55" stroke-width="3"/>
+<g filter="url(#sh)" transform="translate(40 36) scale(.34375)" fill="url(#gl)"><path  d="M496.938 14.063c-95.14 3.496-172.297 24.08-231.282 55.812l-29.47 49.28l-4.967-28.093c-10.535 7.402-20.314 15.222-29.314 23.407l-14.687 45.06l-5.032-25.155c-40.65 45.507-60.41 99.864-58.938 155.906c47.273-93.667 132.404-172.727 211.97-221.155l9.717 15.97c-75.312 45.838-156.387 121.202-202.187 208.25h12.156c19.78-12.02 39.16-26.858 58.406-43.44l-30.28 1.595l54.218-23.094c46.875-43.637 93.465-94.974 143.313-138.28l-24.47-5.19l56.5-21.03c26.853-20.485 54.8-37.844 84.344-49.843zM59.53 312.03v30.408H194V312.03zm20.376 49.095L47.25 389.813L24.97 474.78l14.53 15.876h177.22l14.56-15.875L209 389.814l-30.906-28.688H79.906z"/></g>
+</svg>

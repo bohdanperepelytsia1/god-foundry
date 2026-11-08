@@ -1,0 +1,18 @@
+<li class="god-row draggable {{#if system.equipped}}equipped{{/if}} {{#if (lookup @root.expandedDesc id)}}expanded{{/if}}"
+    data-item-id="{{id}}" data-search="{{search}}" draggable="true">
+  <a class="god-row-img" data-action="itemUse" data-tooltip="Використати / показати в чаті"><img src="{{img}}" alt=""></a>
+  <div class="god-row-main">
+    <a class="god-row-name" data-action="itemExpand" data-tooltip="Показати опис">{{name}}{{#each tags}}<i class="fa-solid {{icon}} god-tag {{cls}}" data-tooltip="{{tip}}"></i>{{/each}}</a>
+    {{#if sub}}<span class="god-row-sub">{{sub}}</span>{{/if}}
+  </div>
+  {{> @partial-block }}
+  <div class="god-row-controls">
+    {{#if equippable}}
+    <a data-action="itemEquip" data-tooltip="{{#if system.equipped}}Зняти (лишиться в інвентарі){{else}}Одягнути / взяти в руку{{/if}}">
+      <i class="fa-solid fa-shirt {{#unless system.equipped}}god-off{{/unless}}"></i></a>
+    {{/if}}
+    <a data-action="itemEdit" data-tooltip="Редагувати"><i class="fa-solid fa-pen-to-square"></i></a>
+    {{#if @root.editMode}}<a data-action="itemDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>{{/if}}
+  </div>
+  <div class="god-row-summary" {{#if (lookup @root.expandedDesc id)}}data-loaded="1"{{/if}}>{{{lookup @root.expandedDesc id}}}</div>
+</li>

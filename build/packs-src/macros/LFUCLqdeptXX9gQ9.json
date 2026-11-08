@@ -1,0 +1,21 @@
+{
+  "_id": "LFUCLqdeptXX9gQ9",
+  "_key": "!macros!LFUCLqdeptXX9gQ9",
+  "name": "Панель кидків",
+  "type": "script",
+  "img": "systems/god/assets/icons/weapons/staff.svg",
+  "command": "game.god.diceTray()",
+  "scope": "global",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "author": null,
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

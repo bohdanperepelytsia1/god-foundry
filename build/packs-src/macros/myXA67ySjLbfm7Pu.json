@@ -1,0 +1,21 @@
+{
+  "_id": "myXA67ySjLbfm7Pu",
+  "_key": "!macros!myXA67ySjLbfm7Pu",
+  "name": "Завдати урону",
+  "type": "script",
+  "img": "systems/god/assets/icons/status/bleeding.svg",
+  "command": "game.god.applyDamagePrompt()",
+  "scope": "global",
+  "folder": null,
+  "sort": 400,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "author": null,
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

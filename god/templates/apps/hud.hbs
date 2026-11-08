@@ -1,0 +1,42 @@
+<div class="god-hud-body">
+  {{#if missing}}<p class="god-empty">Персонажа не знайдено.</p>{{else}}
+  <div class="god-hud-head">
+    <img src="{{actor.img}}" alt="" data-action="sheet" data-tooltip="Відкрити лист">
+    <div class="god-hud-tiles">
+      <div class="god-tile god-tile-dodge" data-tooltip="Шанс ухилення"><b>{{dodge}}</b><small>ШУ</small></div>
+      <div class="god-tile" data-tooltip="Швидкість"><b>{{speed}}</b><small>ШВ</small></div>
+      <div class="god-tile" data-tooltip="Ініціатива"><b>{{initiative}}</b><small>ІН</small></div>
+    </div>
+    <a class="god-hud-pin {{#if pinned}}on{{/if}}" data-action="pin"
+       data-tooltip="{{#if pinned}}Відкріпити{{else}}Закріпити: відкриється сам після перезавантаження{{/if}}">
+      <i class="fa-solid fa-thumbtack"></i></a>
+  </div>
+
+  <div class="god-res-list">
+    {{#each bars}}{{> god-res damage=(god-eq key "hp")}}{{/each}}
+    <div class="god-res-armor">{{#each armor}}{{> god-res}}{{/each}}</div>
+  </div>
+  {{#if overloaded}}<div class="god-hud-warn"><i class="fa-solid fa-weight-hanging"></i> Перевантаження</div>{{/if}}
+
+  <div class="god-stance god-hud-stance">
+    {{#each stances}}<button type="button" class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{tip}}">{{label}}</button>{{/each}}
+  </div>
+
+  {{#if weapons.length}}
+  <div class="god-hud-actions">
+    {{#each weapons}}
+    <button type="button" class="god-hud-act" data-action="use" data-item-id="{{id}}" data-tooltip="Атака: {{name}}">
+      <img src="{{img}}" alt=""><span>{{name}}</span><i class="fa-solid fa-dice-d20"></i></button>
+    {{/each}}
+  </div>
+  {{/if}}
+  {{#if spells.length}}
+  <div class="god-hud-spells">
+    {{#each spells}}
+    <button type="button" data-action="use" data-item-id="{{id}}" data-tooltip="{{name}} · ПППС {{system.threshold}} · {{system.manaCost}} OM"><img src="{{img}}" alt=""></button>
+    {{/each}}
+  </div>
+  {{/if}}
+  <button type="button" class="god-tray-open" data-action="tray"><i class="fa-solid fa-dice-d20"></i> Панель кидків</button>
+  {{/if}}
+</div>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4912e" stop-opacity=".42"/><stop offset=".55" stop-color="#171b28"/><stop offset="1" stop-color="#0e111a"/></linearGradient>
+  <radialGradient id="glow" cx="50%" cy="48%" r="50%"><stop offset="0" stop-color="#c4912e" stop-opacity=".45"/><stop offset="1" stop-color="#c4912e" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="470"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#f6d58a"/><stop offset="1" stop-color="#c4912e"/></linearGradient>
+  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".7"/></filter>
+</defs>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="url(#bg)"/>
+<circle cx="128" cy="124" r="110" fill="url(#glow)"/>
+<rect x="4" y="4" width="248" height="248" rx="30" fill="none" stroke="#c4912e" stroke-opacity=".55" stroke-width="3"/>
+<g filter="url(#sh)" transform="translate(40 36) scale(.34375)" fill="url(#gl)"><path  d="M226.878 16v243.274a120.023 120.023 0 0 0 30 236.71a119.996 119.996 0 0 0 29.998-236.242v-93.747h59.998v-44.998h-59.998v-45h89.997V16zm25.312 299.99a60 60 0 0 1 2.343 0a60 60 0 0 1 2.343 0a59.998 59.998 0 0 1 0 119.996a60.044 60.044 0 0 1-4.688-119.996z"/></g>
+</svg>

@@ -1,0 +1,25 @@
+{
+  "_id": "l2bcVRhxWqQa4LC0",
+  "_key": "!items!l2bcVRhxWqQa4LC0",
+  "name": "Бойова сокира",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/heavy1h.svg",
+  "system": {
+    "description": "<p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "category": "heavy1h",
+    "weight": 2.5,
+    "range": 1
+  },
+  "effects": [],
+  "folder": "a0MupHzakHuoBPjl",
+  "sort": 300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

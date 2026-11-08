@@ -1,0 +1,26 @@
+{
+  "_id": "uu6lP912nD2QGFVu",
+  "_key": "!items!uu6lP912nD2QGFVu",
+  "name": "Мапа місцевості",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/map.svg",
+  "system": {
+    "description": "<p>Мапа — заповнюється в процесі пригоди.</p>",
+    "weight": 0.1,
+    "quantity": 1,
+    "location": "books",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

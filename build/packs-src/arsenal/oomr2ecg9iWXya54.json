@@ -1,0 +1,26 @@
+{
+  "_id": "oomr2ecg9iWXya54",
+  "_key": "!items!oomr2ecg9iWXya54",
+  "name": "Зілля лікування",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/potion.svg",
+  "system": {
+    "description": "<p>Відновлює здоров’я. Скільки саме — визначає майстер: вкажи HP у листі предмета, і «Використати» застосує його саме.</p>",
+    "weight": 0.2,
+    "quantity": 1,
+    "location": "potions",
+    "consumable": true
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3600,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

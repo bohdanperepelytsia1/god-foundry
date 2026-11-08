@@ -1,0 +1,6 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="notes">
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-feather"></i> Нотатки майстра</h3></header>
+    <prose-mirror name="system.notes" value="{{system.notes}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{notes}}}</prose-mirror>
+  </section>
+</section>

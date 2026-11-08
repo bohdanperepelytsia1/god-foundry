@@ -1,0 +1,24 @@
+{
+  "_id": "tP86eSGPkIYbMiVZ",
+  "_key": "!items!tP86eSGPkIYbMiVZ",
+  "name": "Каплевидний щит",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/shield.svg",
+  "system": {
+    "description": "<p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "slot": "Щит",
+    "weight": 5
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 2300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

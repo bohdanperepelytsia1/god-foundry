@@ -1,0 +1,26 @@
+{
+  "_id": "ik9XVerylWRaJliR",
+  "_key": "!items!ik9XVerylWRaJliR",
+  "name": "Мотузка, 15 м",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/rope.svg",
+  "system": {
+    "description": "<p>Міцна конопляна мотузка. Витримає двох людей.</p>",
+    "weight": 2,
+    "quantity": 1,
+    "location": "main",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 2700,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

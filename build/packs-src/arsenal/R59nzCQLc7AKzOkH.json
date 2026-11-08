@@ -1,0 +1,26 @@
+{
+  "_id": "R59nzCQLc7AKzOkH",
+  "_key": "!items!R59nzCQLc7AKzOkH",
+  "name": "Чакрами",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/chakram.svg",
+  "system": {
+    "description": "<p>Радіус ураження 6, парна зброя (в кожну руку), далекобійна і ближній бій. Фізичний і магічний урон.</p><p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p><p><b>Рівні володіння:</b> 1 — +1 МОД · 2 — +2 МОД · 3 — +3 МОД · 4 — ЗДТН · 5 — ЗДТН + 1 СИЛА ·\n  6 — +4 МОД · 7 — +5 МОД + ПОТІК · 8 — +6 МОД · 9 — ЗДТН + 2 СИЛА · 10 — 8 МОД</p>",
+    "category": "chakram",
+    "range": 6,
+    "weight": 1,
+    "isMagic": true
+  },
+  "effects": [],
+  "folder": "08EWQmS4Ef2q9cb2",
+  "sort": 1200,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

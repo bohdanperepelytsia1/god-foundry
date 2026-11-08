@@ -1,0 +1,24 @@
+{
+  "_id": "krbjO7czJ6K1aYCg",
+  "_key": "!items!krbjO7czJ6K1aYCg",
+  "name": "Рукавиці",
+  "type": "armor",
+  "img": "systems/god/assets/icons/armor/gloves.svg",
+  "system": {
+    "description": "<p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "slot": "Рукавиці",
+    "weight": 0.5
+  },
+  "effects": [],
+  "folder": "YJcyS05D7NyGgtAR",
+  "sort": 1900,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "_id": "wLEJMTkMbS7RUODW",
+  "_key": "!items!wLEJMTkMbS7RUODW",
+  "name": "Набір відмичок",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/lockpick.svg",
+  "system": {
+    "description": "<p>Для роботи з замками. Потребує вміння «Взлом» чи «Знання замків».</p>",
+    "weight": 0.2,
+    "quantity": 1,
+    "location": "tools",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

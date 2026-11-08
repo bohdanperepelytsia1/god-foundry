@@ -1,0 +1,26 @@
+{
+  "_id": "ACYU8q6VzCPUmitU",
+  "_key": "!items!ACYU8q6VzCPUmitU",
+  "name": "Оберіг",
+  "type": "weapon",
+  "img": "systems/god/assets/icons/weapons/amulet.svg",
+  "system": {
+    "description": "<p>Магічний оберіг.</p><p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
+    "category": "amulet",
+    "range": 0,
+    "weight": 0.2,
+    "isMagic": true
+  },
+  "effects": [],
+  "folder": "08EWQmS4Ef2q9cb2",
+  "sort": 1300,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

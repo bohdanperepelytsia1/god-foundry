@@ -1,0 +1,152 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="gear">
+  <div class="god-inv">
+    <div class="god-inv-main">
+      {{#unless isNpc}}
+      <div class="god-encumbrance {{#if system.derived.overloaded}}over{{/if}}">
+        <div class="god-enc-bar" data-tooltip="Вага всього, що несе персонаж"><div style="width: {{weightPct}}%"></div>
+          <span><b>{{system.derived.totalWeight}}</b> / {{system.derived.maxWeight}} кг</span></div>
+        {{#if editMode}}
+        <label class="god-inline-field" data-tooltip="Власний максимум ваги (0 — за формулою: 20 + Мул·5 + рюкзак)">
+          макс <input type="number" name="system.encumbrance.override" value="{{system.encumbrance.override}}" min="0"></label>
+        {{/if}}
+      </div>
+      {{/unless}}
+
+      <section class="god-panel god-equip {{#unless equipOpen}}collapsed{{/unless}}" data-collapsible>
+        <header data-action="invCollapse" data-loc="@equip" class="god-inv-toggle">
+          <h3><i class="fa-solid fa-chevron-down god-chev"></i> Одягнене <small class="god-inv-meta">{{equippedCount}} з {{slots.length}}</small></h3>
+        </header>
+        <div class="god-slots">
+          {{#each slots}}{{#if item}}
+          <div class="god-slot filled" data-item-id="{{item.id}}">
+            <span class="god-slot-label">{{label}}</span>
+            <a class="god-slot-item" data-action="invSelect" data-tooltip="Фіз {{item.system.phys}} · Маг {{item.system.mag}}">
+              <img src="{{item.img}}" alt="">{{item.name}}</a>
+            <a class="god-slot-off" data-action="itemEquip" data-tooltip="Зняти — лишиться в інвентарі"><i class="fa-solid fa-xmark"></i></a>
+          </div>
+          {{/if}}{{else}}{{/each}}
+          {{#unless equippedCount}}<p class="god-empty">Нічого не одягнено. Одягай кнопкою <i class="fa-solid fa-shirt"></i> у рядку предмета.</p>{{/unless}}
+        </div>
+      </section>
+
+      <div class="god-toolbar">
+        <div class="god-search"><i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" data-filter="inventory" placeholder="Пошук…" class="god-select-on-focus"></div>
+        <select class="god-inv-sort" data-inv-sort data-tooltip="Сортування">{{selectOptions sorts selected=sort}}</select>
+        <div class="god-create">
+          <button type="button" data-action="itemCreate" data-type="gear" data-tooltip="Новий предмет"><i class="fa-solid fa-box"></i></button>
+          <button type="button" data-action="itemCreate" data-type="weapon" data-tooltip="Нова зброя"><i class="fa-solid fa-khanda"></i></button>
+          <button type="button" data-action="itemCreate" data-type="armor" data-tooltip="Новий обладунок"><i class="fa-solid fa-shield-halved"></i></button>
+        </div>
+      </div>
+
+      <nav class="god-inv-types">
+        {{#each types}}
+        <a class="{{#if active}}active{{/if}}" data-action="invType" data-type="{{id}}"><i class="fa-solid {{icon}}"></i> {{label}} <small>{{count}}</small></a>
+        {{/each}}
+      </nav>
+
+      <div class="god-inv-list" data-filter-scope="inventory" tabindex="0" aria-label="Інвентар: ↑/↓ — вибір, Enter — використати, Delete — видалити">
+        {{#each sections}}
+        <section class="god-inv-sec {{#if collapsed}}collapsed{{/if}}" data-drop-location="{{loc}}" data-filter-group data-collapsible>
+          <header data-action="invCollapse" data-loc="{{loc}}" class="god-inv-toggle" data-tooltip="Перетягни сюди предмет, щоб перекласти">
+            <i class="fa-solid fa-chevron-down god-chev"></i>
+            <i class="fa-solid {{icon}} god-inv-loc-icon"></i>
+            <h4>{{label}}</h4>
+            <span class="god-inv-meta">{{count}}{{#if slots}} · <b class="{{#if slotsOver}}over{{/if}}" data-tooltip="Зайняті слоти пояса">{{slots}} сл.</b>{{/if}} · {{weight}} кг</span>
+            <a class="god-head-add" data-action="itemCreate" data-type="gear" data-location="{{loc}}" data-tooltip="Додати сюди"><i class="fa-solid fa-plus"></i></a>
+          </header>
+          {{#if rows.length}}
+          <ol class="god-inv-rows">
+            {{#each rows}}
+            <li class="god-inv-row god-inv-{{type}} {{#if selected}}selected{{/if}} {{#if equipped}}equipped{{/if}} {{#if empty}}empty{{/if}}"
+                data-item-id="{{id}}" data-search="{{search}}" data-action="invSelect" draggable="true">
+              <a class="god-inv-img" data-action="itemUse" data-tooltip="{{#if usable}}Використати{{else}}Показати в чаті{{/if}}"><img src="{{img}}" alt=""></a>
+              <div class="god-inv-name">
+                <span>{{name}}{{#each tags}}<i class="fa-solid {{icon}} god-tag {{cls}}" data-tooltip="{{tip}}"></i>{{/each}}</span>
+                {{#if sub}}<small>{{sub}}</small>{{/if}}
+              </div>
+              <div class="god-inv-qty">
+                {{#if showQty}}
+                <a data-action="invQty" data-step="-1" data-tooltip="−1 · Shift −10">−</a><b>{{qty}}</b><a data-action="invQty" data-step="1" data-tooltip="+1 · Shift +10">+</a>
+                {{/if}}
+              </div>
+              <span class="god-inv-w" data-tooltip="Вага разом, кг">{{weight}}</span>
+              <span class="god-inv-eq">
+                {{#if equippable}}<a data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти{{else}}Одягнути / взяти в руку{{/if}}">
+                  <i class="fa-solid fa-shirt {{#unless equipped}}god-off{{/unless}}"></i></a>{{/if}}
+              </span>
+            </li>
+            {{/each}}
+          </ol>
+          {{else}}
+          <p class="god-empty">{{#if (god-eq loc "main")}}Порожньо. Перетягни предмет сюди з компендіуму чи каталогу.{{else}}Нічого з обраного типу.{{/if}}</p>
+          {{/if}}
+        </section>
+        {{/each}}
+      </div>
+    </div>
+
+    <aside class="god-inv-detail" {{#if inspect}}data-item-id="{{inspect.id}}"{{/if}}>
+      {{#with inspect}}
+      <header class="god-insp-head">
+        <img src="{{img}}" alt="" data-action="itemEdit" data-tooltip="Відкрити лист предмета">
+        <div>
+          <h3>{{name}}{{#each tags}}<i class="fa-solid {{icon}} god-tag {{cls}}" data-tooltip="{{tip}}"></i>{{/each}}</h3>
+          <span>{{typeLabel}}{{#if equipped}} · <b class="god-insp-on">одягнено</b>{{/if}}</span>
+        </div>
+      </header>
+
+      <div class="god-insp-actions">
+        <button type="button" class="god-insp-main" data-action="itemUse"><i class="fa-solid {{useIcon}}"></i> {{useLabel}}</button>
+        {{#if equippable}}
+        <button type="button" data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти — лишиться в інвентарі{{else}}Одягнути / взяти в руку{{/if}}">
+          <i class="fa-solid fa-shirt"></i> {{#if equipped}}Зняти{{else}}Одягнути{{/if}}</button>
+        {{/if}}
+      </div>
+
+      {{#if restore.length}}
+      <div class="god-insp-restore">
+        {{#each restore}}<span class="god-res-chip god-res-{{key}} {{#if (god-eq sign "")}}neg{{/if}}">{{abbr}} <b>{{sign}}{{value}}</b></span>{{/each}}
+      </div>
+      {{else}}{{#if consumable}}
+      <p class="god-hint">Розхідне без числового ефекту — вкажи відновлення в листі предмета, і «Використати» застосує його саме.</p>
+      {{/if}}{{/if}}
+
+      <dl class="god-insp-stats">
+        {{#each stats}}<div class="{{cls}}" {{#if tip}}data-tooltip="{{tip}}"{{/if}}><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/each}}
+      </dl>
+
+      <div class="god-insp-inv">
+        <label><span>Кількість</span>
+          <span class="god-insp-qty">
+            <a data-action="invQty" data-step="-1" data-tooltip="−1 · Shift −10">−</a>
+            <input type="number" data-item-field="system.quantity" value="{{qty}}" min="0">
+            <a data-action="invQty" data-step="1" data-tooltip="+1 · Shift +10">+</a>
+          </span></label>
+        <label><span>Де лежить</span>
+          <select data-item-field="system.location">{{selectOptions @root.locationOptions selected=location}}</select></label>
+      </div>
+
+      {{#if effects.length}}
+      <h4 class="god-insp-h">Ефекти</h4>
+      <ul class="god-insp-effects">
+        {{#each effects}}<li class="{{#if off}}off{{/if}}"><img src="{{img}}" alt=""><span><b>{{name}}</b><small>{{changes}}{{#if note}} · {{note}}{{/if}}</small></span></li>{{/each}}
+      </ul>
+      {{/if}}
+
+      <h4 class="god-insp-h">Опис</h4>
+      <div class="god-insp-desc">{{#if description}}{{{description}}}{{else}}<p class="god-empty">Без опису. Додай його в листі предмета.</p>{{/if}}</div>
+
+      <footer class="god-insp-foot">
+        <a data-action="itemEdit"><i class="fa-solid fa-pen-to-square"></i> Редагувати</a>
+        <a data-action="invChat"><i class="fa-solid fa-comment"></i> У чат</a>
+        {{#if canSplit}}<a data-action="invSplit"><i class="fa-solid fa-scissors"></i> Розділити</a>{{/if}}
+        {{#if @root.editable}}<a class="danger" data-action="itemDelete"><i class="fa-solid fa-trash"></i> Видалити</a>{{/if}}
+      </footer>
+      {{else}}
+      <div class="god-insp-none"><i class="fa-solid fa-hand-pointer"></i><p>Обери предмет у списку — тут з'являться його характеристики й опис.</p></div>
+      {{/with}}
+    </aside>
+  </div>
+</section>

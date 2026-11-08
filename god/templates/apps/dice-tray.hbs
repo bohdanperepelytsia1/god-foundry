@@ -1,0 +1,77 @@
+<div class="god-tray-body">
+  <div class="god-tray-actor">
+    {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    <select name="actor" aria-label="Персонаж">
+      {{#each actors}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
+      {{#unless actors.length}}<option>Немає персонажів</option>{{/unless}}
+    </select>
+    <a class="god-hud-pin {{#if pinned}}on{{/if}}" data-action="pin"
+       data-tooltip="{{#if pinned}}Відкріпити{{else}}Закріпити: відкриється сам після перезавантаження{{/if}}"><i class="fa-solid fa-thumbtack"></i></a>
+  </div>
+
+  {{#if isChar}}
+  <div class="god-seg god-tray-src">
+    <button type="button" class="{{#if (god-eq source 'skills')}}active{{/if}}" data-action="setSource" data-source="skills">Вміння</button>
+    <button type="button" class="{{#if (god-eq source 'stats')}}active{{/if}}" data-action="setSource" data-source="stats">Характеристики</button>
+  </div>
+
+  <div class="god-tray-picks">
+    {{#if (god-eq source 'stats')}}
+    <div class="god-tray-stats">
+      {{#each stats}}
+      <button type="button" class="god-pick {{#if active}}active{{/if}}" data-action="pick" data-kind="stat" data-key="{{key}}"
+        data-tooltip="{{label}} {{value}}">
+        <small>{{abbr}}</small><b>{{god-signed mod}}</b></button>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="god-search"><i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" name="search" value="{{search}}" placeholder="Знайти вміння…"></div>
+    {{#each skillGroups}}
+    <div class="god-tray-group">
+      <h4>{{label}}</h4>
+      <div class="god-tray-skills">
+        {{#each skills}}
+        <button type="button" class="god-pick god-pick-skill {{#if active}}active{{/if}}" data-action="pick" data-kind="skill"
+          data-key="{{key}}" data-search="{{search}}" data-tooltip="Подвійний клік — одразу кинути">
+          <span>{{label}}</span><b>{{god-signed mod}}</b></button>
+        {{/each}}
+      </div>
+    </div>
+    {{else}}
+    <p class="god-empty">Прокачаних вмінь немає.</p>
+    {{/each}}
+    {{/if}}
+  </div>
+  {{else}}
+  <p class="god-empty">{{#if actor}}Для НІП доступні лише куби й модифікатор.{{else}}Обери персонажа або токен.{{/if}}</p>
+  {{/if}}
+
+  <div class="god-tray-dice">
+    {{#each dice}}
+    <button type="button" class="god-die {{#if n}}has{{/if}}" data-action="addDie" data-die="{{d}}" data-tooltip="Клік — додати, ПКМ — прибрати">
+      {{d}}{{#if n}}<em>{{n}}</em>{{/if}}</button>
+    {{/each}}
+    {{#if hasPool}}<button type="button" class="god-die-clear" data-action="clearPool" data-tooltip="Очистити лоток"><i class="fa-solid fa-xmark"></i></button>{{/if}}
+  </div>
+
+  <div class="god-seg god-tray-mode {{#if hasPool}}god-disabled{{/if}}">
+    {{#each modes}}
+    <button type="button" class="{{#if active}}active{{/if}} mode-{{id}}" data-action="setMode" data-mode="{{id}}">{{label}}</button>
+    {{/each}}
+  </div>
+
+  <div class="god-tray-mod">
+    <span class="god-dim">Модифікатор</span>
+    {{#if pickLabel}}<span class="god-tray-base" data-tooltip="Від обраного: {{pickLabel}}">{{god-signed base}}</span>{{/if}}
+    <button type="button" data-action="modStep" data-step="-1">−</button>
+    <input type="number" name="extra" value="{{extra}}">
+    <button type="button" data-action="modStep" data-step="1">+</button>
+  </div>
+
+  <button type="button" class="god-tray-roll" data-action="roll">
+    <i class="fa-solid fa-dice-d20"></i>
+    <span><b>{{#if pickLabel}}{{pickLabel}}{{else}}Кинути{{/if}}</b><small>{{preview}}</small></span>
+  </button>
+  {{#unless dsn}}<p class="god-hint">Для 3D-кубів встанови модуль Dice So Nice — кидки анімуються автоматично.</p>{{/unless}}
+</div>

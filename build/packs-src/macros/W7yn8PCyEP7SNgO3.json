@@ -1,0 +1,21 @@
+{
+  "_id": "W7yn8PCyEP7SNgO3",
+  "_key": "!macros!W7yn8PCyEP7SNgO3",
+  "name": "Видати досвід",
+  "type": "script",
+  "img": "systems/god/assets/icons/misc/ability.svg",
+  "command": "game.god.awardXp()",
+  "scope": "global",
+  "folder": null,
+  "sort": 200,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "author": null,
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

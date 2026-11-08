@@ -1,0 +1,16 @@
+{{!-- Смуга ресурсу: ± на краях (Shift ×10, Ctrl ×100), поле приймає 30 / -25 / +10 / =30 --}}
+<div class="god-res god-res-{{key}}" data-res="{{key}}">
+  {{#if damage}}
+  <a class="god-res-abbr god-res-hit" data-res-damage data-tooltip="Завдати урону: MR → PR → HP"><span>{{abbr}}</span><i class="fa-solid fa-burst"></i></a>
+  {{else}}
+  <span class="god-res-abbr"{{#if tip}} data-tooltip="{{tip}}"{{/if}}>{{abbr}}</span>
+  {{/if}}
+  <div class="god-res-bar"{{#if tip}} data-tooltip="{{tip}}"{{/if}}>
+    <div class="god-res-fill" style="width: {{pct}}%"></div>
+    <a class="god-res-step minus" data-res-step="-1" data-tooltip="−1 · Shift −10 · Ctrl −100" aria-label="Зменшити">−</a>
+    <input type="text" inputmode="numeric" data-delta="system.resources.{{key}}.value" value="{{value}}" aria-label="{{#if label}}{{label}}{{else}}{{abbr}}{{/if}}">
+    <span class="god-res-max">/ {{max}}</span>
+    <a class="god-res-step plus" data-res-step="1" data-tooltip="+1 · Shift +10 · Ctrl +100 (не вище максимуму)" aria-label="Збільшити">+</a>
+  </div>
+  {{#if @partial-block}}{{> @partial-block}}{{/if}}
+</div>

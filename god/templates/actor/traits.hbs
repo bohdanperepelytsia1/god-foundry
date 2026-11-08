@@ -1,0 +1,61 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="traits">
+  <div class="god-grid-2">
+    <section class="god-panel god-list">
+      <header><h3><i class="fa-solid fa-sun"></i> Риси</h3>
+        {{#if editable}}<a class="god-head-add" data-action="itemCreate" data-type="trait" data-kind="trait" data-tooltip="Нова риса"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
+      <ol class="god-rows">
+        {{#each traits}}
+        {{#> god-row}}{{#if system.cost}}<span class="god-cost-badge" data-tooltip="Вартість">{{system.cost}}</span>{{/if}}{{/god-row}}
+        {{else}}<p class="god-empty">Рис немає.</p>{{/each}}
+      </ol>
+    </section>
+    <section class="god-panel god-list">
+      <header><h3><i class="fa-solid fa-masks-theater"></i> Особливості</h3>
+        {{#if editable}}<a class="god-head-add" data-action="itemCreate" data-type="trait" data-kind="quirk" data-tooltip="Нова особливість"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
+      <ol class="god-rows">
+        {{#each quirks}}
+        {{#> god-row}}{{#if system.cost}}<span class="god-cost-badge" data-tooltip="Вартість">{{system.cost}}</span>{{/if}}{{/god-row}}
+        {{else}}<p class="god-empty">Особливостей немає.</p>{{/each}}
+      </ol>
+    </section>
+  </div>
+
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-language"></i> Мови</h3>
+      {{#if editable}}<a class="god-head-add" data-action="knowAdd" data-list="languages" data-tooltip="Додати мову"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
+    {{#if knowledge.languages.length}}
+    <div class="god-chips">
+      {{#each knowledge.languages}}
+      {{#if @root.editMode}}
+      <div class="god-know-chip" data-know-list="languages" data-know-index="{{index}}">
+        <input type="text" data-know-field="name" value="{{name}}" placeholder="Мова">
+        <input type="text" data-know-field="level" value="{{level}}" placeholder="рівень" class="god-know-level">
+        <a data-action="knowRemove" data-tooltip="Прибрати"><i class="fa-solid fa-xmark"></i></a>
+      </div>
+      {{else}}
+      <span class="god-lang-chip">{{name}}{{#if level}} <small>{{level}}</small>{{/if}}</span>
+      {{/if}}
+      {{/each}}
+    </div>
+    {{else}}<p class="god-empty">Мов не вказано.</p>{{/if}}
+  </section>
+
+  {{#each (god-array "recipes" "Рецепти" "fa-flask" "tech" "Технології" "fa-gears") as |sec|}}
+  <section class="god-panel">
+    <header><h3><i class="fa-solid {{sec.icon}}"></i> {{sec.label}}</h3>
+      {{#if @root.editable}}<a class="god-head-add" data-action="knowAdd" data-list="{{sec.key}}" data-tooltip="Додати"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
+    {{#each (lookup @root.knowledge sec.key)}}
+    <div class="god-know-row" data-know-list="{{sec.key}}" data-know-index="{{index}}">
+      {{#if @root.editMode}}
+      <input type="text" data-know-field="name" value="{{name}}" placeholder="Назва">
+      <input type="text" data-know-field="source" value="{{source}}" placeholder="Джерело">
+      <input type="text" data-know-field="desc" value="{{desc}}" placeholder="Опис" class="god-know-desc">
+      <a data-action="knowRemove" data-tooltip="Прибрати"><i class="fa-solid fa-trash"></i></a>
+      {{else}}
+      <b>{{name}}</b>{{#if source}}<span class="god-dim">{{source}}</span>{{/if}}<span class="god-know-text">{{desc}}</span>
+      {{/if}}
+    </div>
+    {{else}}<p class="god-empty">Порожньо.</p>{{/each}}
+  </section>
+  {{/each}}
+</section>

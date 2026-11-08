@@ -1,0 +1,42 @@
+<div class="god-qb">
+  <a class="god-qb-grip" data-tooltip="Перетягни панель · подвійний клік — на місце"><i class="fa-solid fa-grip-vertical"></i></a>
+  {{#if missing}}
+  {{#if userMode}}
+  <span class="god-qb-user" data-tooltip="Персонажа не обрано — показано твої макроси"><i class="fa-solid fa-scroll"></i></span>
+  {{else}}
+  <span class="god-qb-hint">Обери токен свого персонажа</span>
+  {{/if}}
+  {{else}}
+  <img class="god-qb-portrait" src="{{actor.img}}" alt="" data-action="sheet" data-tooltip="{{actor.name}} — відкрити лист">
+  <a class="god-qb-collapse" data-action="collapse" data-tooltip="{{#if collapsed}}Розгорнути{{else}}Згорнути{{/if}}">
+    <i class="fa-solid {{#if collapsed}}fa-chevron-up{{else}}fa-chevron-down{{/if}}"></i></a>
+
+  <div class="god-qb-res">
+    {{#each bars}}{{> god-res}}{{/each}}
+    {{#if armor.length}}<div class="god-qb-armor">{{#each armor}}{{> god-res}}{{/each}}</div>{{/if}}
+  </div>
+
+  {{#unless collapsed}}
+  <div class="god-qb-side">
+    <div class="god-qb-dodge" data-tooltip="Шанс ухилення"><b>{{dodge}}</b><small>ШУ</small></div>
+    <div class="god-qb-stance">
+      {{#each stances}}<a class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{label}}"><img src="{{icon}}" alt=""></a>{{/each}}
+    </div>
+  </div>
+  {{/unless}}
+  {{/if}}
+
+  {{#unless collapsed}}{{#if (or actor userMode)}}
+  <div class="god-qb-slots" data-tooltip-direction="UP">
+    {{#each slots}}
+    {{#if gap}}<span class="god-qb-gap"></span>{{/if}}
+    <a class="god-qb-slot god-qb-{{group}} {{#if dim}}dim{{/if}}" data-slot data-action="use" data-key="{{key}}"{{#if hotSlot}} data-hot-slot="{{hotSlot}}"{{/if}} draggable="true"
+       data-tooltip="{{tip}} · клік — використати, ПКМ — прибрати">
+      <img src="{{img}}" alt="">{{#if num}}<u>{{num}}</u>{{/if}}{{#if badge}}<em>{{badge}}</em>{{/if}}</a>
+    {{/each}}
+    <span class="god-qb-drop" data-tooltip="{{#if actor}}Перетягни сюди предмет, заклинання, вміння чи макрос{{else}}Перетягни сюди макрос{{/if}}"><i class="fa-solid fa-plus"></i></span>
+    {{#if custom}}<a class="god-qb-reset" data-action="resetSlots" data-tooltip="Повернути автоматичний набір"><i class="fa-solid fa-rotate-left"></i></a>{{/if}}
+  </div>
+  {{#if actor}}<a class="god-qb-tray" data-action="tray" data-tooltip="Панель кидків (Shift+R)"><i class="fa-solid fa-dice-d20"></i></a>{{/if}}
+  {{/if}}{{/unless}}
+</div>

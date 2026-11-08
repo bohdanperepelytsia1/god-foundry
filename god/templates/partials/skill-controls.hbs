@@ -1,0 +1,9 @@
+{{#if pips.length}}<span class="god-pips">{{#each pips}}<i class="{{#if on}}on{{/if}} {{#if fixed}}fixed{{/if}}"></i>{{/each}}</span>{{/if}}
+{{#if @root.editMode}}
+<button type="button" class="god-mini" data-action="skillDown" data-skill="{{key}}" {{#unless lvl}}disabled{{/unless}} data-tooltip="{{downTip}}">−</button>
+<b class="god-skill-lvl {{#if fixed}}fixed{{/if}}">{{lvl}}</b>
+<button type="button" class="god-mini" data-action="skillUp" data-skill="{{key}}" {{#if maxed}}disabled{{/if}} {{#if locked}}disabled{{/if}} data-tooltip="{{upTip}}">+</button>
+<span class="god-cost">{{#unless maxed}}{{#unless locked}}{{next}}{{/unless}}{{/unless}}</span>
+{{else}}
+<b class="god-skill-lvl">{{#if lvl}}{{lvl}}{{else}}·{{/if}}</b>
+{{/if}}

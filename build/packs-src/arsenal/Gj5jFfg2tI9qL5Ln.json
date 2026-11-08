@@ -1,0 +1,26 @@
+{
+  "_id": "Gj5jFfg2tI9qL5Ln",
+  "_key": "!items!Gj5jFfg2tI9qL5Ln",
+  "name": "Спальник",
+  "type": "gear",
+  "img": "systems/god/assets/icons/gear/camp.svg",
+  "system": {
+    "description": "<p>Ковдра і підстилка для ночівлі під небом.</p>",
+    "weight": 2,
+    "quantity": 1,
+    "location": "main",
+    "consumable": false
+  },
+  "effects": [],
+  "folder": "ESBOjyWBN371g21U",
+  "sort": 3200,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.345",
+    "systemId": "god",
+    "systemVersion": "0.5.0"
+  }
+}

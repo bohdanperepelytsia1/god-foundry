@@ -1,0 +1,354 @@
+/**
+ * Кидки G.O.D.: перевірки, атака зброєю (попадання → сітка урону),
+ * сотворення заклинань v4.5.0 (попадання → МОДІНТ×d(школа) проти порогу → урон).
+ * Кидки — звичайні Roll Foundry: Dice So Nice, режими приватності й чат працюють самі.
+ */
+import * as R from '../rules.mjs'
+import { GOD } from '../config.mjs'
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const signed = n => (n >= 0 ? `+${n}` : `${n}`)
+const D20 = { norm: '1d20', adv: '2d20kh', dis: '2d20kl' }
+const MODE_LABEL = { adv: 'перевага', dis: 'недолік' }
+
+const naturalOf = roll => {
+  const d = roll.dice[0]
+  return d?.results.find(r => r.active !== false && !r.discarded)?.result ?? d?.total ?? 0
+}
+
+/**
+ * Можливі цілі на сцені: токени з актором, крім самого нападника.
+ * Порядок: позначені (T) → найближчі → за абеткою.
+ */
+export function targetChoices(actor) {
+  const tokens = canvas?.ready ? canvas.tokens.placeables : []
+  const own = actor?.getActiveTokens?.() ?? []
+  const origin = own[0]
+  const marked = new Set([...game.user.targets].map(t => t.id))
+  const dist = t => {
+    if (!origin) return null
+    try { return Math.round(canvas.grid.measurePath([origin.center, t.center]).distance) } catch { return null }
+  }
+  return tokens
+    .filter(t => t.actor && !own.includes(t) && (t.visible || game.user.isGM))
+    .map(t => ({ uuid: t.document.uuid, name: t.name, dodge: t.actor.system?.derived?.dodge ?? 0, dist: dist(t), marked: marked.has(t.id) }))
+    .sort((a, b) => (b.marked - a.marked) || ((a.dist ?? 0) - (b.dist ?? 0)) || a.name.localeCompare(b.name, 'uk'))
+}
+
+/** Ціль за UUID токена → { uuid, name, dodge, actor } і позначка T для наочності */
+function resolveTarget(uuid) {
+  const doc = uuid && fromUuidSync(uuid)
+  if (!doc?.actor) return null
+  doc.object?.setTarget?.(true, { releaseOthers: true, groupSelection: false })
+  return { uuid, name: doc.name, dodge: doc.actor.system?.derived?.dodge ?? 0, actor: doc.actor }
+}
+
+// ── Розмітка картки ──────────────────────────────────────────────────────────
+const head = (img, title, sub) => `
+  <header class="god-card-head">
+    ${img ? `<img src="${esc(img)}" alt="">` : ''}
+    <div><h3>${esc(title)}</h3>${sub ? `<span>${sub}</span>` : ''}</div>
+  </header>`
+
+const step = (label, total, detail, verdict) => `
+  <div class="god-step">
+    <span class="god-step-label">${label}</span>
+    <b class="god-step-total">${total}</b>
+    ${detail ? `<span class="god-step-detail">${detail}</span>` : ''}
+    ${verdict ? `<span class="god-verdict ${verdict.ok ? 'ok' : 'fail'}">${verdict.text}</span>` : ''}
+  </div>`
+
+const damageBlock = (phys, mag, note, target = null) => `
+  <div class="god-dmg">
+    ${phys ? `<span class="phys">${phys}<small>фіз</small></span>` : ''}
+    ${mag ? `<span class="mag">${mag}<small>маг</small></span>` : ''}
+    ${!phys && !mag ? '<span class="none">0</span>' : ''}
+  </div>
+  ${note ? `<div class="god-note">${note}</div>` : ''}
+  ${phys || mag ? `<div class="god-apply god-apply-one">
+    <button type="button" data-god-apply="1" data-phys="${phys}" data-mag="${mag}" ${target ? `data-target="${target.uuid}"` : ''}
+      data-tooltip="${target ? `Застосувати до «${esc(target.name)}»` : 'Обраним токенам'}: спершу MR, потім PR, потім HP. Менше за MR — щит не пробито">
+      <i class="fa-solid fa-burst"></i> Урон ${phys + mag}${target ? ` → ${esc(target.name)}` : ''}</button>
+  </div>` : ''}`
+
+async function sendCard(actor, html, rolls) {
+  const data = {
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="god-card">${html}</div>`,
+    rolls,
+    sound: CONFIG.sounds.dice,
+  }
+  ChatMessage.applyRollMode(data, game.settings.get('core', 'rollMode'))
+  return ChatMessage.create(data)
+}
+
+// ── Діалог параметрів ────────────────────────────────────────────────────────
+async function rollDialog({ title, fields, info }) {
+  const rows = fields.map(fd => {
+    if (fd.type === 'mode') return `
+      <div class="god-mode" role="radiogroup">
+        <label><input type="radio" name="mode" value="dis"><span>Недолік</span></label>
+        <label><input type="radio" name="mode" value="norm" checked><span>Звичайний</span></label>
+        <label><input type="radio" name="mode" value="adv"><span>Перевага</span></label>
+      </div>`
+    if (fd.type === 'check') return `
+      <label class="god-dlg-check"><input type="checkbox" name="${fd.name}" ${fd.value ? 'checked' : ''}><span>${esc(fd.label)}</span></label>`
+    if (fd.type === 'target') {
+      const pre = fd.choices.find(t => t.marked)
+      return `
+      <label class="god-dlg-field god-dlg-target"><span>${esc(fd.label ?? 'Ціль')}</span>
+        <select name="${fd.name}" required>
+          ${pre ? '' : '<option value="" selected disabled>— обери ціль —</option>'}
+          ${fd.choices.map(t => `<option value="${t.uuid}" ${t === pre ? 'selected' : ''}>${esc(t.name)} — ШУ ${t.dodge}${t.dist !== null ? ` · ${t.dist} м` : ''}</option>`).join('')}
+        </select></label>`
+    }
+    return `
+      <label class="god-dlg-field"><span>${esc(fd.label)}</span>
+        <input type="number" name="${fd.name}" value="${fd.value ?? 0}" autofocus></label>`
+  }).join('')
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title, icon: 'fa-solid fa-dice-d20' },
+    classes: ['god-dialog'],
+    position: { width: 380 },
+    content: `${info ? `<p class="god-dlg-info">${info}</p>` : ''}${rows}`,
+    rejectClose: false,
+    buttons: [{
+      action: 'roll', label: 'Кинути', icon: 'fa-solid fa-dice-d20', default: true,
+      callback: (event, button) => {
+        const el = button.form.elements, out = {}
+        for (const fd of fields) {
+          if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? 'norm'
+          else if (fd.type === 'check') out[fd.name] = el[fd.name].checked
+          else if (fd.type === 'target') out[fd.name] = el[fd.name].value
+          else out[fd.name] = Number(el[fd.name].value) || 0
+        }
+        return out
+      },
+    }],
+  })
+  if (!result || typeof result !== 'object') return null
+  // Ціль обов'язкова: без неї влучання не перевірити
+  const tf = fields.find(fd => fd.type === 'target')
+  if (tf && !result[tf.name]) { ui.notifications.warn('Обери ціль атаки'); return null }
+  return result
+}
+
+// ── Прості перевірки ─────────────────────────────────────────────────────────
+async function d20Check(actor, label, mod, sub) {
+  const p = await rollDialog({ title: label, fields: [{ name: 'mod', label: 'Модифікатор', value: mod }, { type: 'mode' }] })
+  if (!p) return
+  const roll = await new Roll(`${D20[p.mode]} + @m`, { m: p.mod }).evaluate()
+  const nat = naturalOf(roll)
+  const cls = nat === 20 ? 'nat20' : nat === 1 ? 'nat1' : ''
+  return sendCard(actor, `
+    ${head(actor.img, label, sub)}
+    <div class="god-big ${cls}">${roll.total}</div>
+    <div class="god-note">куб ${nat} ${signed(p.mod)}${MODE_LABEL[p.mode] ? ` · ${MODE_LABEL[p.mode]}` : ''}</div>`, [roll])
+}
+
+export const statCheck = (actor, key) =>
+  d20Check(actor, GOD.STATS[key].label, actor.system.stats[key].mod, 'перевірка характеристики')
+
+export const skillCheck = (actor, key) =>
+  d20Check(actor, GOD.SKILL_INDEX[key].name, actor.system.skill(key), `вміння, рівень ${actor.system.skill(key)}`)
+
+// ── Швидкий кидок з панелі (без діалогу) ─────────────────────────────────────
+/**
+ * @param pool  {d4: 2, d20: 1, ...} — довільні куби; порожній → перевірка d20
+ * @param mode  'norm'|'adv'|'dis' — лише для перевірки d20
+ */
+export async function quickRoll(actor, { label = 'Кидок', sub = '', base = 0, extra = 0, mode = 'norm', pool = {} }) {
+  const dice = Object.entries(pool).filter(([, n]) => n > 0)
+  const mod = base + extra
+  const formula = dice.length
+    ? dice.map(([d, n]) => `${n}${d}`).join(' + ') + (mod ? ` ${mod >= 0 ? '+' : '-'} ${Math.abs(mod)}` : '')
+    : `${D20[mode]}${mod ? ` ${mod >= 0 ? '+' : '-'} ${Math.abs(mod)}` : ''}`
+  const roll = await new Roll(formula).evaluate()
+  const isCheck = !dice.length
+  const nat = isCheck ? naturalOf(roll) : null
+  const cls = nat === 20 ? 'nat20' : nat === 1 ? 'nat1' : ''
+  const faces = dice.length
+    ? `<div class="god-faces">${roll.dice.flatMap(d => d.results.map(r => `<span data-tooltip="d${d.faces}">${r.result}</span>`)).join('')}</div>` : ''
+  const detail = isCheck
+    ? `куб ${nat}${mod ? ` ${signed(mod)}` : ''}${MODE_LABEL[mode] ? ` · ${MODE_LABEL[mode]}` : ''}`
+    : `${esc(roll.formula)}`
+  return sendCard(actor, `
+    ${head(actor?.img, label, sub)}
+    <div class="god-big ${cls}">${roll.total}</div>
+    ${faces}
+    <div class="god-note">${detail}</div>`, [roll])
+}
+
+// ── Атака зброєю ─────────────────────────────────────────────────────────────
+export async function weaponAttack(actor, item) {
+  const sys = actor.system
+  const ws = GOD.WEAPON_SKILLS[item.system.category] ?? {}
+  const isChar = actor.type === 'character'
+  const natural = !!item.natural
+  const profLvl = sys.skill?.(ws.prof) ?? 0
+  const accLvl = sys.skill?.(ws.acc) ?? 0
+  const cm = sys.combat ?? {}
+  const choices = targetChoices(actor)
+  if (!choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
+
+  const p = await rollDialog({
+    title: `Атака: ${item.name}`,
+    info: 'Урон кидається лише якщо попадання <b>більше</b> за ШУ цілі.',
+    fields: [
+      { type: 'target', name: 'target', choices },
+      { name: 'hitMod', label: 'Модифікатор попадання', value: accLvl + (cm.hitMod || 0) },
+      { name: 'dmgMod', label: 'Модифікатор урону', value: (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0) },
+      { type: 'mode' },
+    ],
+  })
+  if (!p) return
+  const target = resolveTarget(p.target)
+  if (!target) return ui.notifications.warn('Ціль зникла зі сцени')
+
+  const hit = await new Roll(`${D20[p.mode]} + @m`, { m: p.hitMod }).evaluate()
+  const hitOk = R.isHit(hit.total, target.dodge)
+  const rolls = [hit]
+  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[item.system.category] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
+  let html = head(item.img ?? actor.img, item.name, sub)
+  html += step('Попадання', hit.total,
+    `куб ${naturalOf(hit)} ${signed(p.hitMod)}${MODE_LABEL[p.mode] ? ` · ${MODE_LABEL[p.mode]}` : ''} · проти ШУ ${target.dodge}`,
+    { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+
+  if (!hitOk) {
+    html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
+    return sendCard(actor, html, rolls)
+  }
+  const dmg = await new Roll('1d20 + @m', { m: p.dmgMod }).evaluate()
+  rolls.push(dmg)
+  const tier = R.damageTier({ total: dmg.total, natural: naturalOf(dmg), skillLvl: profLvl })
+  const st = sys.stats
+  const base = natural
+    ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0 }
+    : R.weaponBaseDamage({ str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off' })
+  const out = R.applyPct(base, tier.pct)
+  html += step('Урон', dmg.total, `куб ${naturalOf(dmg)} ${signed(p.dmgMod)}`, null)
+  html += `<div class="god-tier tier-${tier.tier}">${tier.label}<small>${tier.pct}%${tier.note ? ` · ${esc(tier.note)}` : ''}</small></div>`
+  html += damageBlock(out.phys, out.mag, `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}`, target)
+  return sendCard(actor, html, rolls)
+}
+
+// ── Сотворення заклинання (v4.5.0 §1.2) ──────────────────────────────────────
+export async function castSpell(actor, spell) {
+  const s = spell.system, sys = actor.system
+  const schoolLvl = sys.schools[s.school] ?? 0
+  const school = GOD.SPELL_SCHOOLS[s.school]
+  if (!schoolLvl) return ui.notifications.warn(`Немає володіння школою «${school}»`)
+  const needsHit = s.attackType === 'target' || s.attackType === 'touch'
+  const choices = needsHit ? targetChoices(actor) : []
+  if (needsHit && !choices.length) return ui.notifications.warn('На сцені немає цілей для заклинання')
+  const n = R.castDiceCount(sys.stats.int.value), die = R.schoolDie(schoolLvl)
+
+  const p = await rollDialog({
+    title: `Сотворення: ${spell.name}`,
+    info: `${school}, володіння ${schoolLvl} → <b>${n}d${die}</b>, потрібно ≥ ${s.threshold} хоча б на одному кубі.` +
+      (needsHit ? '<br>Спершу попадання: має бути <b>більше</b> за ШУ цілі.' : ''),
+    fields: [
+      ...(needsHit ? [
+        { type: 'target', name: 'target', choices },
+        { name: 'hitMod', label: 'Маг. прицільність', value: sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) },
+      ] : []),
+      { name: 'threshold', label: 'Поріг (ПППС)', value: s.threshold },
+      { name: 'statMult', type: 'check', label: 'Множник +МОДІНТ +МОДМУД (Кодекс)', value: sys.derived.spellStatMult },
+      { name: 'pay', type: 'check', label: `Списати ${s.manaCost} OM${s.staminaCost ? ` і ${s.staminaCost} ВС` : ''}`, value: true },
+    ],
+  })
+  if (!p) return
+  const target = needsHit ? resolveTarget(p.target) : null
+  if (needsHit && !target) return ui.notifications.warn('Ціль зникла зі сцени')
+
+  const mp = sys.resources.mp.value, ed = sys.resources.ed.value
+  if (p.pay && (mp < s.manaCost || ed < s.staminaCost)) {
+    return ui.notifications.warn(`Недостатньо ресурсів: потрібно ${s.manaCost} OM / ${s.staminaCost} ВС, є ${mp} / ${ed}`)
+  }
+  const pay = () => p.pay && actor.update({
+    'system.resources.mp.value': mp - s.manaCost,
+    'system.resources.ed.value': ed - s.staminaCost,
+  })
+
+  const rolls = []
+  let html = head(spell.img, spell.name, `${school} · ${GOD.ATTACK_TYPES[s.attackType]}`)
+
+  if (needsHit) {
+    const hit = await new Roll('1d20 + @m', { m: p.hitMod }).evaluate()
+    rolls.push(hit)
+    const ok = R.isHit(hit.total, target.dodge)
+    html += step('Попадання', hit.total, `куб ${naturalOf(hit)} ${signed(p.hitMod)} · ${esc(target.name)}, ШУ ${target.dodge}`,
+      { ok, text: ok ? 'Влучання' : 'Промах' })
+    if (!ok) {
+      await pay()
+      html += `<div class="god-note">${p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>`
+      return sendCard(actor, html, rolls)
+    }
+  }
+
+  const cast = await new Roll(`${n}d${die}`).evaluate()
+  rolls.push(cast)
+  const faces = cast.dice[0].results.map(r => r.result)
+  const ev = R.evaluateCast(faces, p.threshold)
+  await pay()
+
+  html += `<div class="god-step"><span class="god-step-label">Сотворення</span>
+    <span class="god-step-detail">${n}d${die} проти ${p.threshold}</span>
+    <span class="god-verdict ${ev.success ? 'ok' : 'fail'}">${ev.success ? 'Успіх' : 'Провал'}</span></div>
+    <div class="god-faces">${faces.map((v, i) => `<span class="${ev.hits[i] ? 'hit' : ''}">${v}</span>`).join('')}</div>`
+
+  if (!ev.success) {
+    html += `<div class="god-note">Можна спробувати ще раз, поки вистачає мани.</div>
+      <div class="god-apply god-apply-one"><button type="button" data-god-recast="${spell.uuid}">
+        <i class="fa-solid fa-rotate-right"></i> Спробувати ще раз</button></div>`
+  } else if (s.baseDamage > 0 && s.damageKind !== 'none') {
+    const dmg = R.spellDamage({ base: s.baseDamage, schoolLvl, int: sys.stats.int.value, wis: sys.stats.wis.value, statMult: p.statMult })
+    const mult = schoolLvl + (p.statMult ? sys.stats.int.mod + sys.stats.wis.mod : 0)
+    html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target)
+  }
+  if (p.pay) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>`
+  return sendCard(actor, html, rolls)
+}
+
+export async function useAbility(actor, item) {
+  const s = item.system, r = actor.system.resources
+  let note = ''
+  if (s.manaCost || s.staminaCost) {
+    if (r.mp.value < s.manaCost || r.ed.value < s.staminaCost) {
+      return ui.notifications.warn(`Недостатньо ресурсів: ${s.manaCost} OM / ${s.staminaCost} ВС`)
+    }
+    await actor.update({ 'system.resources.mp.value': r.mp.value - s.manaCost, 'system.resources.ed.value': r.ed.value - s.staminaCost })
+    note = `Списано ${s.manaCost} OM, ${s.staminaCost} ВС`
+  }
+  return postItem(actor, item, note)
+}
+
+export async function postItem(actor, item, note = '') {
+  const desc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(item.system.description ?? '', { relativeTo: item })
+  return ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="god-card">${head(item.img, item.name, game.i18n.localize(`TYPES.Item.${item.type}`))}
+      <div class="god-desc">${desc || '<p class="god-note">Без опису</p>'}</div>${note ? `<div class="god-note">${esc(note)}</div>` : ''}</div>`,
+  })
+}
+
+/** Розхідний предмет: відновити ресурси, списати 1 шт (останній — прибрати), картка в чат */
+export async function consumeItem(actor, item) {
+  const s = item.system
+  if ((s.quantity ?? 0) < 1) return ui.notifications.warn(`«${item.name}» закінчився`)
+  const { changes, applied } = R.applyRestore(actor.system.resources, s.restore)
+  const upd = Object.fromEntries(Object.entries(changes).map(([k, v]) => [`system.resources.${k}.value`, v]))
+  if (Object.keys(upd).length) await actor.update(upd)
+  const left = s.quantity - 1
+  if (left > 0) await item.update({ 'system.quantity': left })
+  else await item.delete()
+  const abbr = k => GOD.RESOURCES[k]?.abbr ?? k.toUpperCase()
+  const lines = applied.map(a => `<span class="${a.gained >= 0 ? 'up' : 'down'}"><b>${abbr(a.key)} ${a.gained >= 0 ? '+' : ''}${a.gained}</b> <small>${a.from} → ${a.to}</small></span>`).join('')
+  const desc = await foundry.applications.ux.TextEditor.implementation.enrichHTML(s.description ?? '', { relativeTo: actor })
+  return ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="god-card">${head(item.img, item.name, `Використано · лишилось ${left}`)}
+      ${lines ? `<div class="god-restore">${lines}</div>` : ''}
+      ${desc ? `<div class="god-desc">${desc}</div>` : ''}</div>`,
+  })
+}
