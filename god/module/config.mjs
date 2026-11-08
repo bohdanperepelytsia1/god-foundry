@@ -48,7 +48,7 @@ export const SKILL_CATEGORIES = {
     S('Поводження з тваринами', 2, 10), S('Полювання', 3, 10), S("Пам'ять", 2, 10), S('Перша допомога', 6, 5),
     S('Плавання', 2, 10), S('Рибатство', 3, 10), S('Слух', 3, 10), S('Стійкість', 5, 10),
     S('Слідопитство', 4, 10), S('Залізні нерви', 7, 5), S('Майстер на всі руки', 4, 10),
-    S('Грамота (рідна мова)', 6, 5), S('Скритність', 5, 10), S('Маскування', 3, 10), S('Кулінарія', 3, 10),
+    S('Грамота (рідна мова)', 2, 5), S('Скритність', 5, 10), S('Маскування', 3, 10), S('Кулінарія', 3, 10),
     S('Пошук скарбів', 5, 10), S('Мореплавство', 7, 3),
   ]},
   combat: { gate: skillKey('Бойові навички'), label: 'Бойові', skills: [
@@ -62,7 +62,7 @@ export const SKILL_CATEGORIES = {
   science: { gate: skillKey('Розуміння'), label: 'Наука', skills: [
     S('Розуміння', 8, 1), S('Аналіз', 5, 10), S('Грамота (друга мова)', 3, 5), S('Історія', 3, 10),
     S('Картографія', 3, 10), S('Медицина', 4, 10), S('Натуралізм', 2, 10), S('Окультизм', 4, 10),
-    S('Реанімація', 4, 10), S('Теологія', 4, 10), S('Травництво', 3, 10), S('Хірургія', 5, 10),
+    S('Реанімація', 4, 10), S('Теологія', 4, 10), S('Травництво', 3, 10), S('Хірургія', 5, 5),
     S('Мова жестів', 3, 5), S('Зіллєварство', 4, 10),
   ]},
   magic: { gate: skillKey('Магічність'), label: 'Магія', skills: [
@@ -112,6 +112,9 @@ export const ARMOR_SLOTS = {
 export const ARMOR_CLASSES = {
   none: 'Не обладунок', light: 'Легкий', medium: 'Середній', heavy: 'Тяжкий',
 }
+
+/** Типи щитів (Combat manual, «Типи зброї» і «Захист») */
+export const SHIELD_SIZES = { small: 'Кулачний (малий)', medium: 'Каплевидний (середній)', large: 'Башенний (великий)' }
 
 /** Розміри створінь (Combat manual): клітини, швидкість, множник ШУ */
 export const CREATURE_SIZES = {
@@ -206,7 +209,7 @@ export const MONEY = {
 }
 
 export const GOD = {
-  BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
+  BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SHIELD_SIZES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
   INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 

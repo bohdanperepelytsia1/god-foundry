@@ -28,12 +28,14 @@ function itemTotals(actor) {
       t.armorKeys.push(R.armorClassKey(s.armorClass, s.fitted))
       t.pr += Number(s.phys) || 0
       t.mr += Number(s.mag) || 0
+      if (s.slot === 'Щит') t.shield = s.shieldSize || 'small'
       if (s.slot === 'Рюкзак') t.bagBonus += Number(s.bagBonus) || 0
       if (s.slot === 'Пояс')   t.beltSlots += Number(s.beltSlots) || 0
     }
     if (s.spellStatMult) t.spellStatMult = true
   }
   t.armor = R.armorDodgeMod(t.armorKeys)
+  t.shieldDodge = t.shield ? (R.SHIELD_DODGE[t.shield] ?? 0) : 0
   t.equippedWeight = Math.round(t.equippedWeight * 100) / 100
   t.totalWeight = Math.round(t.totalWeight * 100) / 100
   return t
@@ -109,6 +111,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       source.reputation.status ??= source.reputation.status_val
       delete source.reputation.status_val
     }
+    // Максимуми вмінь звірено з правилами (напр. Хірургія 10 → 5): зайве повертаємо очками
+    for (const [cat, c] of Object.entries(GOD.SKILL_CATEGORIES)) {
+      const lv = source.skills?.[cat]
+      if (!lv) continue
+      for (const s of c.skills) {
+        if (!(lv[s.key] > s.max)) continue
+        if (source.progress) source.progress.skillPoints = (source.progress.skillPoints ?? 0) + R.skillInvested(s.cost, lv[s.key]) - R.skillInvested(s.cost, s.max)
+        lv[s.key] = s.max
+        if (source.floors?.skills?.[s.key] > s.max) source.floors.skills[s.key] = s.max
+      }
+    }
     return super.migrateData(source)
   }
 
@@ -124,7 +137,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     for (const [cat, c] of Object.entries(GOD.SKILL_CATEGORIES)) {
       for (const s of c.skills) if ((this.skills[cat][s.key] ?? 0) > (this.floors.skills[s.key] ?? 0)) return true
     }
-    for (const k of Object.keys(GOD.STATS)) if (this.stats[k].value > (this.floors.stats[k] ?? this.stats[k].value)) return true
+    for (const k of Object.keys(GOD.STATS)) { const v = this.stats[k].base ?? this.stats[k].value; if (v > (this.floors.stats[k] ?? v)) return true }
     return this.customSkills.some(s => s.lvl > s.floor)
   }
 
@@ -132,14 +145,21 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const actor = this.parent
     const t = itemTotals(actor)
 
-    for (const [k, s] of Object.entries(this.stats)) s.mod = R.statMod(s.value)
+    // Бонус від шкіл магії додається до значення; base — те, що вкачано
+    const school = R.schoolStatBonus(this.schools)
+    for (const [k, s] of Object.entries(this.stats)) {
+      s.base = s.value
+      s.bonus = school[k] ?? 0
+      s.value += s.bonus
+      s.mod = R.statMod(s.value)
+    }
 
     for (const [k, cfg] of Object.entries(GOD.RESOURCES)) {
       const r = this.resources[k]
       r.auto = Math.round((this.stats[cfg.stat]?.value || 0) * cfg.mult)
       r.max = r.auto + (r.bonus || 0)
     }
-    this.resources.pr.max = t.pr
+    this.resources.pr.max = t.pr + (t.shield ? R.shieldPrBonus(this.skill('Щити')) : 0)
     this.resources.mr.max = t.mr
 
     const level = R.levelFromXp(this.progress.xp)
@@ -156,8 +176,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       maxWeight: R.calcMaxWeight({ override: this.encumbrance.override, muleLvl: this.skill('Мул'), bagBonus: t.bagBonus }),
       belt: { slots: t.beltSlots, used: t.beltUsed },
       dodgeAuto,
-      armorDodge: t.armor.mod, armorWorst: t.armor.worst,
-      dodge: Math.max(0, Math.min(R.MAX_DODGE, dodgeAuto + t.armor.mod + (this.combat.dodgeBonus || 0))),
+      armorDodge: t.armor.mod, armorWorst: t.armor.worst, shieldDodge: t.shieldDodge, shield: t.shield ?? null,
+      dodge: Math.max(0, Math.min(R.MAX_DODGE, dodgeAuto + t.armor.mod + t.shieldDodge + (this.combat.dodgeBonus || 0))),
       dodgeParts: R.dodgeParts({
         equippedWeight: t.equippedWeight, enduranceCurrent: this.resources.ed.value,
         dodgeSkill: this.skill('Ухиляння'), bonus: this.combat.dodgeBonus,
@@ -234,9 +254,9 @@ export class NpcData extends foundry.abstract.TypeDataModel {
     this.resources.pr.max = (this.resources.pr.base || 0) + t.pr
     this.resources.mr.max = (this.resources.mr.base || 0) + t.mr
     this.derived = {
-      armorDodge: t.armor.worst ? t.armor.mod : 0,
-      // НІП: база + клас обладунку (лише якщо щось одягнено) + ефекти, × розмір
-      dodge: Math.max(0, Math.round(((this.dodge || 0) + (t.armor.worst ? t.armor.mod : 0) + (this.combat.dodgeBonus || 0)) * (R.SIZE_DODGE[this.size] ?? 1))),
+      armorDodge: t.armor.worst ? t.armor.mod : 0, shieldDodge: t.shieldDodge, shield: t.shield ?? null,
+      // НІП: база + клас обладунку (лише якщо щось одягнено) + щит + ефекти, × розмір
+      dodge: Math.max(0, Math.round(((this.dodge || 0) + (t.armor.worst ? t.armor.mod : 0) + t.shieldDodge + (this.combat.dodgeBonus || 0)) * (R.SIZE_DODGE[this.size] ?? 1))),
       initiative: this.initiative,
       speed: this.speed,
       equippedWeight: t.equippedWeight,

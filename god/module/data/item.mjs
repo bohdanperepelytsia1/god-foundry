@@ -44,6 +44,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       slot: choice(Object.keys(GOD.ARMOR_SLOTS), 'Кираса'),
       armorClass: choice(Object.keys(GOD.ARMOR_CLASSES), 'none'),
       fitted: new f.BooleanField({ initial: false }),   // підігнаний під героя
+      shieldSize: new f.StringField({ initial: 'small', choices: ['small', 'medium', 'large'] }),   // лише для слоту «Щит»
       phys: int(0),
       mag: int(0),
       beltSlots: int(0, { min: 0 }),   // лише для слота «Пояс»

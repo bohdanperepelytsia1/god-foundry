@@ -2,7 +2,7 @@
  * rules.mjs — ядро правил G.O.D. Чисті функції, жодних залежностей від Foundry.
  * Перевіряється звичайним Node (tests/rules.test.mjs).
  */
-import { BALANCE, SKILL_COST_TABLE, SCHOOL_DIE } from './config.mjs'
+import { BALANCE, SKILL_COST_TABLE, SCHOOL_DIE, WEAPON_SKILLS } from './config.mjs'
 
 const num = v => Number(v) || 0
 
@@ -150,8 +150,8 @@ export const accuracyMod = lvl => num(lvl) >= 1 ? num(lvl) : -5
  */
 export const PROF_DMG_MOD = [-5, 1, 2, 3, 3, 3, 4, 5, 6, 6, 8]
 export const proficiencyDamageMod = skillLvl => PROF_DMG_MOD[Math.max(0, Math.min(10, Math.trunc(num(skillLvl))))]
-/** Кулачний бій: плоский бонус до урону на рівнях 4/5/8/9 (+50/+150/+300/+500) */
-export const fistFlatBonus = lvl => { const l = num(lvl); return l >= 9 ? 500 : l >= 8 ? 300 : l >= 5 ? 150 : l >= 4 ? 50 : 0 }
+/** Кулачний бій: плоский бонус до урону на рівнях 4/5/9/10 (+50/+150/+300/+500) */
+export const fistFlatBonus = lvl => { const l = num(lvl); return l >= 10 ? 500 : l >= 9 ? 300 : l >= 5 ? 150 : l >= 4 ? 50 : 0 }
 
 /**
  * Клас обладунку → ШУ (Combat manual, «Види обладунків»). Змішаний комплект — штраф
@@ -271,7 +271,9 @@ export const applyDamage = ({ hp, pr, mr }, dmg) => {
   if (MR > 0 && total < MR) { out.blocked = true; return out }   // щит не пробито — урон у нікуди
   let left = total
   out.toMr = Math.min(MR, left); left -= out.toMr; out.mr = MR - out.toMr
-  out.toPr = Math.min(PR, left); left -= out.toPr; out.pr = PR - out.toPr
+  // Смертельний постріл ігнорує фіз. захист: PR не знімається, урон іде далі в HP
+  if (dmg?.ignorePr) { out.ignorePr = true; out.pr = num(pr) }
+  else { out.toPr = Math.min(PR, left); left -= out.toPr; out.pr = PR - out.toPr }
   out.toHp = left; out.hp = num(hp) - left
   return out
 }
@@ -381,3 +383,132 @@ export const applyRestore = (resources, restore) => {
 /** Ціна в монетах → «1 з 5 ср» */
 export const formatPrice = (price = {}, money = {}) =>
   Object.entries(money).filter(([k]) => num(price[k])).map(([k, m]) => `${num(price[k])} ${m.abbr}`).join(' ') || ''
+
+/**
+ * Володіння школою магії (Combat manual, «Система заклинань»): 7 — МУД +15, 9 — ІНТ +15, 10 — МУД +30.
+ * Рахується для кожної школи окремо.
+ */
+export const schoolStatBonus = schools => {
+  const out = { wis: 0, int: 0 }
+  for (const l of Object.values(schools ?? {}).map(num)) {
+    out.wis += l >= 10 ? 30 : l >= 7 ? 15 : 0
+    out.int += l >= 9 ? 15 : 0
+  }
+  return out
+}
+
+/** Щити: ШУ за типом і фіз. захист, що додає вміння «Щити» (рівні 1–10) */
+export const SHIELD_DODGE = { small: 0, medium: -1, large: -3 }
+export const SHIELD_PR = [0, 20, 40, 70, 100, 120, 150, 200, 300, 400, 500]
+export const shieldPrBonus = lvl => SHIELD_PR[Math.max(0, Math.min(10, Math.trunc(num(lvl))))]
+
+// ── Володіння зброєю: що дають рівні (Combat manual, «Бойові уміння») ─────────
+/** Фізична зброя, для якої маг. урон зброї рахується лише з «Потоком Одхі» (7 рівень) */
+export const FLOW_CATS = new Set(['light', 'onehand', 'heavy1h', 'twohand', 'bow', 'throw'])
+export const weaponPerks = (cat, lvl) => {
+  const l = num(lvl)
+  return {
+    flow: FLOW_CATS.has(cat) && l >= 7,                       // Потік Одхі
+    strDouble: l >= 10 && (cat === 'twohand' || cat === 'fist'),   // урон від Сили ×2
+    offHandStr: l >= 10 && cat === 'light',                    // ліва рука теж з Силою
+    autoChance: l >= 10 && cat === 'light',                    // усі шанси урону спрацьовують
+    glovesPct: cat === 'fist' && l >= 7 ? 50 : 0,              // половина фіз. захисту рукавиць → урон
+  }
+}
+
+/**
+ * Урон зброї на 100% з урахуванням рівня володіння (лише для персонажів; НІП — як раніше).
+ * magic — чи має герой «Магічність»: без неї «Потік Одхі» перетворює маг. урон на фізичний.
+ */
+export const weaponDamage = ({ str, int, phys, mag, offHand = false, cat, lvl = 0, magic = false, gloves = 0, char = true }) => {
+  if (!char) return { ...weaponBaseDamage({ str, int, phys, mag, offHand }), notes: [] }
+  const pk = weaponPerks(cat, lvl)
+  const notes = []
+  const strPart = (offHand && !pk.offHandStr) ? 0 : num(str) * BALANCE.STR_DMG_MULT * (pk.strDouble ? 2 : 1)
+  if (pk.strDouble) notes.push('Сила ×2')
+  if (offHand && pk.offHandStr) notes.push('ліва рука з Силою')
+  let p = Math.floor(strPart + num(phys))
+  let m = num(mag) > 0 ? Math.floor(num(int) * BALANCE.STR_DMG_MULT + num(mag)) : 0
+  if (m && FLOW_CATS.has(cat)) {
+    if (!pk.flow) { m = 0; notes.push('маг. урон зброї — з 7 рівня (Потік Одхі)') }
+    else if (!magic) { p += m; m = 0; notes.push('Потік Одхі: маг → фіз') }
+    else notes.push('Потік Одхі')
+  }
+  if (pk.glovesPct && num(gloves) > 0) { const g = Math.floor(num(gloves) * pk.glovesPct / 100); p += g; notes.push(`рукавиці +${g}`) }
+  if (cat === 'fist') { const fl = fistFlatBonus(lvl); if (fl) { p += fl; notes.push(`кулачний бій +${fl}`) } }
+  return { phys: p, mag: m, notes }
+}
+
+/**
+ * Здібності зброї (ЗДТН): з якого рівня володіння, витрата витривалості на кожному рівні здібності.
+ * Рівень здібності = скільки порогів з `lvls` уже досягнуто.
+ */
+export const WEAPON_ABILITIES = {
+  light:   [{ id: 'shadow', name: 'Тіньовий удар', lvls: [4, 5, 9], ed: [20, 30, 20] }],
+  onehand: [{ id: 'feint', name: 'Фінт', lvls: [4, 5, 9], ed: [20, 20, 30] }],
+  heavy1h: [{ id: 'forbidden', name: 'Заборонений удар', lvls: [4, 5, 9], ed: [40, 50, 40] }],
+  twohand: [{ id: 'heaven', name: 'Небесна кара', lvls: [4, 5, 9], ed: [60, 60, 50] }],
+  throw:   [{ id: 'instant', name: 'Миттєвий захист', lvls: [4, 5], ed: [20, 30] }, { id: 'deaththrow', name: 'Кидок смерті', lvls: [9], ed: [30] }],
+  bow:     [{ id: 'trauma', name: 'Травматичний постріл', lvls: [4], ed: [40] },
+            { id: 'double', name: 'Подвійний постріл', lvls: [5], ed: [100] },
+            { id: 'deadshot', name: 'Смертельний постріл', lvls: [9], ed: [50] }],
+}
+export const availableAbilities = (cat, lvl) => (WEAPON_ABILITIES[cat] ?? [])
+  .map(a => { const level = a.lvls.filter(x => num(lvl) >= x).length; return level ? { id: a.id, name: a.name, level, ed: a.ed[level - 1] } : null })
+  .filter(Boolean)
+
+/** Тіньовий удар: з якого результату урону й з яким шансом крит/смертельний */
+export const SHADOW_STRIKE = {
+  1: [{ min: 17, tier: 'crit', odds: 'chance' }],
+  2: [{ min: 16, tier: 'crit', odds: 'half' }],
+  3: [{ min: 18, tier: 'deadly', odds: 'threeQuarters' }, { min: 14, tier: 'crit', odds: 'threeQuarters' }],
+}
+/** Заборонений удар: шанс і скільки % фінального урону додати; 3 рівень — і по броньованій цілі */
+export const FORBIDDEN_STRIKE = { 1: { odds: 'chance', pct: 25 }, 2: { odds: 'half', pct: 50 }, 3: { odds: 'half', pct: 100, armored: true } }
+/** Небесна кара: на скільки менший урон кожної наступної цілі й скільки додаткових цілей */
+export const HEAVEN_STRIKE = { 1: { cut: 50, extra: 2 }, 2: { cut: 25, extra: 3 }, 3: { cut: 10, extra: 4 } }
+export const heavenSeries = (total, level) => {
+  const h = HEAVEN_STRIKE[level]; if (!h) return []
+  const out = []; let cur = num(total)
+  for (let i = 0; i < h.extra; i++) { cur = Math.floor(cur * (100 - h.cut) / 100); out.push(cur) }
+  return out
+}
+/** Шанси: 'chance' — 1d4 = 3, 'half' — 1d2 = 2, 'threeQuarters' — 1d4 ≤ 3 */
+export const ODDS = { chance: { die: '1d4', ok: v => v === 3, label: 'ШАНС (1d4 = 3)' }, half: { die: '1d2', ok: v => v === 2, label: '50% (1d2 = 2)' }, threeQuarters: { die: '1d4', ok: v => v <= 3, label: '75% (1d4 ≤ 3)' } }
+
+/** Оцінка (ближній): +1 попадання і +0.5 урону за кожну, до 4. Прицілювання (дальній): +1 попадання, до 10 */
+export const aimBonus = (n, melee) => {
+  const k = Math.max(0, Math.min(melee ? 4 : 10, Math.trunc(num(n))))
+  return { n: k, hit: k, dmg: melee ? Math.floor(k * 0.5) : 0 }
+}
+
+// ── Маневр «Захист» ───────────────────────────────────────────────────────────
+/** Чи спрацьовує захист проти N-го ворога за раунд: 1 — завжди, 2 — 1d4 ≥ 2, 3 — ≥ 3, 4 — = 3, 5+ — ні */
+export const DEFENSE_GATE = { 1: null, 2: v => v >= 2, 3: v => v >= 3, 4: v => v === 3 }
+/** Поріг 1d10, щоб повністю відбити урон */
+export const DEFENSE_DC = {
+  fist: 6, fistUneven: 9, light: 8, onehand: 7, heavy1h: 6, twohand: 5,
+  shield: { small: { melee: 8, ranged: 10 }, medium: { melee: 6, ranged: 6 }, large: { melee: 4, ranged: 2 } },
+}
+/** Скільки урону проходить, якщо захист не вдався (Бойові рефлекси 4+ — 50%, 2+ — 75%; стріли й магія — 100%) */
+export const defenseFailPct = (reflexes, ranged) => ranged ? 100 : num(reflexes) >= 4 ? 50 : num(reflexes) >= 2 ? 75 : 100
+
+// ── Ініціатива: 2 повні ходи ──────────────────────────────────────────────────
+/** 2ПХ, якщо середня ініціатива ворожої пачки щонайменше вдвічі менша за власну */
+export const doubleTurn = (own, enemies) => {
+  const list = (enemies ?? []).map(num)
+  if (!list.length || num(own) <= 0) return false
+  const avg = list.reduce((a, b) => a + b, 0) / list.length
+  return avg * 2 <= num(own)
+}
+
+/** Урон зброї в руках актора (для листа й інспектора) — з тими самими правилами, що й атака */
+export const actorWeaponDamage = (actor, item) => {
+  const sys = actor.system, s = item.system
+  const ws = WEAPON_SKILLS[s.category] ?? {}
+  const gloves = [...(actor.items ?? [])].filter(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Рукавиці').reduce((a, i) => a + num(i.system.phys), 0)
+  return weaponDamage({
+    str: sys.stats.str.value, int: sys.stats.int.value, phys: s.phys, mag: s.mag, offHand: s.hand === 'off',
+    cat: s.category, lvl: sys.skill?.(ws.prof) ?? 0, magic: (sys.skill?.('Магічність') ?? 0) > 0, gloves, char: actor.type === 'character',
+  })
+}

@@ -72,7 +72,7 @@ const step = (label, total, detail, verdict) => `
     ${verdict ? `<span class="god-verdict ${verdict.ok ? 'ok' : 'fail'}">${verdict.text}</span>` : ''}
   </div>`
 
-const damageBlock = (phys, mag, note, target = null) => `
+const damageBlock = (phys, mag, note, target = null, { kind = 'melee', pierce = false } = {}) => `
   <div class="god-dmg">
     ${phys ? `<span class="phys">${phys}<small>фіз</small></span>` : ''}
     ${mag ? `<span class="mag">${mag}<small>маг</small></span>` : ''}
@@ -80,9 +80,12 @@ const damageBlock = (phys, mag, note, target = null) => `
   </div>
   ${note ? `<div class="god-note">${note}</div>` : ''}
   ${phys || mag ? `<div class="god-apply god-apply-one">
-    <button type="button" data-god-apply="1" data-phys="${phys}" data-mag="${mag}" ${target ? `data-target="${target.uuid}"` : ''}
-      data-tooltip="${target ? `Застосувати до «${esc(target.name)}»` : 'Обраним токенам'}: спершу MR, потім PR, потім HP. Менше за MR — щит не пробито">
+    <button type="button" data-god-apply="1" data-phys="${phys}" data-mag="${mag}" ${target ? `data-target="${target.uuid}"` : ''} ${pierce ? 'data-pierce="pr"' : ''}
+      data-tooltip="${target ? `Застосувати до «${esc(target.name)}»` : 'Обраним токенам'}: спершу MR, потім ${pierce ? 'HP (фіз. захист ігнорується)' : 'PR, потім HP'}. Менше за MR — щит не пробито">
       <i class="fa-solid fa-burst"></i> Урон ${phys + mag}${target ? ` → ${esc(target.name)}` : ''}</button>
+    ${target ? `<button type="button" class="god-defend" data-god-defend="1" data-kind="${kind}"
+      data-tooltip="Маневр «Захист» (для власника цілі): 1d10 зброєю чи піднятим щитом. Вдалося — урону немає, ні — частина урону за Бойовими рефлексами">
+      <i class="fa-solid fa-shield-halved"></i> Захист</button>` : ''}
   </div>` : ''}`
 
 async function sendCard(actor, html, rolls) {
@@ -147,9 +150,9 @@ async function rollDialog({ title, fields, info }) {
         const el = button.form.elements, out = {}
         for (const fd of fields) {
           if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? 'norm'
-          else if (fd.type === 'check') out[fd.name] = el[fd.name].checked
-          else if (fd.type === 'target' || fd.type === 'select') out[fd.name] = el[fd.name].value
-          else out[fd.name] = Number(el[fd.name].value) || 0
+          else if (fd.type === 'check') out[fd.name] = el[fd.name]?.checked ?? !!fd.value
+          else if (fd.type === 'target' || fd.type === 'select') out[fd.name] = el[fd.name]?.value ?? fd.value ?? ''
+          else out[fd.name] = Number(el[fd.name]?.value ?? fd.value) || 0
         }
         return out
       },
@@ -250,29 +253,47 @@ async function rollChance(rolls) {
   return { value: r.total, ok: R.chanceSucceeds(r.total) }
 }
 
+/** Шанс на 1d2/1d4 за описом з R.ODDS; auto — спрацьовує без кидка (Легка, 10 рівень) */
+async function rollOdds(rolls, kind, auto = false) {
+  const o = R.ODDS[kind]
+  if (auto) return { value: '—', ok: true, label: `${o.label}: автоматично` }
+  const r = await new Roll(o.die).evaluate(); rolls.push(r)
+  return { value: r.total, ok: o.ok(r.total), label: o.label }
+}
+
+/** Фіз. захист одягнених рукавиць — для кулачного бою (7+ рівень) */
+const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Рукавиці')
+  .reduce((a, i) => a + (Number(i.system.phys) || 0), 0)
+
 export async function weaponAttack(actor, item) {
   const sys = actor.system
-  const ws = GOD.WEAPON_SKILLS[item.system.category] ?? {}
+  const cat = item.system.category
+  const ws = GOD.WEAPON_SKILLS[cat] ?? {}
   const isChar = actor.type === 'character'
   const natural = !!item.natural
   const profLvl = sys.skill?.(ws.prof) ?? 0
   const accLvl = sys.skill?.(ws.acc) ?? 0
   const cm = sys.combat ?? {}
-  const melee = !RANGED.has(item.system.category)
+  const melee = !RANGED.has(cat)
   const choices = targetChoices(actor)
   if (!choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
+  const perks = isChar ? R.weaponPerks(cat, profLvl) : {}
+  const abilities = natural ? [] : R.availableAbilities(cat, profLvl)
 
   // Модифікатори за правилами: прицільність 0 → −5, урон від володіння за «формулою ГМ-а», максимум +12
   const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0)
   const dmgDefault = (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0)
+  const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = await rollDialog({
     title: `Атака: ${item.name}`,
     info: 'Попадання має бути <b>більше</b> за ШУ цілі. Натуральні 17–20 — гарантоване влучання, 1 — промах.',
     fields: [
       { type: 'target', name: 'target', choices },
       { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
+      ...(abilities.length ? [{ type: 'select', name: 'ability', label: 'Здібність зброї', options: abilityOpts, value: '' }] : []),
       { name: 'hitMod', label: 'Модифікатор попадання', value: isChar ? R.capMod(hitDefault) : hitDefault },
       { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
+      { name: 'aim', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
       { type: 'mode' },
     ],
   })
@@ -280,41 +301,59 @@ export async function weaponAttack(actor, item) {
   const target = resolveTarget(p.target)
   if (!target) return ui.notifications.warn('Ціль зникла зі сцени')
 
-  // Положення: тил — перевага на попадання й +2 урону, фланг +1; сам лежиш −3, присів −1; ціль лежить — урон з перевагою (ближній бій)
-  const notes = []
+  // Здібність: спершу витривалість
+  const ab = abilities.find(a => a.id === p.ability) ?? null
+  if (ab) {
+    const ed = sys.resources?.ed
+    if (ed && ed.value < ab.ed) return ui.notifications.warn(`${ab.name}: потрібно ${ab.ed} ВС, є ${ed.value}`)
+    if (ed) await actor.update({ 'system.resources.ed.value': ed.value - ab.ed })
+  }
+
+  // Положення: тил — перевага на попадання й +2 урону, фланг +1; сам лежиш −3; ціль лежить — урон з перевагою (ближній бій)
+  const notes = [], after = []
   let hitMod = p.hitMod, dmgMod = p.dmgMod, hitMode = p.mode, dmgMode = 'norm'
   if (p.dir === 'flank') { hitMod += 1; notes.push('фланг +1') }
   if (p.dir === 'back') { hitMode = mergeMode(hitMode, 'adv'); dmgMod += 2; notes.push('тил: перевага, урон +2') }
   if (hasStatus(actor, 'prone')) { hitMod -= 3; notes.push('лежачи −3') }
   if (melee && hasStatus(target.actor, 'prone')) { dmgMode = 'adv'; notes.push('ціль лежить: урон з перевагою') }
+  const aim = R.aimBonus(p.aim, melee)
+  if (aim.n) { hitMod += aim.hit; dmgMod += aim.dmg; notes.push(`${melee ? 'оцінка' : 'прицілювання'} ×${aim.n}`) }
   if (isChar) { hitMod = R.capMod(hitMod); dmgMod = R.capMod(dmgMod) }
 
   const rolls = []
-  const hit = await new Roll(`${D20[hitMode]} + @m`, { m: hitMod }).evaluate()
-  rolls.push(hit)
-  const nat = naturalOf(hit)
-  const hc = R.hitCheck({ total: hit.total, natural: nat, dodge: target.dodge })
-  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[item.system.category] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
+  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
   let html = head(item.img ?? actor.img, item.name, sub)
-  let hitOk = hc.hit
-  html += step('Попадання', hit.total,
-    `куб ${nat} ${signed(hitMod)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''} · проти ШУ ${target.dodge}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
-    { ok: hitOk, text: hitOk ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
-  if (hc.reason) html += `<div class="god-note">${esc(hc.reason)}</div>`
+  if (ab) html += `<div class="god-ability"><i class="fa-solid fa-star"></i> ${esc(ab.name)}${ab.level > 1 ? ` · ${ab.level} рівень` : ''} <small>−${ab.ed} ВС</small></div>`
 
-  // 2 — 50% промаху (1d2 = 1), 3 — ШАНС промаху (1d4 = 3)
-  if (hitOk && hc.missCheck === 'half') {
-    const r = await new Roll('1d2').evaluate(); rolls.push(r)
-    if (r.total === 1) hitOk = false
-    html += step('Шанс промаху', r.total, '1d2: 1 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
-  } else if (hitOk && hc.missCheck === 'chance') {
-    const ch = await rollChance(rolls)
-    if (ch.ok) hitOk = false
-    html += step('ШАНС промаху', ch.value, '1d4: 3 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
-  }
-  if (!hitOk) {
-    html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
-    return sendCard(actor, html, rolls)
+  let hc = { hit: true, guaranteed: null }
+  if (ab?.id === 'shadow') {
+    // Тіньовий удар: ціль не бачить героя — попадання автоматичне
+    html += step('Попадання', '—', 'ціль не бачить — автоматично', { ok: true, text: 'Так' })
+  } else {
+    const hit = await new Roll(`${D20[hitMode]} + @m`, { m: hitMod }).evaluate()
+    rolls.push(hit)
+    const nat = naturalOf(hit)
+    hc = R.hitCheck({ total: hit.total, natural: nat, dodge: target.dodge })
+    let hitOk = hc.hit
+    html += step('Попадання', hit.total,
+      `куб ${nat} ${signed(hitMod)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''} · проти ШУ ${target.dodge}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
+      { ok: hitOk, text: hitOk ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
+    if (hc.reason) html += `<div class="god-note">${esc(hc.reason)}</div>`
+
+    // 2 — 50% промаху (1d2 = 1), 3 — ШАНС промаху (1d4 = 3)
+    if (hitOk && hc.missCheck === 'half') {
+      const r = await new Roll('1d2').evaluate(); rolls.push(r)
+      if (r.total === 1) hitOk = false
+      html += step('Шанс промаху', r.total, '1d2: 1 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+    } else if (hitOk && hc.missCheck === 'chance') {
+      const ch = await rollChance(rolls)
+      if (ch.ok) hitOk = false
+      html += step('ШАНС промаху', ch.value, '1d4: 3 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
+    }
+    if (!hitOk) {
+      html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
+      return sendCard(actor, html, rolls)
+    }
   }
 
   const dmg = await new Roll(`${D20[dmgMode]} + @m`, { m: dmgMod }).evaluate()
@@ -323,9 +362,23 @@ export async function weaponAttack(actor, item) {
   let key = tier.tier
   html += step('Урон', dmg.total, `куб ${naturalOf(dmg)} ${signed(dmgMod)}${MODE_LABEL[dmgMode] ? ` · ${MODE_LABEL[dmgMode]}` : ''}`, null)
   if (tier.chance) {
-    const ch = await rollChance(rolls)
-    html += step('ШАНС', ch.value, `1d4: 3 — ${R.TIER[tier.chance].label.toLowerCase()}`, { ok: ch.ok, text: ch.ok ? 'Спрацював' : 'Ні' })
-    if (ch.ok) key = R.betterTier(key, tier.chance)
+    if (perks.autoChance) {
+      html += step('ШАНС', '—', `легка зброя 10 рівня: ${R.TIER[tier.chance].label.toLowerCase()} автоматично`, { ok: true, text: 'Спрацював' })
+      key = R.betterTier(key, tier.chance)
+    } else {
+      const ch = await rollChance(rolls)
+      html += step('ШАНС', ch.value, `1d4: 3 — ${R.TIER[tier.chance].label.toLowerCase()}`, { ok: ch.ok, text: ch.ok ? 'Спрацював' : 'Ні' })
+      if (ch.ok) key = R.betterTier(key, tier.chance)
+    }
+  }
+  // Тіньовий удар: шанс криту/смертельного від результату урону
+  if (ab?.id === 'shadow' && profLvl >= 1) {
+    const rule = (R.SHADOW_STRIKE[ab.level] ?? []).find(x => dmg.total >= x.min)
+    if (rule && R.betterTier(key, rule.tier) !== key) {
+      const o = await rollOdds(rolls, rule.odds, perks.autoChance)
+      html += step('Тіньовий удар', o.value, `${o.label} — ${R.TIER[rule.tier].label.toLowerCase()} (урон ${rule.min}+)`, { ok: o.ok, text: o.ok ? 'Спрацював' : 'Ні' })
+      if (o.ok) key = R.betterTier(key, rule.tier)
+    }
   }
   // Гарантований мінімум із сітки попадання (без володіння крит → 100%)
   if (hc.guaranteed) {
@@ -336,16 +389,100 @@ export async function weaponAttack(actor, item) {
   }
   const st = sys.stats
   const base = natural
-    ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0 }
-    : R.weaponBaseDamage({ str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off' })
-  const flat = isChar && item.system.category === 'fist' ? R.fistFlatBonus(profLvl) : 0
-  if (flat) base.phys += flat
+    ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0, notes: [] }
+    : R.weaponDamage({
+      str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off',
+      cat, lvl: profLvl, magic: (sys.skill?.('Магічність') ?? 0) > 0, gloves: glovesPr(actor), char: isChar,
+    })
+  let pierce = false
+  if (ab?.id === 'trauma') { base.phys += 50; base.notes.push('травматичний постріл +50'); after.push('Ціль, що тікає, отримує травму ноги; якщо не тікає — шанс травми.') }
+  if (ab?.id === 'deadshot') { const b = Math.max(0, st.str.mod) * 50; base.phys += b; pierce = true; base.notes.push(`смертельний постріл +${b} (МОД СИЛ×50)`); after.push('Фізичний захист цілі ігнорується.') }
   const pct = R.TIER[key].pct
   const out = R.applyPct(base, pct)
+  if (ab?.id === 'double') { out.phys *= 2; out.mag *= 2; after.push('Дві стріли однією перевіркою — урон ×2. Потрібен сагайдак.') }
+  // Заборонений удар: шанс додати % фінального урону (ціль без броні; 3 рівень — будь-яка)
+  if (ab?.id === 'forbidden') {
+    const f = R.FORBIDDEN_STRIKE[ab.level]
+    const tr = target.actor.system.resources
+    const bare = !((tr?.pr?.value ?? 0) > 0 || (tr?.mr?.value ?? 0) > 0)
+    if (bare || f.armored) {
+      const o = await rollOdds(rolls, f.odds, perks.autoChance)
+      html += step('Заборонений удар', o.value, `${o.label} — +${f.pct}% урону`, { ok: o.ok, text: o.ok ? 'Спрацював' : 'Ні' })
+      if (o.ok) { out.phys += Math.floor(out.phys * f.pct / 100); out.mag += Math.floor(out.mag * f.pct / 100) }
+    } else after.push('Заборонений удар: ціль у броні — до 3 рівня не діє.')
+  }
+  if (ab?.id === 'heaven') {
+    const series = R.heavenSeries(out.phys + out.mag, ab.level)
+    after.push(`Небесна кара: наступні цілі навколо — ${series.join(' → ')} (кожна на ${R.HEAVEN_STRIKE[ab.level].cut}% менше).`)
+  }
+  if (ab?.id === 'feint') after.push(`Фінт: другий удар замість наступн${['', 'ого ПХ', 'ої дії', 'ої дод. дії'][ab.level]}.`)
+  if (ab?.id === 'instant') after.push(`Миттєвий захист: удар упритул і кидок тієї ж зброї в іншого ворога; ${ab.level > 1 ? 'за бажанням відскок на 2 м' : 'відскок на 1 клітину назад'}.`)
+  if (ab?.id === 'deaththrow') after.push('Кидок смерті: друга зброя летить у ту саму ціль — ще одна атака.')
+
   const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : ''].filter(Boolean).join(' · ')
   html += `<div class="god-tier tier-${key}">${R.TIER[key].label}<small>${pct}%${tierNote ? ` · ${esc(tierNote)}` : ''}</small></div>`
-  html += damageBlock(out.phys, out.mag, `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${flat ? ` (кулачний бій +${flat})` : ''}`, target)
+  const baseNote = `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${base.notes.length ? ` (${base.notes.join(', ')})` : ''}`
+  html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
   return sendCard(actor, html, rolls)
+}
+
+/**
+ * Маневр «Захист» проти удару з картки. Повертає, скільки урону дістається (0 — відбито), або null — скасовано.
+ * @param kind 'melee' | 'ranged' | 'magic'
+ */
+export async function defend(actor, amount, kind = 'melee') {
+  const sys = actor.system
+  const isChar = actor.type === 'character'
+  const reflexes = isChar ? (sys.skill?.('Бойові_рефлекси') ?? 0) : 1
+  if (isChar && reflexes < 1) { ui.notifications.warn(`${actor.name}: «Захист» доступний з 1 рівня Бойових рефлексів`); return null }
+  const ranged = kind !== 'melee'
+  const eq = actor.items.filter(i => i.system.equipped)
+  const opts = {}
+  for (const w of eq.filter(i => i.type === 'weapon')) {
+    const c = w.system.category
+    if (ranged || R.DEFENSE_DC[c] === undefined) continue
+    opts[`w:${w.id}`] = `${w.name} — 1d10 ≥ ${R.DEFENSE_DC[c]}`
+  }
+  if (!ranged && !eq.some(i => i.type === 'weapon')) { opts.fist = `Кулаки (рівний бій) — 1d10 ≥ ${R.DEFENSE_DC.fist}`; opts.fistUneven = `Кулаки проти зброї — 1d10 ≥ ${R.DEFENSE_DC.fistUneven}` }
+  for (const sh of eq.filter(i => i.type === 'armor' && i.system.slot === 'Щит')) {
+    if (kind === 'magic' && !(Number(sh.system.mag) > 0)) continue
+    const dc = R.DEFENSE_DC.shield[sh.system.shieldSize || 'small'][ranged ? 'ranged' : 'melee']
+    opts[`s:${sh.id}`] = `${sh.name} (піднятий) — 1d10 ≥ ${dc}`
+  }
+  if (!Object.keys(opts).length) { ui.notifications.warn(`${actor.name}: нема чим захиститись від ${kind === 'magic' ? 'магії' : ranged ? 'стріл' : 'цього удару'}`); return null }
+  const p = await rollDialog({
+    title: `Захист: ${actor.name}`,
+    info: `Вхідний урон <b>${amount}</b>. Захист завжди спрацьовує проти першого ворога за раунд, далі — з шансом; від 5-го вже ні.`,
+    fields: [
+      { type: 'select', name: 'by', label: 'Чим', options: opts, value: Object.keys(opts)[0] },
+      { type: 'select', name: 'nth', label: 'Який ворог б\'є тебе цього раунду', options: { 1: 'Перший', 2: 'Другий (75%)', 3: 'Третій (50%)', 4: 'Четвертий (25%)', 5: 'П\'ятий і далі' }, value: '1' },
+    ],
+  })
+  if (!p) return null
+  const rolls = []
+  let html = head(actor.img, 'Захист', `${esc(actor.name)} · вхідний урон ${amount}`)
+  let ok = true
+  const nth = Number(p.nth) || 1
+  if (nth >= 5) { ok = false; html += `<div class="god-note">П'ятий ворог за раунд — захиститись уже не можна.</div>` }
+  else if (R.DEFENSE_GATE[nth]) {
+    const r = await new Roll('1d4').evaluate(); rolls.push(r)
+    ok = R.DEFENSE_GATE[nth](r.total)
+    html += step('Встиг захиститись', r.total, `${nth}-й ворог: 1d4 ${{ 2: '≥ 2', 3: '≥ 3', 4: '= 3' }[nth]}`, { ok, text: ok ? 'Так' : 'Ні' })
+  }
+  if (ok) {
+    let dc
+    if (p.by.startsWith('w:')) dc = R.DEFENSE_DC[actor.items.get(p.by.slice(2))?.system.category]
+    else if (p.by.startsWith('s:')) dc = R.DEFENSE_DC.shield[actor.items.get(p.by.slice(2))?.system.shieldSize || 'small'][ranged ? 'ranged' : 'melee']
+    else dc = R.DEFENSE_DC[p.by]
+    const r = await new Roll('1d10').evaluate(); rolls.push(r)
+    ok = r.total >= dc
+    html += step('Захист', r.total, `${esc(opts[p.by].split(' — ')[0])}: 1d10 ≥ ${dc}`, { ok, text: ok ? 'Відбито' : 'Не вдалося' })
+  }
+  const pct = ok ? 0 : R.defenseFailPct(reflexes, ranged)
+  const left = Math.floor(amount * pct / 100)
+  html += `<div class="god-note">${ok ? 'Урон повністю відбито.' : `Проходить ${pct}% урону: <b>${left}</b>${pct < 100 ? ` (Бойові рефлекси ${reflexes})` : ranged ? ' (стріли й магія — повністю)' : ''}.`}</div>`
+  await sendCard(actor, html, rolls)
+  return left
 }
 
 // ── Сотворення заклинання (v4.5.0 §1.2) ──────────────────────────────────────
@@ -439,7 +576,7 @@ export async function castSpell(actor, spell) {
   } else if (s.baseDamage > 0 && s.damageKind !== 'none') {
     const dmg = R.spellDamage({ base: s.baseDamage, schoolLvl, int: sys.stats.int.value, wis: sys.stats.wis.value, statMult: p.statMult })
     const mult = schoolLvl + (p.statMult ? sys.stats.int.mod + sys.stats.wis.mod : 0)
-    html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target)
+    html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target, { kind: 'magic' })
   }
   if (p.pay) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>` + manaWarn()
   return sendCard(actor, html, rolls)

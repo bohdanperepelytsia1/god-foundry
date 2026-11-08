@@ -97,7 +97,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       if (el.dataset.delta) {
         ev.stopPropagation()
         const path = el.dataset.delta
-        const cur = foundry.utils.getProperty(this.document, path)
+        const cur = foundry.utils.getProperty(this.document._source, path) ?? foundry.utils.getProperty(this.document, path)
         const next = R.parseDelta(el.value, cur)
         if (next === null) { el.value = cur; return }
         this.document.update({ [path]: el.dataset.min !== undefined ? Math.max(Number(el.dataset.min), next) : next })
@@ -312,14 +312,14 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const sys = this.document.system, st = sys.stats
     const isChar = this.document.type === 'character'
     const ws = GOD.WEAPON_SKILLS[i.system.category] ?? {}
-    const base = R.weaponBaseDamage({ str: st.str.value, int: st.int.value, phys: i.system.phys, mag: i.system.mag, offHand: i.system.hand === 'off' })
+    const base = R.actorWeaponDamage(this.document, i)
     const prof = sys.skill(ws.prof), acc = sys.skill(ws.acc)
     const dmgMod = (isChar ? R.proficiencyDamageMod(prof) : (sys.attack?.damageMod ?? 0)) + (sys.combat.damageMod || 0)
     return GodActorSheetBase.itemRow(i, {
       base, prof, acc, category: GOD.WEAPON_CATEGORIES[i.system.category],
       table: R.damageTable(base),
       dmgTip: `100% урону. Фіз: ${i.system.hand === 'off' ? '' : `СИЛ ${st.str.value}×5 + `}${i.system.phys}` +
-        (base.mag ? ` · Маг: ІНТ ${st.int.value}×5 + ${i.system.mag}` : ''),
+        (base.mag ? ` · Маг: ІНТ ${st.int.value}×5 + ${i.system.mag}` : '') + (base.notes?.length ? ` · ${base.notes.join(', ')}` : ''),
       rollTip: `Попадання d20+${acc + (sys.combat.hitMod || 0)} · урон d20${dmgMod >= 0 ? '+' : ''}${dmgMod} · володіння ${prof}`,
     })
   }
@@ -599,13 +599,14 @@ export class GodCharacterSheet extends GodActorSheetBase {
       const r = sys.resources[key]
       return { key, abbr: key.toUpperCase(), value: r.value, max: r.max,
         pct: r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0,
-        tip: key === 'pr' ? 'Фізичний захист — сума одягненої броні' : 'Магічний захист — сума одягненої броні' }
+        tip: key === 'pr' ? `Фізичний захист — сума одягненої броні${d.shield && sys.skill?.('Щити') ? ` + ${R.shieldPrBonus(sys.skill('Щити'))} від вміння «Щити»` : ''}` : 'Магічний захист — сума одягненої броні' }
     })
     const dp = d.dodgeParts
     const AW = { light: 'легкий', mediumFit: 'середній підігнаний', medium: 'середній', heavyFit: 'тяжкий підігнаний', heavy: 'тяжкий' }
     context.dodgeTip = `ШУ: навантаження ${dp.load} з бази ${dp.base} → ${dp.fromLoad}` +
       `${dp.skill ? ` · Ухиляння +${dp.skill}` : ''}` +
       ` · обладунок ${d.armorWorst ? AW[d.armorWorst] : 'відсутній'} ${d.armorDodge >= 0 ? '+' : ''}${d.armorDodge}` +
+      `${d.shieldDodge ? ` · щит ${d.shieldDodge}` : ''}` +
       `${dp.bonus ? ` · правка/ефекти ${dp.bonus > 0 ? '+' : ''}${dp.bonus}` : ''} · максимум ${R.MAX_DODGE}`
     context.xpPct = (() => {
       const lo = R.totalXpForLevel(d.level), hi = d.xpNext
@@ -614,7 +615,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     context.money = Object.entries(GOD.MONEY).map(([key, m]) => ({ key, ...m, value: sys.money[key] }))
 
     // ── Огляд
-    context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: st[key].value, mod: st[key].mod }))
+    context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: st[key].value, base: st[key].base ?? st[key].value, bonus: st[key].bonus, mod: st[key].mod }))
     context.equippedWeapons = items.filter(i => i.type === 'weapon' && i.system.equipped).map(i => this._weaponRow(i))
     context.readySpells = items.filter(i => i.type === 'spell').slice(0, 6).map(i => GodActorSheetBase.itemRow(i, {
       school: GOD.SPELL_SCHOOLS[i.system.school], castable: (sys.schools[i.system.school] ?? 0) > 0,

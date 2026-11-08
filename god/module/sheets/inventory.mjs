@@ -93,10 +93,12 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
   const add = (label, value, cls = '', tip = '') => { if (value !== '' && value !== null && value !== undefined && value !== false) stats.push({ label, value, cls, tip }) }
 
   if (item.type === 'weapon') {
-    const base = R.weaponBaseDamage({ str: st.str.value, int: st.int.value, phys: s.phys, mag: s.mag, offHand: s.hand === 'off' })
+    const base = R.actorWeaponDamage(actor, item)
     const ws = GOD.WEAPON_SKILLS[s.category] ?? {}
     add('100% урону', [base.phys && `${base.phys} фіз`, base.mag && `${base.mag} маг`].filter(Boolean).join(' + ') || '0', 'big',
-      s.hand === 'off' ? 'Друга рука — без бонусу Сили' : `СИЛ ${st.str.value}×5 + ${s.phys}${base.mag ? ` · ІНТ ${st.int.value}×5 + ${s.mag}` : ''}`)
+      (s.hand === 'off' ? 'Друга рука — без бонусу Сили' : `СИЛ ${st.str.value}×5 + ${s.phys}${base.mag ? ` · ІНТ ${st.int.value}×5 + ${s.mag}` : ''}`) + (base.notes?.length ? ` · ${base.notes.join(', ')}` : ''))
+    const abil = actor.type === 'character' ? R.availableAbilities(s.category, actor.system.skill(ws.prof)) : []
+    if (abil.length) add('Здібності', abil.map(a => `${a.name}${a.level > 1 ? ` ${a.level}` : ''} (${a.ed} ВС)`).join(', '), '', 'Вибираються у вікні атаки')
     add('Зброя', `${s.phys} фіз${s.mag ? ` · ${s.mag} маг` : ''}`)
     add('Рука', s.hand === 'off' ? 'Друга' : 'Основна')
     add('Радіус', s.range)

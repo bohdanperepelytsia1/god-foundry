@@ -141,14 +141,15 @@ export class GodActor extends Actor {
     if (!st) return
     const pts = this.system.progress.statPoints
     if (delta > 0 && !free && pts < 1) return ui.notifications.warn('Немає очок характеристик')
-    if (delta < 0 && st.value <= 0) return
+    if (delta < 0 && (st.base ?? st.value) <= 0) return
     const floor = this.system.floors.stats[key]
-    if (delta < 0 && !free && floor !== undefined && st.value <= floor) {
+    if (delta < 0 && !free && floor !== undefined && (st.base ?? st.value) <= floor) {
       return ui.notifications.warn(`${GOD.STATS[key].label}: значення зафіксовано — знизити може лише майстер`)
     }
-    const update = { [`system.stats.${key}.value`]: st.value + delta }
+    const v = st.base ?? st.value
+    const update = { [`system.stats.${key}.value`]: v + delta }
     if (!free) update['system.progress.statPoints'] = pts - delta
-    else update[`system.floors.stats.${key}`] = st.value + delta
+    else update[`system.floors.stats.${key}`] = v + delta
     return this.update(update)
   }
 
@@ -157,7 +158,7 @@ export class GodActor extends Actor {
     const sys = this.system
     const skills = {}
     for (const [cat, c] of Object.entries(GOD.SKILL_CATEGORIES)) for (const s of c.skills) skills[s.key] = sys.skills[cat][s.key]
-    const stats = Object.fromEntries(Object.keys(GOD.STATS).map(k => [k, sys.stats[k].value]))
+    const stats = Object.fromEntries(Object.keys(GOD.STATS).map(k => [k, sys.stats[k].base ?? sys.stats[k].value]))
     const customSkills = sys.toObject().customSkills.map(s => ({ ...s, floor: s.lvl }))
     await this.update({ 'system.floors.skills': skills, 'system.floors.stats': stats, 'system.customSkills': customSkills })
     ui.notifications.info(`${this.name}: розвиток зафіксовано`)

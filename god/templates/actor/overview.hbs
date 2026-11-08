@@ -21,11 +21,11 @@
       {{#if @root.editMode}}
       <div class="god-stat-edit">
         <button type="button" data-action="statDown" data-stat="{{key}}" data-tooltip="−1 (майстер: Shift — без повернення очка)">−</button>
-        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Число, або -5 / +3 — відняти чи додати">
+        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{base}}" data-tooltip="Число, або -5 / +3 — відняти чи додати{{#if bonus}}. Ще +{{bonus}} від шкіл магії{{/if}}">
         <button type="button" data-action="statUp" data-stat="{{key}}" data-tooltip="+1 за очко характеристик (майстер: Shift — безкоштовно)">+</button>
       </div>
       {{else}}
-      <div class="god-stat-value" data-tooltip="{{hint}}">{{value}}</div>
+      <div class="god-stat-value" data-tooltip="{{hint}}{{#if bonus}} · {{base}} + {{bonus}} від шкіл магії{{/if}}">{{value}}{{#if bonus}}<sup class="god-stat-bonus">+{{bonus}}</sup>{{/if}}</div>
       {{/if}}
     </div>
     {{/each}}

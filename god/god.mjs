@@ -47,7 +47,8 @@ Hooks.once('init', () => {
   }
 
   // Ініціатива G.O.D. = ⌊поточна витривалість / 100⌋ (як на сайті); у НІП — власне поле
-  CONFIG.Combat.initiative = { formula: '@derived.initiative', decimals: 0 }
+  // Рівна ініціатива — першість визначає чистий 1d20 (сота частка числа)
+  CONFIG.Combat.initiative = { formula: '@derived.initiative + 1d20 / 100', decimals: 2 }
 
   const Actors = foundry.documents.collections?.Actors ?? globalThis.Actors
   const Items = foundry.documents.collections?.Items ?? globalThis.Items
@@ -243,7 +244,27 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
   html.querySelectorAll('[data-god-apply]').forEach((btn, i) => {
     const key = String(i)
     const done = applied[key]
-    if (done || pendingApply.has(`${message.id}:${key}`)) lockApplyButton(btn, done)
+    const defBtn = btn.parentElement?.querySelector('[data-god-defend]')
+    if (done || pendingApply.has(`${message.id}:${key}`)) { lockApplyButton(btn, done); defBtn?.remove() }
+    // Маневр «Захист»: власник цілі кидає захист, і застосовується лише те, що пройшло
+    defBtn?.addEventListener('click', async ev => {
+      ev.preventDefault()
+      const doc = fromUuidSync(btn.dataset.target)
+      const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
+      if (!actor) return ui.notifications.warn('Ціль більше не існує')
+      if (!actor.isOwner) return ui.notifications.warn(`Захищатись може лише власник «${actor.name}» або майстер`)
+      const pk = `${message.id}:${key}`
+      if (pendingApply.has(pk) || message.getFlag('god', `applied.${key}`)) return
+      const amount = (Number(btn.dataset.phys) || 0) + (Number(btn.dataset.mag) || 0)
+      const left = await Dice.defend(actor, amount, defBtn.dataset.kind)
+      if (left === null || left === undefined) return
+      pendingApply.add(pk)
+      lockApplyButton(btn, null)
+      try {
+        const out = await API.dealDamage(actor, btn.dataset.pierce ? { amount: left, ignorePr: true } : left)
+        await markApplied(message, key, { by: game.user.id, text: `Захист — ${API.damageSummary(actor.name, out)}` })
+      } catch (err) { console.error('G.O.D. | захист', err); pendingApply.delete(pk); unlockApplyButton(btn) }
+    })
     btn.addEventListener('click', async ev => {
       ev.preventDefault()
       const again = game.user.isGM && ev.shiftKey
@@ -252,7 +273,8 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       if (pendingApply.has(pk) && !again) return
       pendingApply.add(pk)
       lockApplyButton(btn, null)
-      const amount = (Number(btn.dataset.phys) || 0) + (Number(btn.dataset.mag) || 0) + (Number(btn.dataset.amount) || 0)
+      const sum = (Number(btn.dataset.phys) || 0) + (Number(btn.dataset.mag) || 0) + (Number(btn.dataset.amount) || 0)
+      const amount = btn.dataset.pierce ? { amount: sum, ignorePr: true } : sum
       try {
         if (btn.dataset.target) {
           const ok = await applyToTarget(btn.dataset.target, amount, { messageId: message.id, key })
@@ -346,6 +368,40 @@ Hooks.on('updateActor', (actor, changes, options, userId) => {
   }
 })
 
+// Початок бою: хто має 2 повні ходи (ініціатива вдвічі вища за середню ворожої пачки)
+// і хто без Бойових рефлексів пропускає перший раунд
+Hooks.on('combatStart', async combat => {
+  if (game.user !== game.users.activeGM) return
+  const side = c => c.token?.disposition ?? c.actor?.prototypeToken?.disposition ?? 0
+  const ini = c => c.actor?.system?.derived?.initiative ?? 0
+  const fighters = combat.combatants.filter(c => c.actor && side(c) !== 0)
+  const doubles = [], idle = []
+  for (const c of fighters) {
+    const foes = fighters.filter(o => side(o) !== side(c) && side(o) !== 0).map(ini)
+    const two = R.doubleTurn(ini(c), foes)
+    if (two !== !!c.getFlag('god', 'doubleTurn')) await c.setFlag('god', 'doubleTurn', two)
+    if (two) doubles.push(c.name)
+    if (c.actor.type === 'character' && !(c.actor.system.skill?.('Бойові_рефлекси') > 0)) idle.push(c.name)
+  }
+  const e = n => foundry.utils.escapeHTML?.(n) ?? n
+  const parts = []
+  if (doubles.length) parts.push(`<p><b>2 повні ходи на раунд:</b> ${doubles.map(e).join(', ')}</p>`)
+  if (idle.length) parts.push(`<p><b>Пропускають перший раунд</b> (немає Бойових рефлексів), далі ШАНС пропуску кожного ходу: ${idle.map(e).join(', ')}</p>`)
+  if (parts.length) ChatMessage.create({ content: `<div class="god-card"><header class="god-card-head"><div><h3>Бій почався</h3><span>ініціатива</span></div></header>${parts.join('')}</div>` })
+})
+
+// Позначка 2ПХ у трекері бою
+Hooks.on('renderCombatTracker', (app, html) => {
+  const root = html instanceof HTMLElement ? html : html?.[0]
+  const combat = app.viewed ?? game.combat
+  if (!root || !combat) return
+  for (const c of combat.combatants) {
+    if (!c.getFlag('god', 'doubleTurn')) continue
+    const name = root.querySelector(`[data-combatant-id="${c.id}"] .token-name, [data-combatant-id="${c.id}"] h4`)
+    if (name && !name.querySelector('.god-2ph')) name.insertAdjacentHTML('beforeend', ' <span class="god-2ph" data-tooltip="2 повні ходи на раунд">2ПХ</span>')
+  }
+})
+
 // Кожен раунд бою коштує 10 ВС (списується після бою, якщо бій дійшов до 2-го раунду)
 Hooks.on('deleteCombat', async combat => {
   if (game.user !== game.users.activeGM || !game.settings.get('god', 'combatStamina')) return
@@ -378,13 +434,14 @@ async function applyToTarget(uuid, amount, mark) {
   }
   if (!game.users.activeGM) { ui.notifications.warn('Немає майстра онлайн, щоб застосувати урон'); return false }
   game.socket.emit('system.god', { op: 'damage', uuid, amount, from: game.user.id, ...mark })
-  ui.notifications.info(`Урон ${amount} → ${actor.name}: надіслано майстру`)
+  ui.notifications.info(`Урон ${amount?.amount ?? amount} → ${actor.name}: надіслано майстру`)
   return true
 }
 
 /** Ключі кнопок урону, які вже натиснуто на цьому клієнті (до приходу прапорця з сервера) */
 const pendingApply = new Set()
 function lockApplyButton(btn, done) {
+  btn.parentElement?.querySelector('[data-god-defend]')?.remove()
   btn.disabled = true
   btn.classList.add('applied')
   btn.innerHTML = `<i class="fa-solid fa-check"></i> ${done?.text ? foundry.utils.escapeHTML?.(done.text) ?? done.text : 'Застосовано'}`
@@ -412,7 +469,7 @@ Hooks.once('ready', async () => {
       const doc = fromUuidSync(msg.uuid)
       const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
       if (!actor || message?.getFlag('god', `applied.${msg.key}`)) return
-      const out = await API.dealDamage(actor, Number(msg.amount) || 0)
+      const out = await API.dealDamage(actor, typeof msg.amount === 'object' && msg.amount ? { amount: Number(msg.amount.amount) || 0, ignorePr: !!msg.amount.ignorePr } : (Number(msg.amount) || 0))
       if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
     } else if (msg?.op === 'mark' && message) {
       await message.setFlag('god', `applied.${msg.key}`, msg.info)

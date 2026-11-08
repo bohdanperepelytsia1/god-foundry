@@ -45,6 +45,9 @@
       <label class="god-check" data-tooltip="Підігнаний: тяжкий −1 ШУ замість −2, середній без штрафу ШУ"><input type="checkbox" name="system.fitted" {{checked system.fitted}}><span>Підігнаний</span></label>
       <label><span>Фізичний захист</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
       <label><span>Магічний захист</span><input type="number" name="system.mag" value="{{system.mag}}"></label>
+      {{#if (god-eq system.slot "Щит")}}
+      <label data-tooltip="Кулачний — з усім, крім дворучної; каплевидний — ШУ −1; башенний — ШУ −3"><span>Тип щита</span><select name="system.shieldSize">{{selectOptions config.SHIELD_SIZES selected=system.shieldSize}}</select></label>
+      {{/if}}
       {{#if (god-eq system.slot "Пояс")}}
       <label><span>Слотів пояса</span><input type="number" name="system.beltSlots" value="{{system.beltSlots}}" min="0"></label>
       {{/if}}

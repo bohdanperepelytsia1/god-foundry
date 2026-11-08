@@ -1485,3 +1485,12 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god .god-npc-fields select { width: 140px; height: 24px; font-size: 11px; }
 .god .god-over b, .god .god-over { color: var(--g-red); }
 .god .god-stats-tools { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+
+/* 0.9.3 — здібності зброї, захист, 2ПХ, бонус шкіл */
+.god-card .god-apply-one:has(.god-defend) { grid-template-columns: 1fr auto; }
+.god-card .god-apply button.god-defend { padding-inline: 10px; }
+.god-card .god-ability { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 4px 8px; border-radius: 6px;
+  background: rgba(243, 194, 103, .12); border: 1px solid rgba(243, 194, 103, .35); color: #f3c267; font-weight: 600; font-size: 12px; }
+.god-card .god-ability small { margin-left: auto; opacity: .75; font-weight: 500; }
+.god-2ph { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 4px; background: #f3c267; color: #141822; font-size: 10px; font-weight: 700; vertical-align: middle; }
+.god .god-stat-bonus { font-size: .55em; margin-left: 2px; color: #b99be0; vertical-align: super; }

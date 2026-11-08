@@ -90,6 +90,25 @@ canvas.tokens.placeables = []
 await weaponAttack(hero, sword)
 assert.match(warns.pop(), /немає цілей/)
 console.log('✓ бойовка: ціль, попадання > ШУ, сітка попадання 1/17–20, ШАНС, позиції')
+// 5. Тіньовий удар (легка, 4 рівень): без кидка попадання, −20 ВС, при уроні 17+ — ШАНС на крит
+canvas.tokens.placeables = [goblin, ogre]
+const updates = []
+const rogue = { ...hero, system: { ...hero.system, skill: () => 4, resources: { ed: { value: 100 } } }, update: async u => updates.push(u) }
+const dagger = { name: 'Кинджал', img: 'd.png', system: { category: 'light', phys: 10, mag: 0, hand: 'main' } }
+goblin.actor.system.resources = { pr: { value: 0 }, mr: { value: 0 } }
+rolled.length = 0; nextTotals = [17, 3]
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', ability: 'shadow', hitMod: 0, dmgMod: 0 }
+await weaponAttack(rogue, dagger)
+assert.deepEqual(updates.at(-1), { 'system.resources.ed.value': 80 }, 'витривалість списано')
+assert.equal(rolled[0], '1d20 + @m', 'перший кидок — уже урон')
+assert.ok(cards.at(-1).includes('Тіньовий удар') && cards.at(-1).includes('Критичний урон'), 'крит від тіньового удару')
+assert.ok(cards.at(-1).includes('data-god-defend'), 'кнопка «Захист»')
+// Без витривалості — не б'є
+rogue.system.resources.ed.value = 5; const before = cards.length
+await weaponAttack(rogue, dagger)
+assert.equal(cards.length, before); assert.match(warns.pop(), /ВС/)
+console.log('✓ здібності зброї: тіньовий удар, витривалість, кнопка захисту')
+
 
 // ── НІП: дані ──
 class Field { constructor(o = {}) { this.o = o } }

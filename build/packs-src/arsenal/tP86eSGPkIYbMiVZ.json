@@ -7,7 +7,8 @@
   "system": {
     "description": "<p><i>Шаблон. Вкажи урон і ціну за таблицями своєї кампанії.</i></p>",
     "slot": "Щит",
-    "weight": 5
+    "weight": 5,
+    "shieldSize": "medium"
   },
   "effects": [],
   "folder": "YJcyS05D7NyGgtAR",
