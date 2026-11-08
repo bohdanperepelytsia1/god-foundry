@@ -3,7 +3,9 @@
 Версія 0.9.0 · Foundry v13–v14.
 
 ## Встановлення
-Розпакуй архів так, щоб вийшла тека `Data/systems/god/` (у ній лежить `system.json`), перезапусти Foundry і створи світ із системою G.O.D.
+Foundry → *Game Systems* → *Install System* → *Manifest URL*:
+`https://github.com/bohdanperepelytsia1/god-foundry/releases/latest/download/system.json` → *Install*.
+Оновлення — кнопкою *Update* у тому ж списку.
 
 ## Як користуватись листом
 - **Замок** у правому верхньому куті бічної панелі вмикає режим редагування. У звичайному режимі лист показує значення й кнопки кидків — нічого не зіб'єш випадково.

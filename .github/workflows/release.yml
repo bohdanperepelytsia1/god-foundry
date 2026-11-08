@@ -1,0 +1,42 @@
+# Реліз за тегом: git tag v0.9.1 && git push origin v0.9.1
+# Збирає god.zip (system.json у корені архіву) і кладе system.json поруч —
+# Foundry встановлює й оновлює систему за посиланням на маніфест.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+      - name: Посилання в system.json (версія має збігатися з тегом)
+        run: node build/manifest.mjs "${GITHUB_REF_NAME#v}"
+
+      - name: Архів системи
+        run: |
+          cd god
+          zip -qr ../god.zip . -x 'packs/*/LOG*' 'packs/*/LOCK'
+          cd ..
+          cp god/system.json system.json
+
+      - name: Реліз
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" god.zip system.json \
+            --title "G.O.D. ${GITHUB_REF_NAME}" --generate-notes

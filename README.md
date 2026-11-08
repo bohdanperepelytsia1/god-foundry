@@ -5,7 +5,20 @@
 Сама система лежить у теці [`god/`](god/) — там і повний опис можливостей: [god/README.md](god/README.md).
 
 ## Встановлення
-Скопіюй теку `god` у `Data/systems/` свого Foundry (вийде `Data/systems/god/system.json`) і перезапусти сервер.
+**За посиланням (рекомендовано):** Foundry → *Game Systems* → *Install System* → у полі *Manifest URL* встав
+
+```
+https://github.com/bohdanperepelytsia1/god-foundry/releases/latest/download/system.json
+```
+
+і натисни *Install*. Нові версії з'являтимуться там само кнопкою *Update*.
+
+**Вручну:** скачай `god.zip` з [останнього релізу](https://github.com/bohdanperepelytsia1/god-foundry/releases/latest) і розпакуй у `Data/systems/god/`.
+
+## Випуск нової версії
+1. Підняти `version` у `god/system.json` і `package.json`.
+2. `git commit` → `git tag vX.Y.Z` → `git push origin main vX.Y.Z`.
+3. GitHub Actions прожене тести, збере `god.zip` і створить реліз — Foundry побачить оновлення.
 
 ## Розробка
 ```bash
