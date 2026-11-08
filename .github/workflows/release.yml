@@ -1,11 +1,12 @@
-# Реліз за тегом: git tag v0.9.1 && git push origin v0.9.1
-# Збирає god.zip (system.json у корені архіву) і кладе system.json поруч —
-# Foundry встановлює й оновлює систему за посиланням на маніфест.
+# Публікуєш реліз з тегом vX.Y.Z (на GitHub: Releases → Draft a new release) —
+# робочий процес проганяє тести, збирає god.zip (system.json у корені архіву)
+# і прикріплює god.zip та system.json до релізу. Foundry встановлює й оновлює
+# систему за посиланням на маніфест останнього релізу.
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -25,7 +26,9 @@ jobs:
       - run: npm test
 
       - name: Посилання в system.json (версія має збігатися з тегом)
-        run: node build/manifest.mjs "${GITHUB_REF_NAME#v}"
+        run: node build/manifest.mjs "${TAG#v}"
+        env:
+          TAG: ${{ github.event.release.tag_name }}
 
       - name: Архів системи
         run: |
@@ -34,9 +37,8 @@ jobs:
           cd ..
           cp god/system.json system.json
 
-      - name: Реліз
+      - name: Файли до релізу
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" god.zip system.json \
-            --title "G.O.D. ${GITHUB_REF_NAME}" --generate-notes
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" god.zip system.json --clobber

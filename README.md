@@ -17,8 +17,9 @@ https://github.com/bohdanperepelytsia1/god-foundry/releases/latest/download/syst
 
 ## Випуск нової версії
 1. Підняти `version` у `god/system.json` і `package.json`.
-2. `git commit` → `git tag vX.Y.Z` → `git push origin main vX.Y.Z`.
-3. GitHub Actions прожене тести, збере `god.zip` і створить реліз — Foundry побачить оновлення.
+2. Закомітити й запушити в `main`.
+3. На GitHub: *Releases* → *Draft a new release* → тег `vX.Y.Z` (той самий, що у `system.json`) → *Publish*.
+4. GitHub Actions прожене тести, збере `god.zip` і прикріпить його разом із `system.json` до релізу — Foundry побачить оновлення.
 
 ## Розробка
 ```bash
