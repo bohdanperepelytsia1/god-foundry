@@ -364,6 +364,11 @@ document.addEventListener('focusin', ev => {
     el.dataset.godZero = '1'
     if (!el.placeholder) { el.placeholder = '0'; el.dataset.godPh = '1' }
     el.value = ''
+  } else if (el.dataset.delta !== undefined && el.type === 'text') {
+    // Поле з математикою: курсор у кінець — дописуєш «-100», «+5», «*2» до наявного числа, без стирання
+    const end = el.value.length
+    requestAnimationFrame(() => { try { el.setSelectionRange(end, end) } catch {} })
+    el.addEventListener('mouseup', e => e.preventDefault(), { once: true })
   } else {
     el.select()
     // Клік мишею інакше одразу скине виділення в курсор

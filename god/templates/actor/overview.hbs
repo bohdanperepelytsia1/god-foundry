@@ -21,7 +21,7 @@
       {{#if @root.editMode}}
       <div class="god-stat-edit">
         <button type="button" data-action="statDown" data-stat="{{key}}" data-tooltip="−1 (майстер: Shift — без повернення очка)">−</button>
-        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{base}}" data-tooltip="Число, або -5 / +3 — відняти чи додати{{#if bonus}}. Ще +{{bonus}} від шкіл магії{{/if}}">
+        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{base}}" data-tooltip="Можна рахувати: допиши -5, +3, *2 або введи 150-100; =30 — задати{{#if bonus}}. Ще +{{bonus}} від шкіл магії{{/if}}">
         <button type="button" data-action="statUp" data-stat="{{key}}" data-tooltip="+1 за очко характеристик (майстер: Shift — безкоштовно)">+</button>
       </div>
       {{else}}
@@ -48,7 +48,7 @@
     <header><h3><i class="fa-solid fa-crown"></i> Репутація</h3></header>
     <div class="god-rep">
       {{#each reputation}}
-      <label class="god-rep-tile" style="--rep: {{color}}" data-tooltip="{{#if tip}}{{tip}}. {{else}}{{label}}. {{/if}}Введи +1 або -2">
+      <label class="god-rep-tile" style="--rep: {{color}}" data-tooltip="{{#if tip}}{{tip}}. {{else}}{{label}}. {{/if}}Допиши +1, -2 або порахуй: 3+2">
         <input type="text" data-delta="system.reputation.{{key}}" value="{{value}}" {{#if max}}data-min="0" data-max="{{max}}"{{/if}}><span>{{label}}{{#if max}} <small>/ {{max}}</small>{{/if}}</span>
       </label>
       {{/each}}

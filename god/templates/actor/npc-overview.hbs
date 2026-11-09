@@ -9,7 +9,7 @@
       </a>
       {{#if @root.editMode}}
       <div class="god-stat-edit god-stat-edit-npc">
-        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Число, або -5 / +3 — відняти чи додати">
+        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Можна рахувати: допиши -5, +3, *2 або введи 150-100; =30 — задати">
       </div>
       {{else}}
       <div class="god-stat-value">{{value}}</div>

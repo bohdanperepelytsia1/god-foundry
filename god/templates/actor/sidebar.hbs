@@ -18,7 +18,7 @@
   {{/if}}
   {{#if system.details.race}}<div class="god-subtitle">{{system.details.race}}{{#if system.details.origin}} · {{system.details.origin}}{{/if}}</div>{{/if}}
 
-  <div class="god-xp" data-tooltip="Досвід. Введи +120, щоб додати">
+  <div class="god-xp" data-tooltip="Досвід: допиши +120 або порахуй (300+120)">
     <div class="god-xp-bar"><div style="width: {{xpPct}}%"></div></div>
     <label><span>XP</span>
       <input type="text" data-delta="system.progress.xp" data-min="0" value="{{system.progress.xp}}">
@@ -88,7 +88,7 @@
     <h4>Гаманець</h4>
     <div class="god-purse">
       {{#each money}}
-      <label class="god-coin god-coin-{{key}}" data-tooltip="{{label}}. Введи +5 або -3">
+      <label class="god-coin god-coin-{{key}}" data-tooltip="{{label}}: допиши +5, -3 або порахуй (150-100, 20*3)">
         <i></i><input type="text" data-delta="system.money.{{key}}" data-min="0" value="{{value}}"><span>{{abbr}}</span>
       </label>
       {{/each}}

@@ -250,15 +250,60 @@ export const isHit = (total, targetDodge) => num(total) > num(targetDodge)
 // ── Дельта-ввід у полях ресурсів: "+5", "-25", "=30" або просто "30" ─────────
 // Застосовується лише на подію change (реальна зміна тексту) — повторний
 // фокус/блюр нічого не подвоює.
+/**
+ * Безпечний калькулятор (без eval): числа, + − × ÷, дужки. «x», «х», «×», «*» — множення; «:», «÷», «/» — ділення.
+ * Повертає число або null, якщо вираз некоректний.
+ */
+export function calc(expr) {
+  const src = String(expr ?? '').replace(/\s+/g, '').replace(/,/g, '.').replace(/[xх×]/gi, '*').replace(/[÷:]/g, '/').replace(/[−–]/g, '-')
+  if (!src || /[^0-9.+\-*/()]/.test(src)) return null
+  let i = 0
+  const peek = () => src[i]
+  const number = () => {
+    const m = src.slice(i).match(/^\d+(?:\.\d+)?|^\.\d+/)
+    if (!m) throw new Error('num')
+    i += m[0].length
+    return Number(m[0])
+  }
+  const factor = () => {
+    if (peek() === '+') { i++; return factor() }
+    if (peek() === '-') { i++; return -factor() }
+    if (peek() === '(') { i++; const v = expr0(); if (peek() !== ')') throw new Error(')'); i++; return v }
+    return number()
+  }
+  const term = () => {
+    let v = factor()
+    while (peek() === '*' || peek() === '/') {
+      const op = src[i++], r = factor()
+      if (op === '/' && r === 0) throw new Error('div0')
+      v = op === '*' ? v * r : v / r
+    }
+    return v
+  }
+  const expr0 = () => {
+    let v = term()
+    while (peek() === '+' || peek() === '-') { const op = src[i++]; const r = term(); v = op === '+' ? v + r : v - r }
+    return v
+  }
+  try {
+    const v = expr0()
+    if (i !== src.length || !Number.isFinite(v)) return null
+    return Math.round(v * 100) / 100
+  } catch { return null }
+}
+
+/**
+ * Поле з математикою:
+ *  «150-100», «20*3», «(10+5)/2» — порахувати й записати результат;
+ *  «+5», «-3», «*2», «/2» — змінити поточне значення;
+ *  «=30» — задати рівно (теж можна з виразом: «=10*3»).
+ */
 export const parseDelta = (raw, current) => {
-  const s = String(raw ?? '').trim().replace(',', '.')
+  const s = String(raw ?? '').trim()
   if (!s) return null
-  const m = s.match(/^([+\-=])?\s*(\d+(?:\.\d+)?)$/)
-  if (!m) return null
-  const n = Number(m[2])
-  if (m[1] === '+') return num(current) + n
-  if (m[1] === '-') return num(current) - n
-  return n
+  if (s.startsWith('=')) return calc(s.slice(1))
+  if (/^[+\-−–*xх×/÷:]/i.test(s)) return calc(`(${num(current)})${s.replace(/^[xх×]/i, '*')}`)
+  return calc(s)
 }
 
 // ── Урон по цілі: спершу броня (PR/MR), залишок — у здоров'я ────────────────

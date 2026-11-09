@@ -61,6 +61,8 @@ t('дельта-ввід', () => {
   assert.equal(R.parseDelta('-25', 100), 75); assert.equal(R.parseDelta('+10', 100), 110)
   assert.equal(R.parseDelta('=30', 100), 30); assert.equal(R.parseDelta('42', 100), 42)
   assert.equal(R.parseDelta('abc', 100), null); assert.equal(R.parseDelta('', 100), null)
+  assert.equal(R.parseDelta('150-100', 150), 50); assert.equal(R.parseDelta('*2', 7), 14); assert.equal(R.parseDelta('20x3', 0), 60)
+  assert.equal(R.parseDelta('(10+5)/2', 0), 7.5); assert.equal(R.parseDelta('5/0', 1), null); assert.equal(R.parseDelta('=10*3', 1), 30)
 })
 t('урон: MR → PR → HP, тип не важливий', () => {
   const pick = o => ({ hp: o.hp, pr: o.pr, mr: o.mr, toHp: o.toHp, blocked: o.blocked })

@@ -35,7 +35,7 @@ const FX = {
   light_school: ['jb2a.guiding_bolt.01.blueyellow', 'jb2a.guiding_bolt', 'jb2a.magic_missile'],
   light_schoolHit: ['jb2a.sacred_flame.target.yellow', 'jb2a.divine_smite.target.yellowwhite', 'jb2a.explosion.01.yellow', 'jb2a.explosion'],
   dark: ['jb2a.eldritch_blast.purple', 'jb2a.eldritch_blast', 'jb2a.magic_missile'],
-  darkHit: ['jb2a.toll_the_dead.purple.skull_smoke', 'jb2a.explosion.03.purple', 'jb2a.toll_the_dead', 'jb2a.explosion'],
+  darkHit: ['jb2a.explosion.03.purple', 'jb2a.explosion.02.purple', 'jb2a.eldritch_blast.purple', 'jb2a.explosion'],
   spell: ['jb2a.magic_missile', 'jb2a.eldritch_blast', 'jb2a.guiding_bolt'],
   spellHit: ['jb2a.explosion.02.blue', 'jb2a.explosion.01', 'jb2a.explosion'],
   // удари по цілі
@@ -46,7 +46,8 @@ const FX = {
   heal: ['jb2a.healing_generic.200px.green', 'jb2a.healing_generic', 'jb2a.cure_wounds', 'jb2a.markers.light'],
   mana: ['jb2a.healing_generic.200px.blue', 'jb2a.healing_generic', 'jb2a.markers.light'],
   shield: ['jb2a.shield.01.complete.blue', 'jb2a.shield.01.intro.blue', 'jb2a.shield.01', 'jb2a.shield'],
-  death: ['jb2a.toll_the_dead.purple.skull_smoke', 'jb2a.toll_the_dead', 'jb2a.markers.skull', 'jb2a.explosion'],
+  // смерть: бризки крові (без дзвону й диму); якщо в паку немає — малюємо калюжу самі
+  death: ['jb2a.liquid.splash.red', 'jb2a.liquid.splash_side.red', 'jb2a.liquid.blob.red', 'jb2a.liquid.splash', 'jb2a.blood_splatter', 'jb2a.impact.blood'],
 }
 const SCHOOL_FX = { fire: 'fire', water: 'water', air: 'air', earth: 'earth', light: 'light_school', dark: 'dark', necro: 'dark', chaos: 'dark', psionic: 'spell', summon: 'spell', odhi: 'spell' }
 const RANGED = new Set(['bow', 'throw', 'wand', 'staff', 'codex', 'amulet', 'chakram'])
@@ -112,9 +113,26 @@ export function playDamage(fx, target, { hpLoss = 1 } = {}) {
   } catch (e) { console.warn('G.O.D. | анімація урону', e) }
 }
 
+/** Смерть: бризки крові, калюжа під токеном (згасає за ~10 с) і червоний спалах */
+function playDeath(tgt) {
+  const seq = new Sequence()
+  const splash = resolve('death')
+  if (splash) seq.effect().file(splash).atLocation(tgt).scaleToObject(1.9).randomRotation().belowTokens(false)
+  try {
+    const r = Math.max(tgt.w, tgt.h) * 0.42
+    seq.effect().shape('circle', { radius: r, fillColor: '#5e0000', fillAlpha: 0.78, lineSize: 0 })
+      .atLocation(tgt).belowTokens().randomOffset(0.15).fadeIn(400).duration(10000).fadeOut(2500)
+    seq.effect().shape('circle', { radius: r * 0.55, fillColor: '#8a0b0b', fillAlpha: 0.6, lineSize: 0 })
+      .atLocation(tgt, { offset: { x: r * 0.5, y: r * 0.3 } }).belowTokens().fadeIn(600).duration(9000).fadeOut(2500)
+  } catch { /* стара версія Sequencer без shape() */ }
+  hurt(seq, tgt, 2)
+  seq.play()
+}
+
 /** Лікування / мана / захист / смерть — на токені актора */
 export function playOn(actor, kind) {
   if (!fxReady()) return
+  if (kind === 'death') { const t = tokenOf(actor); if (t) try { playDeath(t) } catch (e) { console.warn('G.O.D. | анімація смерті', e) } ; return }
   const tgt = tokenOf(actor), file = resolve(kind)
   if (!tgt || !file) return
   try { new Sequence().effect().file(file).atLocation(tgt).scaleToObject(kind === 'death' ? 1.8 : 2).fadeOut(400).play() } catch (e) { console.warn('G.O.D. | анімація', e) }
