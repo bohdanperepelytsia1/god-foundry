@@ -13,6 +13,7 @@
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
+import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { GodDiceTray } from '../apps/dice-tray.mjs'
 import { GodHud } from '../apps/hud.mjs'
 import { bindResourceControls } from '../apps/res-controls.mjs'
@@ -40,7 +41,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       toggleEdit: GodActorSheetBase.#toggleEdit,
       editImage: GodActorSheetBase.#editImage,
       showPortrait: GodActorSheetBase.#showPortrait,
-      syncToken: GodActorSheetBase.#syncToken,
+      tokenImage: GodActorSheetBase.#tokenImage,
       deathSave: GodActorSheetBase.#deathSave,
       itemUse: GodActorSheetBase.#itemUse,
       itemEdit: GodActorSheetBase.#itemEdit,
@@ -100,7 +101,9 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
         const cur = foundry.utils.getProperty(this.document._source, path) ?? foundry.utils.getProperty(this.document, path)
         const next = R.parseDelta(el.value, cur)
         if (next === null) { el.value = cur; return }
-        this.document.update({ [path]: el.dataset.min !== undefined ? Math.max(Number(el.dataset.min), next) : next })
+        let v = el.dataset.min !== undefined ? Math.max(Number(el.dataset.min), next) : next
+        if (el.dataset.max !== undefined) v = Math.min(Number(el.dataset.max), v)
+        this.document.update({ [path]: v })
         return
       }
       // Особливі вміння (майстер): назва, гілка, вартість, максимум
@@ -366,10 +369,10 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
   static #openTray() { GodDiceTray.open(this.document) }
   static #openHud() { GodHud.open(this.document) }
   static #toggleEdit() { this._editMode = !this._editMode; this.render() }
+  /** Портрет листа: вибрати картинку й шматок (зсув, масштаб) */
   static #editImage() {
     if (!this.isEditable) return
-    const FP = foundry.applications.apps?.FilePicker?.implementation ?? globalThis.FilePicker
-    new FP({ type: 'image', current: this.document.img, callback: path => this.document.update({ img: path }) }).browse()
+    editPortrait(this.document, { height: this.document.type === 'npc' ? 220 : 260 })
   }
   /** Клік по портрету поза редагуванням — показати його на весь екран (і, за бажання, гравцям) */
   static #showPortrait() {
@@ -378,7 +381,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (IP) return new IP({ src: a.img, uuid: a.uuid, window: { title: a.name } }).render({ force: true })
     if (globalThis.ImagePopout) return new globalThis.ImagePopout(a.img, { title: a.name, uuid: a.uuid }).render(true)
   }
-  static #syncToken() { if (this.isEditable) this.document.syncTokenArt() }
+  static #tokenImage() { if (this.isEditable) pickTokenImage(this.document) }
   static #deathSave() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.deathSave(this.document)) }
   static #itemUse(ev, target) { this._item(target)?.use() }
   static #itemEdit(ev, target) { this._item(target)?.sheet.render(true) }
@@ -449,6 +452,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
         ok: actor.getFlag('god', 'deathSaves')?.ok ?? 0, fail: actor.getFlag('god', 'deathSaves')?.fail ?? 0,
       } : null,
       portraitIcon: !actor.img || actor.img.startsWith("systems/god/assets/icons") || actor.img.startsWith("icons/svg"),
+      portraitStyle: cropStyle(portraitCrop(actor)),
+      tokenImg: (actor.isToken ? actor.token?.texture?.src : actor.prototypeToken?.texture?.src) || actor.img,
     })
 
     // Усі ефекти, що можуть діяти на актора: власні + з предметів
@@ -469,7 +474,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       { id: 'attack', label: 'Атака', title: 'Атакуюча: урон +2, ШУ −4' },
       { id: 'defense', label: 'Захист', title: 'Захисна: ШУ +2, урон −4' },
       { id: 'nonlethal', label: 'Несмерт.', title: 'Несмертельна: урон −3, попадання +1' },
-    ].map(s => ({ ...s, active: s.id === activeStance }))
+    ].map(s => ({ ...s, active: s.id === activeStance, locked: s.id !== 'neutral' && !!actor.stanceLock, title: s.id !== 'neutral' && actor.stanceLock ? actor.stanceLock : s.title }))
 
     context.expandedDesc = {}
     for (const id of this._expanded) {

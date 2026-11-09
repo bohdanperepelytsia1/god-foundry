@@ -7,7 +7,8 @@ const rolled = []
 globalThis.Roll = class { constructor(f, d) { this.formula = f; rolled.push(f) }
   async evaluate() { const t = nextTotals.shift() ?? 10; this.total = t; this.dice = [{ faces: 20, total: t, results: [{ result: t, active: true }] }]; return this } }
 const cards = [], warns = []
-globalThis.ChatMessage = { getSpeaker: () => ({}), applyRollMode: () => {}, create: async d => { cards.push(d.content); return d } }
+const msgs = []
+globalThis.ChatMessage = { getSpeaker: () => ({}), applyRollMode: () => {}, create: async d => { cards.push(d.content); msgs.push(d); return d } }
 globalThis.CONFIG = { sounds: { dice: '' } }
 globalThis.ui = { notifications: { warn: m => warns.push(m), info: () => {} } }
 let dialogAnswer = {}
@@ -108,6 +109,31 @@ rogue.system.resources.ed.value = 5; const before = cards.length
 await weaponAttack(rogue, dagger)
 assert.equal(cards.length, before); assert.match(warns.pop(), /ВС/)
 console.log('✓ здібності зброї: тіньовий удар, витривалість, кнопка захисту')
+// 6. Крити: оголошуються до кидка, списуються, +N до роллу; вдача — перевага без від'ємних модифікаторів
+const ups = []
+const lucky = { ...hero, uuid: 'Actor.lucky', system: { ...hero.system, reputation: { crits: 5, luck: 2 }, resources: { ed: { value: 100 } } },
+  update: async u => { ups.push(u); if ('system.reputation.crits' in u) lucky.system.reputation.crits = u['system.reputation.crits'] } }
+rolled.length = 0; nextTotals = [12, 15]
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: -2, dmgMod: 1, critHit: 3, critDmg: 9 }
+await weaponAttack(lucky, sword)
+assert.ok(lastDialog.includes('Крити на попадання'), 'поле критів у діалозі')
+assert.deepEqual(ups.slice(0, 2), [{ 'system.reputation.crits': 2 }, { 'system.reputation.crits': 0 }], '3 на попадання, решта 2 на урон')
+assert.equal(rolled[0], '1d20 + @m + @c')
+const rp = msgs.at(-1).flags.god.replay
+assert.equal(rp.fn, 'weapon'); assert.equal(rp.preset.critHit, 3); assert.equal(rp.preset.critDmg, 2)
+// перекидання вдачею: без діалогу, перевага, −2 відкидається, крити не списуються вдруге
+rolled.length = 0; nextTotals = [12, 15]; ups.length = 0
+await weaponAttack(lucky, sword, { luck: true, preset: rp.preset })
+assert.ok(rolled[0].startsWith('2d20kh') && rolled[1].startsWith('2d20kh'), 'перевага на обидва кидки')
+assert.ok(cards.at(-1).includes('Вдача') && cards.at(-1).includes('куб 12 +0'), 'від\'ємний модифікатор відкинуто')
+assert.equal(ups.length, 0, 'нічого не списано вдруге')
+// натуральна 1 — крити згорають
+rolled.length = 0; nextTotals = [1]; lucky.system.reputation.crits = 4
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0, critHit: 4 }
+await weaponAttack(lucky, sword)
+assert.ok(cards.at(-1).includes('згоріли') && cards.at(-1).includes('Промах'))
+console.log('✓ крити і вдача: списання, +N, натуральна 1, перекидання з перевагою')
+
 
 
 // ── НІП: дані ──

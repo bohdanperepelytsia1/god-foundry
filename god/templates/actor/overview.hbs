@@ -48,8 +48,8 @@
     <header><h3><i class="fa-solid fa-crown"></i> Репутація</h3></header>
     <div class="god-rep">
       {{#each reputation}}
-      <label class="god-rep-tile" style="--rep: {{color}}" data-tooltip="{{label}}. Введи +1 або -2">
-        <input type="text" data-delta="system.reputation.{{key}}" value="{{value}}"><span>{{label}}</span>
+      <label class="god-rep-tile" style="--rep: {{color}}" data-tooltip="{{#if tip}}{{tip}}. {{else}}{{label}}. {{/if}}Введи +1 або -2">
+        <input type="text" data-delta="system.reputation.{{key}}" value="{{value}}" {{#if max}}data-min="0" data-max="{{max}}"{{/if}}><span>{{label}}{{#if max}} <small>/ {{max}}</small>{{/if}}</span>
       </label>
       {{/each}}
     </div>

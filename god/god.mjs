@@ -72,6 +72,11 @@ Hooks.once('init', () => {
     name: 'Витривалість за бій', hint: 'Після бою списувати 10 ВС за кожен раунд (якщо бій дійшов до 2-го раунду), як у Combat manual.',
     scope: 'world', config: true, type: Boolean, default: true,
   })
+  game.settings.register('god', 'stanceReflexes', {
+    name: 'Стійки з рівня Бойових рефлексів',
+    hint: 'Бойові стійки — підвид маневрів: без Бойових рефлексів герою доступні лише атака, втеча, пересування й крик. 0 — без обмеження.',
+    scope: 'world', config: true, type: Number, default: 1, range: { min: 0, max: 5, step: 1 },
+  })
   syncNativeHotbar()
   registerResourceSync()
 
@@ -202,6 +207,23 @@ Hooks.on('hotbarDrop', (bar, data, slot) => {
 
 // ── Чат: кнопки «застосувати урон» на картках атак і заклинань ──────────────
 Hooks.on('renderChatMessageHTML', (message, html) => {
+  // Вдача: кидок перекинуто — стара картка більше не діє
+  const card = html.querySelector('.god-card')
+  if (card && message.getFlag('god', 'lucky')) {
+    card.classList.add('god-lucky-old')
+    card.insertAdjacentHTML('afterbegin', '<div class="god-luck-tag old"><i class="fa-solid fa-clover"></i> Перекинуто вдачею — дивись наступну картку</div>')
+    for (const b of card.querySelectorAll('button')) { b.disabled = true; b.dataset.godDead = '1' }
+  } else if (card && Dice.canLuck(message)) {
+    const actor = Dice.canLuck(message)
+    card.insertAdjacentHTML('beforeend', `<div class="god-apply god-apply-one god-luck-row"><button type="button" data-god-luck="1"
+      data-tooltip="Витратити 1 вдачу: перекинути з перевагою, без від'ємних модифікаторів (є ${Dice.luckOf(actor)})">
+      <i class="fa-solid fa-clover"></i> Вдача <small>${Dice.luckOf(actor)}</small></button></div>`)
+    card.querySelector('[data-god-luck]').addEventListener('click', async ev => {
+      ev.preventDefault()
+      ev.currentTarget.disabled = true
+      Dice.luckReroll(message, markLucky)
+    })
+  }
   // «Спробувати ще раз» — повторне сотворення того ж заклинання
   for (const btn of html.querySelectorAll('[data-god-recast]')) {
     btn.addEventListener('click', async ev => {
@@ -242,6 +264,7 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
   // Майстер може повторити Shift+кліком.
   const applied = message.getFlag('god', 'applied') ?? {}
   html.querySelectorAll('[data-god-apply]').forEach((btn, i) => {
+    if (btn.dataset.godDead) return   // картку перекинуто вдачею
     const key = String(i)
     const done = applied[key]
     const defBtn = btn.parentElement?.querySelector('[data-god-defend]')
@@ -455,6 +478,11 @@ function unlockApplyButton(btn) {
   btn.innerHTML = `<i class="fa-solid fa-burst"></i> Урон ${amount}`
 }
 /** Позначити кнопку на повідомленні як застосовану — для всіх клієнтів і після перезавантаження */
+/** Позначити картку як перекинуту вдачею */
+async function markLucky(message) {
+  if (message.isOwner) return message.setFlag('god', 'lucky', true)
+  if (game.users.activeGM) game.socket.emit('system.god', { op: 'lucky', messageId: message.id })
+}
 async function markApplied(message, key, info) {
   if (!message) return
   if (message.isOwner) return message.setFlag('god', `applied.${key}`, info)
@@ -473,6 +501,8 @@ Hooks.once('ready', async () => {
       if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
     } else if (msg?.op === 'mark' && message) {
       await message.setFlag('god', `applied.${msg.key}`, msg.info)
+    } else if (msg?.op === 'lucky' && message) {
+      await message.setFlag('god', 'lucky', true)
     }
   })
   await migrateWorld()

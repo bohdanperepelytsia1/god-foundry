@@ -45,7 +45,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
   _actorId = null
   _source = 'skills'        // 'stats' | 'skills'
   _search = ''
-  _defaults() { this._pick = null; this._extra = 0; this._mode = 'norm'; this._pool = {} }
+  _defaults() { this._pick = null; this._extra = 0; this._mode = 'norm'; this._pool = {}; this._crits = 0 }
   constructor(...args) { super(...args); this._defaults() }
 
   /** Актор: обраний вручну → контрольований токен → призначений персонаж */
@@ -62,6 +62,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     this.element.addEventListener('change', ev => {
       if (ev.target.name === 'actor') { this._actorId = ev.target.value; this._pick = null; this.render() }
       if (ev.target.name === 'extra') { this._extra = Number(ev.target.value) || 0; this.render({ parts: ['body'] }) }
+      if (ev.target.name === 'crits') { this._crits = Math.max(0, Math.trunc(Number(ev.target.value) || 0)); this.render({ parts: ['body'] }) }
     })
     this.element.addEventListener('input', ev => {
       if (ev.target.name !== 'search') return
@@ -116,7 +117,8 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
       hasPool: poolDice.length > 0,
       modes: [['dis', 'Недолік'], ['norm', 'Звичайний'], ['adv', 'Перевага']].map(([id, label]) => ({ id, label, active: this._mode === id })),
       base, extra: this._extra,
-      preview: `${formula}${total ? ` ${total > 0 ? '+' : '−'} ${Math.abs(total)}` : ''}`,
+      critsHave: isChar ? Math.max(0, actor.system.reputation?.crits ?? 0) : 0, crits: this._crits,
+      preview: `${formula}${total ? ` ${total > 0 ? '+' : '−'} ${Math.abs(total)}` : ''}${this._crits ? ` + ${this._crits} крит.` : ''}`,
       dsn: !!game.modules.get('dice-so-nice')?.active,
       pinned: this.isPinned,
     }
@@ -159,7 +161,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     if (!actor) return ui.notifications.warn('Обери персонажа для кидка')
     const label = this._pickLabel() || (Object.values(this._pool).some(n => n) ? 'Кидок кубів' : 'Перевірка d20')
     const sub = this._pick ? (this._pick.kind === 'stat' ? 'характеристика' : `вміння, рівень ${this._baseMod(actor)}`) : ''
-    await quickRoll(actor, { label, sub, base: this._baseMod(actor), extra: this._extra, mode: this._mode, pool: { ...this._pool } })
+    await quickRoll(actor, { label, sub, base: this._baseMod(actor), extra: this._extra, mode: this._mode, pool: { ...this._pool }, crits: this._crits })
     this._defaults()   // скидаємо все до дефолту після кидка
     this.render()
   }

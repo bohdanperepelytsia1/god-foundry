@@ -19,7 +19,7 @@
   {{#if overloaded}}<div class="god-hud-warn"><i class="fa-solid fa-weight-hanging"></i> Перевантаження</div>{{/if}}
 
   <div class="god-stance god-hud-stance">
-    {{#each stances}}<button type="button" class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{tip}}">{{label}}</button>{{/each}}
+    {{#each stances}}<button type="button" class="{{#if active}}active{{/if}} {{#if locked}}locked{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{tip}}">{{label}}</button>{{/each}}
   </div>
 
   {{#if weapons.length}}

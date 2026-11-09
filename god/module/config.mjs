@@ -175,6 +175,9 @@ export const WEAPON_SKILLS = {
   amulet:  { prof: 'Оберіг',           acc: 'Маг_прицільність' },
 }
 
+/** Школи, рівень яких береться з вмінь гілки «Магія» (Player manual) */
+export const SCHOOL_SKILLS = { water: skillKey('Сила води'), air: skillKey('Сила повітря'), earth: skillKey('Сила землі'), fire: skillKey('Сила вогню') }
+
 export const SPELL_SCHOOLS = {
   air: 'Повітря', earth: 'Земля', water: 'Вода', fire: 'Вогонь', summon: 'Призив',
   light: 'Світло', dark: 'Пітьма', psionic: 'Псионіка', chaos: 'Хаотика', necro: 'Некротика', odhi: 'Одхі',
@@ -197,8 +200,8 @@ export const REPUTATION = {
   karma:  { label: 'Карма',      color: '#e9dcc0' },
   infame: { label: 'Безслава',   color: '#c0574b' },
   status: { label: 'Статус',     color: '#e9dcc0' },
-  crits:  { label: 'Крити',      color: '#b99be0' },
-  luck:   { label: 'Удача',      color: '#8fb0d8' },
+  crits:  { label: 'Крити',      color: '#b99be0', max: 30, tip: 'До кидка: кожен +1 до роллу. Максимум 30' },
+  luck:   { label: 'Вдача',      color: '#8fb0d8', max: 5, tip: 'Після кидка: перекинути з перевагою, без штрафів. Максимум 5' },
 }
 
 export const MONEY = {
@@ -210,7 +213,7 @@ export const MONEY = {
 
 export const GOD = {
   BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SHIELD_SIZES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
-  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
+  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_SKILLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 
 // ── Іконки системи (assets/icons) ────────────────────────────────────────────

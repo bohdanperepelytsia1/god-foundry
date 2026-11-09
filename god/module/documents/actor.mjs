@@ -7,14 +7,6 @@ export class GodActor extends Actor {
   /** Підвищення рівня → автоматично нараховуємо очки вмінь і характеристик */
   async _preUpdate(changes, options, user) {
     if ((await super._preUpdate(changes, options, user)) === false) return false
-    // Новий портрет → і токен, якщо токен був таким самим (або стандартним). Свій окремий токен-арт не чіпаємо.
-    if (changes.img && changes.img !== this.img && foundry.utils.getProperty(changes, 'prototypeToken.texture.src') === undefined) {
-      const tex = this.prototypeToken?.texture?.src
-      if (!tex || tex === this.img || tex === 'icons/svg/mystery-man.svg' || tex.startsWith('systems/god/assets/icons/')) {
-        foundry.utils.setProperty(changes, 'prototypeToken.texture.src', changes.img)
-        options.godTokenArt = { from: tex || this.img, to: changes.img }
-      }
-    }
     if (this.type !== 'character') return
     const newXp = foundry.utils.getProperty(changes, 'system.progress.xp')
     if (newXp === undefined) return
@@ -30,18 +22,18 @@ export class GodActor extends Actor {
 
   _onUpdate(changes, options, userId) {
     super._onUpdate(changes, options, userId)
-    if (options.godTokenArt && userId === game.user.id) this.#syncPlacedTokens(options.godTokenArt)
     if (options.godLevelUp && userId === game.user.id) {
       ui.notifications.info(`${this.name}: новий рівень! +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_SKILL_PTS} очок вмінь, +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_STAT_PTS} очок характеристик`)
     }
   }
 
-  /** Кнопка «Портрет → токен»: примусово поставити портрет на токен (прототип і вже розставлені) */
-  async syncTokenArt() {
-    const from = this.prototypeToken?.texture?.src
-    if (!this.isToken) await this.update({ 'prototypeToken.texture.src': this.img })
-    await this.#syncPlacedTokens({ from, to: this.img, force: true })
-    ui.notifications.info(`${this.name}: токен тепер з портретом`)
+  /** Окрема картинка токена (портрет листа — інше): прототип і вже розставлені токени */
+  async setTokenImage(path) {
+    if (!path) return
+    const from = this.isToken ? this.token?.texture?.src : this.prototypeToken?.texture?.src
+    if (!this.isToken) await this.update({ 'prototypeToken.texture.src': path })
+    await this.#syncPlacedTokens({ from, to: path, force: true })
+    ui.notifications.info(`${this.name}: токен оновлено`)
   }
 
   /**
@@ -198,7 +190,16 @@ export class GodActor extends Actor {
   }
 
   /** Стійка v4.5.0 — активний ефект; одночасно лише одна. Повторний клік знімає */
+  /** Чи доступні стійки (Бойові рефлекси ≥ налаштування; майстер і НІП — завжди) */
+  get stanceLock() {
+    if (this.type !== 'character' || game.user?.isGM) return null
+    const need = game.settings?.get?.('god', 'stanceReflexes') ?? 1
+    const have = this.system.skill?.('Бойові_рефлекси') ?? 0
+    return have >= need ? null : `Стійки — з ${need} рівня Бойових рефлексів (зараз ${have})`
+  }
+
   async setStance(id) {
+    if (id !== 'neutral' && this.stanceLock) return ui.notifications.warn(`${this.name}: ${this.stanceLock}`)
     const existing = this.effects.filter(e => e.getFlag('god', 'stance'))
     const same = existing.some(e => e.getFlag('god', 'stance') === id)
     if (existing.length) await this.deleteEmbeddedDocuments('ActiveEffect', existing.map(e => e.id))

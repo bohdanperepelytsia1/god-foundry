@@ -6,9 +6,9 @@
   {{/if}}
 
   <div class="god-portrait-wrap">
-    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Портрет листа: картинка й шматок"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
     <div class="god-level-badge" data-tooltip="Рівень">{{system.derived.level}}</div>
-    {{#if editMode}}<a class="god-token-sync" data-action="syncToken" data-tooltip="Поставити цей портрет і на токен (прототип і вже розставлені на сценах)"><i class="fa-solid fa-user-circle"></i> На токен</a>{{/if}}
+    {{#if editMode}}<a class="god-token-pick" data-action="tokenImage" data-tooltip="Окрема картинка токена (готовий токен). Портрет листа не змінюється"><img src="{{tokenImg}}" alt=""><span>Токен</span></a>{{/if}}
   </div>
 
   {{#if editMode}}
@@ -71,7 +71,7 @@
     <h4>Стійка</h4>
     <div class="god-stance">
       {{#each stances}}
-      <button type="button" class="{{#if active}}active{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{title}}">{{label}}</button>
+      <button type="button" class="{{#if active}}active{{/if}} {{#if locked}}locked{{/if}}" data-action="stance" data-stance="{{id}}" data-tooltip="{{title}}">{{#if locked}}<i class="fa-solid fa-lock"></i> {{/if}}{{label}}</button>
       {{/each}}
     </div>
   </div>

@@ -96,7 +96,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         lvl: int(0, { min: 0 }),
         floor: int(0, { min: 0 }),
       })),
-      reputation: new f.SchemaField(Object.fromEntries(Object.keys(GOD.REPUTATION).map(k => [k, int(0)]))),
+      reputation: new f.SchemaField(Object.fromEntries(Object.entries(GOD.REPUTATION).map(([k, r]) => [k, r.max ? int(0, { min: 0, max: r.max }) : int(0)]))),
       knowledge: new f.SchemaField({
         languages: new f.ArrayField(new f.SchemaField({ name: new f.StringField({ initial: '' }), level: new f.StringField({ initial: '' }) })),
         recipes: new f.ArrayField(new f.SchemaField({ name: new f.StringField({ initial: '' }), source: new f.StringField({ initial: '' }), desc: new f.StringField({ initial: '' }) })),
@@ -110,6 +110,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     if (source.reputation?.status_val !== undefined) {           // назва поля з сайту
       source.reputation.status ??= source.reputation.status_val
       delete source.reputation.status_val
+    }
+    // Крити ≤ 30, вдача ≤ 5
+    for (const [k, r] of Object.entries(GOD.REPUTATION)) {
+      if (r.max && source.reputation && typeof source.reputation[k] === 'number') source.reputation[k] = Math.max(0, Math.min(r.max, source.reputation[k]))
     }
     // Максимуми вмінь звірено з правилами (напр. Хірургія 10 → 5): зайве повертаємо очками
     for (const [cat, c] of Object.entries(GOD.SKILL_CATEGORIES)) {
@@ -145,6 +149,14 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     const actor = this.parent
     const t = itemTotals(actor)
 
+    // Володіння школами — з вмінь «Сила води/повітря/землі/вогню»; інші школи — з особливого вміння майстра
+    // з назвою школи в гілці «Магія» (напр. «Сила світла»), інакше — як було збережено раніше
+    for (const k of Object.keys(GOD.SPELL_SCHOOLS)) {
+      if (GOD.SCHOOL_SKILLS[k]) { this.schools[k] = this.skill(GOD.SCHOOL_SKILLS[k]); continue }
+      const stem = GOD.SPELL_SCHOOLS[k].toLowerCase().slice(0, 4)
+      const c = this.customSkills.find(x => x.cat === 'magic' && x.name.toLowerCase().includes(stem))
+      if (c) this.schools[k] = c.lvl
+    }
     // Бонус від шкіл магії додається до значення; base — те, що вкачано
     const school = R.schoolStatBonus(this.schools)
     for (const [k, s] of Object.entries(this.stats)) {

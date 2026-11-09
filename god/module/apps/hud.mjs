@@ -59,7 +59,7 @@ export class GodHud extends PinnableMixin(HandlebarsApplicationMixin(Application
       bars: keys.map(bar), armor: ['pr', 'mr'].map(bar),
       dodge: s.derived?.dodge ?? 0, speed: s.derived?.speed ?? s.speed, initiative: s.derived?.initiative ?? s.initiative,
       stances: [['neutral', 'Нейтр.', 'Нейтральна'], ['attack', 'Атака', 'Атакуюча: урон +2, ШУ −4'], ['defense', 'Захист', 'Захисна: ШУ +2, урон −4'], ['nonlethal', 'Несм.', 'Несмертельна: урон −3, попадання +1']]
-        .map(([id, label, tip]) => ({ id, label, tip, active: id === stance })),
+        .map(([id, label, tip]) => ({ id, label, tip: id !== 'neutral' && a.stanceLock ? a.stanceLock : tip, active: id === stance, locked: id !== 'neutral' && !!a.stanceLock })),
       weapons: a.items.filter(i => i.type === 'weapon' && (i.system.equipped || !isChar)),
       spells: a.items.filter(i => i.type === 'spell' && (s.schools?.[i.system.school] ?? 0) > 0),
       overloaded: s.derived?.overloaded,
