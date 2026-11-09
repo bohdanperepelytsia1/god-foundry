@@ -24,7 +24,9 @@ globalThis.canvas = { ready: true, tokens: { placeables: [goblin, ogre] }, grid:
 globalThis.game = { settings: { get: () => 'publicroll' }, user: { targets: new Set(targets), isGM: true } }
 globalThis.fromUuidSync = uuid => { const t = [goblin, ogre].find(t => t.document.uuid === uuid); return t && { name: t.name, actor: t.actor, object: null } }
 
-const { weaponAttack, targetChoices } = await import('../god/module/dice/rolls.mjs')
+const { weaponAttack, weaponDamage, targetChoices } = await import('../god/module/dice/rolls.mjs')
+/** Попадання; якщо влучив — окремий кидок урону з кнопки картки */
+const attack = async (a, w, o) => { const n = cards.length; await weaponAttack(a, w, o); const st = cards.length > n && msgs.at(-1).flags?.god?.attack; if (st) await weaponDamage(a, w, st) }
 
 const hero = {
   type: 'character', img: 'h.png', getActiveTokens: () => [],
@@ -60,23 +62,28 @@ assert.ok(cards.at(-1).includes('Промах') && !cards.at(-1).includes('data-
 // 3. Попадання 9 > 8 — урон з кнопкою на ціль
 rolled.length = 0; nextTotals = [9, 15]
 await weaponAttack(hero, sword)
-assert.equal(rolled.length, 2, 'попадання + урон')
-assert.ok(cards.at(-1).includes('Влучання') && cards.at(-1).includes(`data-target="${goblin.document.uuid}"`) && cards.at(-1).includes('→ Гоблін'), 'урон на ціль')
+assert.equal(rolled.length, 1, 'спершу лише попадання')
+assert.ok(cards.at(-1).includes('data-god-damage') && !cards.at(-1).includes('data-god-apply'), 'кнопка «Кинути урон», урону ще немає')
+const st3 = msgs.at(-1).flags.god.attack
+assert.equal(st3.target, goblin.document.uuid)
+await weaponDamage(hero, sword, st3)
+assert.equal(rolled.length, 2, 'урон — окремим кидком')
+assert.ok(cards.at(-2).includes('Влучання') && cards.at(-1).includes(`data-target="${goblin.document.uuid}"`) && cards.at(-1).includes('→ Гоблін'), 'урон на ціль')
 
 // 3а. Натуральна 20 проти ШУ 30 — гарантований крит, навіть якщо кидок урону слабкий
 ogre.actor.system.derived.dodge = 30
 rolled.length = 0; nextTotals = [20, 4]
 dialogAnswer = { target: ogre.document.uuid, dir: 'back', hitMod: 0, dmgMod: 0 }
-await weaponAttack(hero, sword)
+await attack(hero, sword)
 assert.ok(rolled[0].startsWith('2d20kh'), 'з тилу — попадання з перевагою')
-assert.ok(cards.at(-1).includes('Гарантовано') && cards.at(-1).includes('Критичний урон'), 'гарантований крит')
-assert.ok(cards.at(-1).includes('тил'), 'позиція видно в картці')
+assert.ok(cards.at(-2).includes('Гарантовано') && cards.at(-1).includes('Критичний урон'), 'гарантований крит')
+assert.ok(cards.at(-1).includes('тил +2'), 'тил: +2 до урону видно в картці урону')
 ogre.actor.system.derived.dodge = 3
 
 // 3б. Урон 18 → 100% із ШАНСОМ на крит; 1d4 = 3 → крит
 rolled.length = 0; nextTotals = [10, 18, 3]
 dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0 }
-await weaponAttack(hero, sword)
+await attack(hero, sword)
 assert.deepEqual(rolled.slice(-1), ['1d4'], 'ШАНС кидається окремо')
 assert.ok(cards.at(-1).includes('Спрацював') && cards.at(-1).includes('Критичний урон'), 'ШАНС підняв до криту')
 
@@ -99,9 +106,10 @@ const dagger = { name: 'Кинджал', img: 'd.png', system: { category: 'ligh
 goblin.actor.system.resources = { pr: { value: 0 }, mr: { value: 0 } }
 rolled.length = 0; nextTotals = [17, 3]
 dialogAnswer = { target: goblin.document.uuid, dir: 'front', ability: 'shadow', hitMod: 0, dmgMod: 0 }
-await weaponAttack(rogue, dagger)
+await attack(rogue, dagger)
 assert.deepEqual(updates.at(-1), { 'system.resources.ed.value': 80 }, 'витривалість списано')
 assert.equal(rolled[0], '1d20 + @m', 'перший кидок — уже урон')
+assert.ok(cards.at(-2).includes('автоматично') && cards.at(-2).includes('data-god-damage'), 'картка попадання без кидка')
 assert.ok(cards.at(-1).includes('Тіньовий удар') && cards.at(-1).includes('Критичний урон'), 'крит від тіньового удару')
 assert.ok(cards.at(-1).includes('data-god-defend'), 'кнопка «Захист»')
 // Без витривалості — не б'є
@@ -114,17 +122,22 @@ const ups = []
 const lucky = { ...hero, uuid: 'Actor.lucky', system: { ...hero.system, reputation: { crits: 5, luck: 2 }, resources: { ed: { value: 100 } } },
   update: async u => { ups.push(u); if ('system.reputation.crits' in u) lucky.system.reputation.crits = u['system.reputation.crits'] } }
 rolled.length = 0; nextTotals = [12, 15]
-dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: -2, dmgMod: 1, critHit: 3, critDmg: 9 }
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: -2, dmgMod: 1, critHit: 3 }
 await weaponAttack(lucky, sword)
-assert.ok(lastDialog.includes('Крити на попадання'), 'поле критів у діалозі')
-assert.deepEqual(ups.slice(0, 2), [{ 'system.reputation.crits': 2 }, { 'system.reputation.crits': 0 }], '3 на попадання, решта 2 на урон')
+assert.ok(lastDialog.includes('Крити на попадання') && !lastDialog.includes('Крити на урон'), 'на попадання — крити до кидка попадання')
+assert.deepEqual(ups[0], { 'system.reputation.crits': 2 })
 assert.equal(rolled[0], '1d20 + @m + @c')
-const rp = msgs.at(-1).flags.god.replay
-assert.equal(rp.fn, 'weapon'); assert.equal(rp.preset.critHit, 3); assert.equal(rp.preset.critDmg, 2)
-// перекидання вдачею: без діалогу, перевага, −2 відкидається, крити не списуються вдруге
+const hitMsg = msgs.at(-1), rp = hitMsg.flags.god.replay
+assert.equal(rp.fn, 'weapon'); assert.equal(rp.preset.critHit, 3)
+// урон: крити оголошуються вже перед кидком урону
+dialogAnswer = { crits: 9 }
+await weaponDamage(lucky, sword, hitMsg.flags.god.attack)
+assert.deepEqual(ups.at(-1), { 'system.reputation.crits': 0 }, 'на урон — скільки лишилось (2)')
+assert.equal(msgs.at(-1).flags.god.replay.preset.crits, 2)
+// перекидання попадання вдачею: без діалогу, перевага, −2 відкидається, крити не списуються вдруге
 rolled.length = 0; nextTotals = [12, 15]; ups.length = 0
 await weaponAttack(lucky, sword, { luck: true, preset: rp.preset })
-assert.ok(rolled[0].startsWith('2d20kh') && rolled[1].startsWith('2d20kh'), 'перевага на обидва кидки')
+assert.equal(rolled.length, 1); assert.ok(rolled[0].startsWith('2d20kh'), 'перевага')
 assert.ok(cards.at(-1).includes('Вдача') && cards.at(-1).includes('куб 12 +0'), 'від\'ємний модифікатор відкинуто')
 assert.equal(ups.length, 0, 'нічого не списано вдруге')
 // натуральна 1 — крити згорають

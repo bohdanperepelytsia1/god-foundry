@@ -224,6 +224,20 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       Dice.luckReroll(message, markLucky)
     })
   }
+  // «Кинути урон» — окремий кидок після влучання, лише раз
+  for (const btn of html.querySelectorAll('[data-god-damage]')) {
+    if (btn.dataset.godDead) continue
+    if (message.getFlag('god', 'damageRolled')) {
+      btn.disabled = true; btn.classList.add('applied')
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Урон кинуто'
+      continue
+    }
+    btn.addEventListener('click', async ev => {
+      ev.preventDefault()
+      btn.disabled = true
+      try { await Dice.rollAttackDamage(message, markFlag) } finally { if (!message.getFlag('god', 'damageRolled')) btn.disabled = false }
+    })
+  }
   // «Спробувати ще раз» — повторне сотворення того ж заклинання
   for (const btn of html.querySelectorAll('[data-god-recast]')) {
     btn.addEventListener('click', async ev => {
@@ -478,11 +492,14 @@ function unlockApplyButton(btn) {
   btn.innerHTML = `<i class="fa-solid fa-burst"></i> Урон ${amount}`
 }
 /** Позначити кнопку на повідомленні як застосовану — для всіх клієнтів і після перезавантаження */
-/** Позначити картку як перекинуту вдачею */
-async function markLucky(message) {
-  if (message.isOwner) return message.setFlag('god', 'lucky', true)
-  if (game.users.activeGM) game.socket.emit('system.god', { op: 'lucky', messageId: message.id })
+/** Позначка на картці (перекинуто вдачею / урон уже кинуто) — сам або через майстра */
+const MESSAGE_FLAGS = new Set(['lucky', 'damageRolled'])
+async function markFlag(message, key, value = true) {
+  if (!MESSAGE_FLAGS.has(key)) return
+  if (message.isOwner) return message.setFlag('god', key, value)
+  if (game.users.activeGM) game.socket.emit('system.god', { op: 'flag', messageId: message.id, key, value })
 }
+const markLucky = message => markFlag(message, 'lucky', true)
 async function markApplied(message, key, info) {
   if (!message) return
   if (message.isOwner) return message.setFlag('god', `applied.${key}`, info)
@@ -501,8 +518,8 @@ Hooks.once('ready', async () => {
       if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
     } else if (msg?.op === 'mark' && message) {
       await message.setFlag('god', `applied.${msg.key}`, msg.info)
-    } else if (msg?.op === 'lucky' && message) {
-      await message.setFlag('god', 'lucky', true)
+    } else if (msg?.op === 'flag' && message && MESSAGE_FLAGS.has(msg.key)) {
+      await message.setFlag('god', msg.key, msg.value ?? true)
     }
   })
   await migrateWorld()

@@ -112,7 +112,7 @@ const d20f = (mode, crits) => `${D20[mode] ?? D20.norm} + @m${crits ? ' + @c' : 
 const withCrits = (roll, crits) => roll.total - (crits && naturalOf(roll) === 1 ? crits : 0)
 const critNote = (crits, nat) => crits ? (nat === 1 ? ` · крити ${crits} згоріли (натуральна 1)` : ` · крити +${crits}`) : ''
 
-async function sendCard(actor, html, rolls, replay = null, luck = false) {
+async function sendCard(actor, html, rolls, replay = null, luck = false, extra = null) {
   const data = {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="god-card">${luck ? '<div class="god-luck-tag"><i class="fa-solid fa-clover"></i> Вдача: перекинуто з перевагою, без штрафів</div>' : ''}${html}</div>`,
@@ -120,6 +120,7 @@ async function sendCard(actor, html, rolls, replay = null, luck = false) {
     sound: CONFIG.sounds.dice,
   }
   if (replay && isPC(actor)) data.flags = { god: { replay: { ...replay, actor: actor.uuid } } }
+  if (extra) data.flags = { god: { ...(data.flags?.god ?? {}), ...extra } }
   ChatMessage.applyRollMode(data, game.settings.get('core', 'rollMode'))
   return ChatMessage.create(data)
 }
@@ -300,21 +301,34 @@ async function rollOdds(rolls, kind, auto = false) {
 const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Рукавиці')
   .reduce((a, i) => a + (Number(i.system.phys) || 0), 0)
 
-export async function weaponAttack(actor, item, opts = {}) {
-  const luck = !!opts.luck
+/** Посилання на зброю для повторного кидка: uuid предмета або (для атаки НІП) сам опис */
+const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, system: { ...item.system } } : item.uuid
+async function itemFrom(ref) { return typeof ref === 'string' ? fromUuid(ref) : ref }
+
+/** Спільні дані атаки: категорія, рівні, перки, доступні здібності */
+function attackInfo(actor, item) {
   const sys = actor.system
   const cat = item.system.category
   const ws = GOD.WEAPON_SKILLS[cat] ?? {}
   const isChar = actor.type === 'character'
   const natural = !!item.natural
   const profLvl = sys.skill?.(ws.prof) ?? 0
-  const accLvl = sys.skill?.(ws.acc) ?? 0
-  const cm = sys.combat ?? {}
-  const melee = !RANGED.has(cat)
+  return {
+    sys, cat, ws, isChar, natural, profLvl, accLvl: sys.skill?.(ws.acc) ?? 0, cm: sys.combat ?? {}, melee: !RANGED.has(cat),
+    perks: isChar ? R.weaponPerks(cat, profLvl) : {}, abilities: natural ? [] : R.availableAbilities(cat, profLvl),
+  }
+}
+
+/**
+ * Атака, крок 1 — лише кидок попадання. Якщо влучив, на картці з'являється «Кинути урон»:
+ * урон кидається окремо (і крити на урон оголошуються вже тоді).
+ */
+export async function weaponAttack(actor, item, opts = {}) {
+  const luck = !!opts.luck
+  const A = attackInfo(actor, item)
+  const { sys, cat, isChar, natural, profLvl, accLvl, cm, melee, abilities } = A
   const choices = opts.preset ? [] : targetChoices(actor)
   if (!opts.preset && !choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
-  const perks = isChar ? R.weaponPerks(cat, profLvl) : {}
-  const abilities = natural ? [] : R.availableAbilities(cat, profLvl)
 
   // Модифікатори за правилами: прицільність 0 → −5, урон від володіння за «формулою ГМ-а», максимум +12
   const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0)
@@ -322,7 +336,7 @@ export async function weaponAttack(actor, item, opts = {}) {
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
-    info: 'Попадання має бути <b>більше</b> за ШУ цілі. Натуральні 17–20 — гарантоване влучання, 1 — промах.',
+    info: 'Спершу кидок попадання: має бути <b>більше</b> за ШУ цілі (17–20 — гарантовано, 1 — промах). Урон — окремим кидком, якщо влучив.',
     fields: [
       { type: 'target', name: 'target', choices },
       { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
@@ -330,7 +344,7 @@ export async function weaponAttack(actor, item, opts = {}) {
       { name: 'hitMod', label: 'Модифікатор попадання', value: isChar ? R.capMod(hitDefault) : hitDefault },
       { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
       { name: 'aim', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
-      ...critField(actor, 'critHit', 'Крити на попадання'), ...critField(actor, 'critDmg', 'Крити на урон'),
+      ...critField(actor, 'critHit', 'Крити на попадання'),
       { type: 'mode' },
     ],
   })
@@ -346,21 +360,19 @@ export async function weaponAttack(actor, item, opts = {}) {
     if (ed) await actor.update({ 'system.resources.ed.value': ed.value - ab.ed })
   }
 
-  // Положення: тил — перевага на попадання й +2 урону, фланг +1; сам лежиш −3; ціль лежить — урон з перевагою (ближній бій)
-  const notes = [], after = []
-  // Вдача: перевага на обидва кидки, усі від'ємні модифікатори відкидаються
-  let hitMod = luck ? pos(p.hitMod) : p.hitMod, dmgMod = luck ? pos(p.dmgMod) : p.dmgMod
-  let hitMode = luck ? 'adv' : p.mode, dmgMode = luck ? 'adv' : 'norm'
+  // Положення: тил — перевага на попадання, фланг +1; сам лежиш −3. Вдача: перевага, від'ємні модифікатори відкидаються
+  const notes = []
+  let hitMod = luck ? pos(p.hitMod) : p.hitMod
+  let hitMode = luck ? 'adv' : p.mode
   if (p.dir === 'flank') { hitMod += 1; notes.push('фланг +1') }
-  if (p.dir === 'back') { hitMode = mergeMode(hitMode, 'adv'); dmgMod += 2; notes.push('тил: перевага, урон +2') }
+  if (p.dir === 'back') { hitMode = mergeMode(hitMode, 'adv'); notes.push('тил: перевага') }
   if (hasStatus(actor, 'prone') && !luck) { hitMod -= 3; notes.push('лежачи −3') }
-  if (melee && hasStatus(target.actor, 'prone')) { dmgMode = 'adv'; notes.push('ціль лежить: урон з перевагою') }
   const aim = R.aimBonus(p.aim, melee)
-  if (aim.n) { hitMod += aim.hit; dmgMod += aim.dmg; notes.push(`${melee ? 'оцінка' : 'прицілювання'} ×${aim.n}`) }
-  if (isChar) { hitMod = R.capMod(hitMod); dmgMod = R.capMod(dmgMod) }
+  if (aim.n) { hitMod += aim.hit; notes.push(`${melee ? 'оцінка' : 'прицілювання'} ×${aim.n}`) }
+  if (isChar) hitMod = R.capMod(hitMod)
   const cHit = luck ? (p.critHit ?? 0) : await spendCrits(actor, p.critHit)
-  const cDmg = luck ? (p.critDmg ?? 0) : await spendCrits(actor, p.critDmg)
-  const replay = { fn: 'weapon', args: [item.uuid], preset: { ...p, critHit: cHit, critDmg: cDmg } }
+  const ref = itemRef(item)
+  const replay = { fn: 'weapon', args: [ref], preset: { ...p, critHit: cHit } }
 
   const rolls = []
   const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
@@ -397,13 +409,46 @@ export async function weaponAttack(actor, item, opts = {}) {
       return sendCard(actor, html, rolls, replay, luck)
     }
   }
+  if (hc.guaranteed) html += `<div class="god-note">Урон щонайменше: ${esc(R.TIER[profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)].label.toLowerCase())}.</div>`
+  html += `<div class="god-apply god-apply-one"><button type="button" class="god-roll-dmg" data-god-damage="1"
+    data-tooltip="Окремий кидок урону${critsOf(actor) ? '. Крити на урон — перед кидком' : ''}"><i class="fa-solid fa-dice-d20"></i> Кинути урон</button></div>`
+  const attack = { actor: actor.uuid, item: ref, p: { ...p, critHit: cHit }, guaranteed: hc.guaranteed ?? null, target: target.uuid }
+  return sendCard(actor, html, rolls, replay, luck, { attack })
+}
 
+/**
+ * Атака, крок 2 — кидок урону після влучання (кнопка «Кинути урон» на картці попадання).
+ * @param state  flags.god.attack з картки попадання
+ */
+export async function weaponDamage(actor, item, state, opts = {}) {
+  const luck = !!opts.luck
+  const A = attackInfo(actor, item)
+  const { sys, cat, isChar, natural, profLvl, melee, perks, abilities } = A
+  const p = state.p
+  const target = resolveTarget(state.target)
+  if (!target) return ui.notifications.warn('Ціль зникла зі сцени')
+  const ab = abilities.find(a => a.id === p.ability) ?? null
+
+  // Тил +2, оцінка +0.5 за кожну; ціль лежить (ближній) — урон з перевагою. Вдача: перевага без від'ємних
+  const notes = []
+  let dmgMod = luck ? pos(p.dmgMod) : p.dmgMod, dmgMode = luck ? 'adv' : 'norm'
+  if (p.dir === 'back') { dmgMod += 2; notes.push('тил +2') }
+  if (melee && hasStatus(target.actor, 'prone')) { dmgMode = 'adv'; notes.push('ціль лежить: перевага') }
+  const aim = R.aimBonus(p.aim, melee)
+  if (aim.dmg) { dmgMod += aim.dmg; notes.push(`оцінка +${aim.dmg}`) }
+  if (isChar) dmgMod = R.capMod(dmgMod)
+  const cDmg = luck ? (opts.preset?.crits ?? 0) : await askCrits(actor, `Урон: ${item.name}`)
+  if (cDmg === null) return
+  const replay = { fn: 'weaponDmg', args: [itemRef(item), state], preset: { crits: cDmg } }
+
+  const rolls = [], after = []
+  let html = head(item.img ?? actor.img, `Урон: ${item.name}`, `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`)
   const dmg = await new Roll(d20f(dmgMode, cDmg), { m: dmgMod, c: cDmg }).evaluate()
   rolls.push(dmg)
   const dmgTotal = withCrits(dmg, cDmg)
   const tier = R.damageTier({ total: dmgTotal, natural: naturalOf(dmg), skillLvl: profLvl })
   let key = tier.tier
-  html += step('Урон', dmgTotal, `куб ${naturalOf(dmg)} ${signed(dmgMod)}${critNote(cDmg, naturalOf(dmg))}${MODE_LABEL[dmgMode] ? ` · ${MODE_LABEL[dmgMode]}` : ''}`, null)
+  html += step('Урон', dmgTotal, `куб ${naturalOf(dmg)} ${signed(dmgMod)}${critNote(cDmg, naturalOf(dmg))}${MODE_LABEL[dmgMode] ? ` · ${MODE_LABEL[dmgMode]}` : ''}${notes.length ? ` · ${notes.join(', ')}` : ''}`, null)
   if (tier.chance) {
     if (perks.autoChance) {
       html += step('ШАНС', '—', `легка зброя 10 рівня: ${R.TIER[tier.chance].label.toLowerCase()} автоматично`, { ok: true, text: 'Спрацював' })
@@ -424,11 +469,12 @@ export async function weaponAttack(actor, item, opts = {}) {
     }
   }
   // Гарантований мінімум із сітки попадання (без володіння крит → 100%)
-  if (hc.guaranteed) {
-    const g = profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)
+  let guaranteedNote = ''
+  if (state.guaranteed) {
+    const g = profLvl >= 1 ? state.guaranteed : (state.guaranteed === 'crit' ? 't100' : state.guaranteed)
     const before = key
     key = R.betterTier(key, g)
-    if (key !== before) notes.push(`гарантовано ${R.TIER[key].label.toLowerCase()}`)
+    if (key !== before) guaranteedNote = `гарантовано попаданням`
   }
   const st = sys.stats
   const base = natural
@@ -462,11 +508,24 @@ export async function weaponAttack(actor, item, opts = {}) {
   if (ab?.id === 'instant') after.push(`Миттєвий захист: удар упритул і кидок тієї ж зброї в іншого ворога; ${ab.level > 1 ? 'за бажанням відскок на 2 м' : 'відскок на 1 клітину назад'}.`)
   if (ab?.id === 'deaththrow') after.push('Кидок смерті: друга зброя летить у ту саму ціль — ще одна атака.')
 
-  const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : ''].filter(Boolean).join(' · ')
+  const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : '', guaranteedNote].filter(Boolean).join(' · ')
   html += `<div class="god-tier tier-${key}">${R.TIER[key].label}<small>${pct}%${tierNote ? ` · ${esc(tierNote)}` : ''}</small></div>`
   const baseNote = `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${base.notes.length ? ` (${base.notes.join(', ')})` : ''}`
   html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
   return sendCard(actor, html, rolls, replay, luck)
+}
+
+/** Кнопка «Кинути урон» на картці попадання: кидає власник нападника або майстер, лише раз */
+export async function rollAttackDamage(message, markFlag) {
+  const st = message.getFlag?.('god', 'attack')
+  if (!st || message.getFlag('god', 'damageRolled') || message.getFlag('god', 'lucky')) return
+  const actor = await fromUuid(st.actor)
+  const a = actor?.actor ?? actor
+  if (!a?.isOwner) return ui.notifications.warn('Урон кидає той, хто атакував, або майстер')
+  const item = await itemFrom(st.item)
+  if (!item) return ui.notifications.warn('Зброї вже немає')
+  await markFlag(message, 'damageRolled', true)
+  return weaponDamage(a, item, st)
 }
 
 /**
@@ -816,7 +875,8 @@ const REPLAY = {
   stat: (a, [k], o) => statCheck(a, k, o),
   skill: (a, [k], o) => skillCheck(a, k, o),
   quick: (a, [spec], o) => quickRoll(a, spec, o),
-  weapon: async (a, [u], o) => { const it = await fromUuid(u); return it ? weaponAttack(a, it, o) : ui.notifications.warn('Зброї вже немає') },
+  weapon: async (a, [u], o) => { const it = await itemFrom(u); return it ? weaponAttack(a, it, o) : ui.notifications.warn('Зброї вже немає') },
+  weaponDmg: async (a, [u, st], o) => { const it = await itemFrom(u); return it ? weaponDamage(a, it, st, o) : ui.notifications.warn('Зброї вже немає') },
   spell: async (a, [u], o) => { const it = await fromUuid(u); return it ? castSpell(a, it, o) : ui.notifications.warn('Заклинання вже немає') },
   threshold: (a, [st, dc, why], o) => thresholdCheck(a, st, dc, why, o),
   deathSave: (a, _, o) => deathSave(a, o),
@@ -828,6 +888,7 @@ export function canLuck(message) {
   const r = message.getFlag?.('god', 'replay')
   if (!r || message.getFlag('god', 'lucky') || !REPLAY[r.fn]) return null
   if (Object.keys(message.getFlag('god', 'applied') ?? {}).length) return null
+  if (message.getFlag('god', 'damageRolled')) return null   // урон уже кинуто — попадання не перекидаємо
   const actor = fromUuidSync(r.actor)
   if (!actor?.isOwner || !luckOf(actor)) return null
   return actor
