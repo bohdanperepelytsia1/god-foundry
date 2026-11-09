@@ -207,9 +207,9 @@ export const deathSave = (state, d20) => {
 /** Стан свідомості за поточною MT */
 export const mentalState = mt => {
   const v = num(mt)
-  if (v <= 5) return { key: 'psychosis', label: 'Психоз', note: 'Усі дії МОД−5, ГМ керує більшістю дій' }
-  if (v <= 9) return { key: 'paranoia', label: 'Паранойя', note: 'МОД−3 на всі дії, страх 16+ від волі' }
-  if (v <= 14) return { key: 'anxiety', label: 'Тривожність', note: 'МОД−1 на дії, −2 на урон, страх 12+ від волі' }
+  if (v <= 5) return { key: 'psychosis', label: 'Психоз', note: 'Усі дії МОД−5, ГМ керує більшістю дій', all: -5, dmg: 0 }
+  if (v <= 9) return { key: 'paranoia', label: 'Паранойя', note: 'МОД−3 на всі дії, страх 16+ від волі', all: -3, dmg: 0 }
+  if (v <= 14) return { key: 'anxiety', label: 'Тривожність', note: 'МОД−1 на дії, −2 на урон, страх 12+ від волі', all: -1, dmg: -2 }
   return null
 }
 
@@ -512,3 +512,28 @@ export const actorWeaponDamage = (actor, item) => {
     cat: s.category, lvl: sys.skill?.(ws.prof) ?? 0, magic: (sys.skill?.('Магічність') ?? 0) > 0, gloves, char: actor.type === 'character',
   })
 }
+
+/**
+ * Перевантаження (Player manual): скільки кг понад максимум →
+ * до 5: ШУ −1; до 10: ШУ −3, без бігу; до 29: ШУ −6, МОД −2 на всі дії; 30+: рухатись неможливо.
+ */
+export const overloadEffect = over => {
+  const o = num(over)
+  if (o <= 0) return null
+  if (o <= 5) return { dodge: -1, all: 0, label: 'Перевантаження до 5 кг: ШУ −1, втома ×1.5' }
+  if (o <= 10) return { dodge: -3, all: 0, label: 'Перевантаження до 10 кг: ШУ −3, втома ×2, бігти не можна' }
+  if (o < 30) return { dodge: -6, all: -2, label: 'Перевантаження до 29 кг: ШУ −6, МОД −2 на всі дії, втома ×3, бігти не можна' }
+  return { dodge: -6, all: -2, immobile: true, label: 'Перевантаження 30+ кг: рухатись неможливо' }
+}
+
+/** Відпочинок і сон (Player manual, «Ефекти і відпочинок»): скільки витривалості відновлює */
+export const REST = {
+  restBad: { label: 'Некомфортний відпочинок (30 хв)', ed: 20 },
+  rest: { label: 'Відпочинок (30 хв)', ed: 40 },
+  restGood: { label: 'Комфортний відпочинок (30 хв)', ed: 80 },
+  sleepBad: { label: 'Некомфортний сон (1 год)', ed: 40 },
+  sleep: { label: 'Сон (1 год)', ed: 80 },
+  sleepGood: { label: 'Комфортний сон (1 год)', ed: 200 },
+}
+/** Відновлення броні: підгонка — 50% фіз. і маг. броні (1 год), відновлення — 100% (2 год) */
+export const ARMOR_REPAIR = { fit: { label: 'Підгонка броні (1 год) — 50%', pct: 50 }, full: { label: 'Відновлення броні (2 год) — 100%', pct: 100 } }

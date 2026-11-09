@@ -40,8 +40,11 @@
               <button type="button" data-action="itemCreate" data-type="weapon"><img src="systems/god/assets/icons/weapons/onehand.svg" alt="">Зброя</button>
               <button type="button" data-action="itemCreate" data-type="armor"><img src="systems/god/assets/icons/armor/cuirass.svg" alt="">Обладунок</button>
               <hr>
-              {{#each gearCats}}
+              {{#each gearGroups}}
+              <h5>{{label}}</h5>
+              {{#each cats}}
               <button type="button" data-action="itemCreate" data-type="gear" data-category="{{id}}"><img src="{{icon}}" alt="">{{label}}</button>
+              {{/each}}
               {{/each}}
             </div>
           </details>

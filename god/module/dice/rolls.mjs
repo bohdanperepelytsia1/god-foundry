@@ -236,11 +236,15 @@ async function d20Check(actor, label, mod, sub, replay, opts = {}) {
     { ...replay, preset: { ...p, crits } }, luck)
 }
 
+/** «МОД на всі дії» з ефектів, перевантаження і стану свідомості */
+const allMod = actor => actor?.system?.derived?.allMod || 0
+const allNote = actor => allMod(actor) ? ` (з них ${actor.system.derived.allModParts || `на всі дії ${allMod(actor)}`})` : ''
+
 export const statCheck = (actor, key, opts) =>
-  d20Check(actor, GOD.STATS[key].label, actor.system.stats[key].mod, 'перевірка характеристики', { fn: 'stat', args: [key] }, opts)
+  d20Check(actor, GOD.STATS[key].label, actor.system.stats[key].mod + allMod(actor), `перевірка характеристики${allNote(actor)}`, { fn: 'stat', args: [key] }, opts)
 
 export const skillCheck = (actor, key, opts) =>
-  d20Check(actor, GOD.SKILL_INDEX[key].name, actor.system.skill(key), `вміння, рівень ${actor.system.skill(key)}`, { fn: 'skill', args: [key] }, opts)
+  d20Check(actor, GOD.SKILL_INDEX[key].name, actor.system.skill(key) + allMod(actor), `вміння, рівень ${actor.system.skill(key)}${allNote(actor)}`, { fn: 'skill', args: [key] }, opts)
 
 // ── Швидкий кидок з панелі (без діалогу) ─────────────────────────────────────
 /**
@@ -331,8 +335,8 @@ export async function weaponAttack(actor, item, opts = {}) {
   if (!opts.preset && !choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
 
   // Модифікатори за правилами: прицільність 0 → −5, урон від володіння за «формулою ГМ-а», максимум +12
-  const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0)
-  const dmgDefault = (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0)
+  const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0) + allMod(actor)
+  const dmgDefault = (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0) + (sys.derived?.mindDmg || 0)
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
@@ -610,8 +614,8 @@ export async function castSpell(actor, spell, opts = {}) {
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },
         { name: 'hitMod', label: 'Маг. прицільність', value: actor.type === 'character'
-          ? R.capMod(R.accuracyMod(sys.skill('Маг_прицільність')) + (sys.combat.hitMod || 0))
-          : sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) },
+          ? R.capMod(R.accuracyMod(sys.skill('Маг_прицільність')) + (sys.combat.hitMod || 0) + allMod(actor))
+          : sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) + allMod(actor) },
         ...critField(actor, 'critHit', 'Крити на попадання'),
       ] : []),
       { name: 'threshold', label: 'Поріг (ПППС)', value: s.threshold },
@@ -758,7 +762,7 @@ export async function thresholdCheck(actor, stat, dc, why = '', opts = {}) {
   const luck = !!opts.luck
   const crits = luck ? (opts.preset?.crits ?? 0) : await askCrits(actor, `${STAT_LABEL(stat)} ${dc}+`)
   if (crits === null) return
-  const mod0 = actor.system.stats?.[stat]?.mod ?? 0
+  const mod0 = (actor.system.stats?.[stat]?.mod ?? 0) + allMod(actor)
   const mod = luck ? pos(mod0) : mod0
   const roll = await new Roll(d20f(luck ? 'adv' : 'norm', crits), { m: mod, c: crits }).evaluate()
   const total = withCrits(roll, crits)
@@ -777,15 +781,32 @@ export async function deathSave(actor, opts = {}) {
     if (opts.preset?.wasDead) await actor.toggleStatusEffect?.('dead', { active: false })
     await actor.setFlag('god', 'deathSaves', before)
   }
-  const crits = luck ? (opts.preset?.crits ?? 0) : await askCrits(actor, 'Спаскидок')
-  if (crits === null) return
-  const roll = await new Roll(`${luck ? '2d20kh' : '1d20'}${crits ? ' + @c' : ''}`, { c: crits }).evaluate()
+  // Реанімація (Player manual): інший герой кидає замість того, хто при смерті, з МОД + рівень уміння
+  let crits = 0, rev = null
+  if (luck) { crits = opts.preset?.crits ?? 0; rev = opts.preset?.rev ?? null }
+  else {
+    const revivers = (game.actors?.filter?.(a => a.type === 'character' && a.id !== actor.id && (a.system.skill?.('Реанімація') ?? 0) > 0) ?? [])
+    const fields = [
+      ...(revivers.length ? [{ type: 'select', name: 'by', label: 'Хто кидає', value: '',
+        options: { '': `${actor.name} сам`, ...Object.fromEntries(revivers.map(a => [a.id, `${a.name} — Реанімація +${a.system.skill('Реанімація')}`])) } }] : []),
+      ...critField(actor, 'crits', `Крити ${actor.name}`),
+    ]
+    if (fields.length) {
+      const p = await rollDialog({ title: 'Спаскидок', fields, info: revivers.length ? 'Реаніматор кидає замість героя: + рівень Реанімації. Крити — лише власні, якщо кидає сам герой.' : '' })
+      if (!p) return
+      const r = p.by ? game.actors.get(p.by) : null
+      if (r) rev = { name: r.name, lvl: r.system.skill('Реанімація') }
+      else crits = await spendCrits(actor, p.crits)
+    }
+  }
+  const rm = rev?.lvl ?? 0
+  const roll = await new Roll(`${luck ? '2d20kh' : '1d20'}${rm ? ' + @r' : ''}${crits ? ' + @c' : ''}`, { c: crits, r: rm }).evaluate()
   const nat = naturalOf(roll)
-  // 1 і 20 рахуються за кубом; крити додаються до результату (на натуральній 1 згорають)
+  // 1 і 20 рахуються за кубом; крити й Реанімація додаються до результату (на натуральній 1 згорають)
   const value = nat === 1 || nat === 20 ? nat : Math.min(19, withCrits(roll, crits))
   const s = R.deathSave(before, value)
-  let html = head(actor.img, 'Перевірка смерті', `${actor.name}: успіхи ${s.ok}/3 · провали ${s.fail}/3`)
-  html += step('Спаскидок', withCrits(roll, crits), (nat === 20 ? 'двадцятка — два успіхи' : nat === 1 ? 'одиниця — два провали' : '11+ успіх') + critNote(crits, nat) + (luck ? ' · перевага' : ''),
+  let html = head(actor.img, 'Перевірка смерті', `${actor.name}: успіхи ${s.ok}/3 · провали ${s.fail}/3${rev ? ` · кидає ${esc(rev.name)}` : ''}`)
+  html += step('Спаскидок', withCrits(roll, crits), (nat === 20 ? 'двадцятка — два успіхи' : nat === 1 ? 'одиниця — два провали' : '11+ успіх') + (rm ? ` · Реанімація +${rm}` : '') + critNote(crits, nat) + (luck ? ' · перевага' : ''),
     { ok: value >= 11, text: value >= 11 ? 'Успіх' : 'Провал' })
   if (s.result === 'stable') {
     html += '<div class="god-tier tier-t100">Стабільний<small>живий, але без свідомості</small></div>'
@@ -798,7 +819,7 @@ export async function deathSave(actor, opts = {}) {
     await actor.setFlag('god', 'deathSaves', { ok: s.ok, fail: s.fail })
     html += `<div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|saves"><i class="fa-solid fa-heart-pulse"></i> Наступний спаскидок</button></div>`
   }
-  return sendCard(actor, html, [roll], { fn: 'deathSave', args: [], preset: { before, crits, wasDead: s.result === 'dead' } }, luck)
+  return sendCard(actor, html, [roll], { fn: 'deathSave', args: [], preset: { before, crits, rev, wasDead: s.result === 'dead' } }, luck)
 }
 
 /** HP між 0 і −½max: 1d2 — 2 = автоматично пройдена перевірка смерті, 1 = спаскидки */
@@ -818,6 +839,13 @@ export async function deathCoin(actor, opts = {}) {
 /** Картка наслідків удару (якщо після нього потрібні перевірки) */
 export async function hitConsequences(actor, out) {
   const r = actor.system.resources.hp
+  // НІП: жодних перевірок свідомості — HP ≤ 0 означає смерть
+  if (actor.type === 'npc') {
+    if (r.value > 0 || actor.statuses?.has('dead')) return
+    await actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
+    return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="god-card">${head(actor.img, 'Загинув', `${esc(actor.name)}: HP ${r.value}`)}<div class="god-tier tier-none">Смерть</div></div>` })
+  }
   const a = R.afterHit(r.value, r.max)
   if (a.state === 'ok' && !a.checks.length) return
   let html = head(actor.img, 'Після удару', `${actor.name}: HP ${r.value} / ${r.max}`)

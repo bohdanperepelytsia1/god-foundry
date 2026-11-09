@@ -125,32 +125,59 @@ export const CREATURE_RANKS = { weak: 'Слабкий', junior: 'Молодши�
 
 export const INVENTORY_LOCATIONS = {
   main: 'Загальне', belt: 'Пояс', quest: 'Квестові', tools: 'Інструменти',
-  books: 'Книги', ingredients: 'Інгредієнти', potions: 'Зілля',
+  books: 'Книги', ingredients: 'Інгредієнти', potions: 'Зілля', materials: 'Матеріали й трофеї', valuables: 'Цінності',
 }
 
-/**
- * Категорії звичайних предметів: що це таке. Визначають іконку, типовий розділ інвентаря
- * і чи предмет розхідний. Розділ потім можна змінити — категорія лишиться.
- */
+/** Групи для меню «Додати» */
+export const GEAR_GROUPS = {
+  general: 'Загальне', food: 'Їжа й питво', medicine: 'Зілля й медицина', craft: 'Інструменти й ремесло',
+  lore: 'Книги й документи', materials: 'Матеріали', valuables: 'Цінності', quest: 'Квестове', combat: 'Бій',
+}
+/** Категорії звичайних предметів (gear): іконка, типовий розділ, розхідний чи ні */
 export const GEAR_CATEGORIES = {
-  item:       { label: 'Звичайний',      icon: 'item',     loc: 'main' },
-  potion:     { label: 'Зілля',          icon: 'potion',   loc: 'potions',     consumable: true },
-  food:       { label: 'Їжа й питво',    icon: 'food',     loc: 'main',        consumable: true },
-  medicine:   { label: 'Ліки, бинти',    icon: 'flask',    loc: 'potions',     consumable: true },
-  ingredient: { label: 'Інгредієнт',     icon: 'herb',     loc: 'ingredients' },
-  tool:       { label: 'Інструмент',     icon: 'tools',    loc: 'tools' },
-  lockpick:   { label: 'Відмички',       icon: 'lockpick', loc: 'tools' },
-  book:       { label: 'Книга',          icon: 'book',     loc: 'books' },
-  scroll:     { label: 'Сувій, лист',    icon: 'scroll',   loc: 'books' },
-  quest:      { label: 'Квестовий',      icon: 'map',      loc: 'quest' },
-  key:        { label: 'Ключ',           icon: 'key',      loc: 'quest' },
-  light:      { label: 'Світло',         icon: 'torch',    loc: 'main' },
-  camp:       { label: 'Похідне',        icon: 'camp',     loc: 'main' },
-  rope:       { label: 'Мотузка, кріплення', icon: 'rope', loc: 'main' },
-  valuable:   { label: 'Цінність',       icon: 'coins',    loc: 'main' },
+  item:       { label: 'Звичайний',             icon: 'item',       loc: 'main',        group: 'general' },
+  container:  { label: 'Ємність, скриня',       icon: 'container',  loc: 'main',        group: 'general' },
+  light:      { label: 'Смолоскип, свічка',     icon: 'torch',      loc: 'main',        group: 'general' },
+  lantern:    { label: 'Ліхтар',                icon: 'lantern',    loc: 'main',        group: 'general' },
+  camp:       { label: 'Похідне',               icon: 'camp',       loc: 'main',        group: 'general' },
+  rope:       { label: 'Мотузка, кріплення',    icon: 'rope',       loc: 'main',        group: 'general' },
+  navigation: { label: 'Компас, підзорна труба', icon: 'navigation', loc: 'tools',      group: 'general' },
+  sewing:     { label: 'Шиття, ремонт',         icon: 'sewing',     loc: 'tools',       group: 'general' },
+  game:       { label: 'Кості, карти, забавки', icon: 'game',       loc: 'main',        group: 'general' },
+  food:       { label: 'Їжа',                   icon: 'food',       loc: 'main',        group: 'food', consumable: true },
+  water:      { label: 'Вода, фляга',           icon: 'water',      loc: 'belt',        group: 'food', consumable: true },
+  drink:      { label: 'Алкоголь',              icon: 'drink',      loc: 'main',        group: 'food', consumable: true },
+  potion:     { label: 'Зілля',                 icon: 'potion',     loc: 'potions',     group: 'medicine', consumable: true },
+  medicine:   { label: 'Ліки, бинти',           icon: 'flask',      loc: 'potions',     group: 'medicine', consumable: true },
+  medkit:     { label: 'Набір першої допомоги', icon: 'medkit',     loc: 'tools',       group: 'medicine' },
+  surgery:    { label: 'Хірургічний набір',     icon: 'surgery',    loc: 'tools',       group: 'medicine' },
+  poison:     { label: 'Отрута',                icon: 'poison',     loc: 'potions',     group: 'medicine', consumable: true },
+  alchemy:    { label: 'Алхімічне приладдя',    icon: 'alchemy',    loc: 'tools',       group: 'medicine' },
+  tool:       { label: 'Інструмент',            icon: 'tools',      loc: 'tools',       group: 'craft' },
+  lockpick:   { label: 'Відмички',              icon: 'lockpick',   loc: 'tools',       group: 'craft' },
+  trap:       { label: 'Пастка',                icon: 'trap',       loc: 'tools',       group: 'craft' },
+  fishing:    { label: 'Рибальське',            icon: 'fishing',    loc: 'tools',       group: 'craft' },
+  instrument: { label: 'Музичний інструмент',   icon: 'instrument', loc: 'main',        group: 'craft' },
+  book:       { label: 'Книга',                 icon: 'book',       loc: 'books',       group: 'lore' },
+  scroll:     { label: 'Сувій, лист',           icon: 'scroll',     loc: 'books',       group: 'lore' },
+  document:   { label: 'Документ, грамота',     icon: 'document',   loc: 'books',       group: 'lore' },
+  map:        { label: 'Мапа',                  icon: 'map',        loc: 'books',       group: 'lore' },
+  ingredient: { label: 'Інгредієнт, трава',     icon: 'herb',       loc: 'ingredients', group: 'materials' },
+  material:   { label: 'Матеріал (дерево, тканина)', icon: 'material', loc: 'materials', group: 'materials' },
+  ore:        { label: 'Руда, метал',           icon: 'ore',        loc: 'materials',   group: 'materials' },
+  hide:       { label: 'Шкура',                 icon: 'hide',       loc: 'materials',   group: 'materials' },
+  trophy:     { label: 'Трофей, частини звіра', icon: 'trophy',     loc: 'materials',   group: 'materials' },
+  valuable:   { label: 'Цінність, злиток',      icon: 'coins',      loc: 'valuables',   group: 'valuables' },
+  gem:        { label: 'Самоцвіт',              icon: 'gem',        loc: 'valuables',   group: 'valuables' },
+  jewelry:    { label: 'Прикраса',              icon: 'jewelry',    loc: 'valuables',   group: 'valuables' },
+  artifact:   { label: 'Артефакт, магічне',     icon: 'artifact',   loc: 'valuables',   group: 'valuables' },
+  holy:       { label: 'Святиня, оберіг',       icon: 'holy',       loc: 'valuables',   group: 'valuables' },
+  quest:      { label: 'Квестовий',             icon: 'map',        loc: 'quest',       group: 'quest' },
+  key:        { label: 'Ключ',                  icon: 'key',        loc: 'quest',       group: 'quest' },
+  ammo:       { label: 'Стріли, болти, кулі',   icon: 'ammo',       loc: 'belt',        group: 'combat', consumable: true },
 }
 /** Розділ інвентаря → типова категорія (для кнопки «+» у розділі) */
-export const LOCATION_CATEGORY = { main: 'item', belt: 'item', quest: 'quest', tools: 'tool', books: 'book', ingredients: 'ingredient', potions: 'potion' }
+export const LOCATION_CATEGORY = { main: 'item', belt: 'item', quest: 'quest', tools: 'tool', books: 'book', ingredients: 'ingredient', potions: 'potion', materials: 'material', valuables: 'valuable' }
 
 export const WEAPON_CATEGORIES = {
   fist: 'Кулачна', light: 'Легка', onehand: 'Одноручна', heavy1h: 'Тяжка одноручна',
@@ -213,7 +240,7 @@ export const MONEY = {
 
 export const GOD = {
   BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SHIELD_SIZES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
-  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_SKILLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
+  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_GROUPS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_SKILLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 
 // ── Іконки системи (assets/icons) ────────────────────────────────────────────

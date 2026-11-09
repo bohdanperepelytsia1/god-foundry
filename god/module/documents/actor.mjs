@@ -211,6 +211,37 @@ export class GodActor extends Actor {
     }])
   }
 
+  /**
+   * Відпочинок і відновлення броні (Player manual): вибір у діалозі, відновлене — в чат.
+   */
+  async restDialog() {
+    const opt = (k, l) => `<label class="god-dlg-check"><input type="radio" name="what" value="${k}"><span>${l}</span></label>`
+    const res = await foundry.applications.api.DialogV2.wait({
+      window: { title: `Відпочинок: ${this.name}`, icon: 'fa-solid fa-campground' }, classes: ['god-dialog'], position: { width: 380 }, rejectClose: false,
+      content: `<p class="god-dlg-info">Витривалість відновлюється за правилами; броня — підгонкою чи повним відновленням.</p>
+        <h4 class="god-dlg-h">Відпочинок і сон</h4>${Object.entries(R.REST).map(([k, r]) => opt(k, `${r.label} — +${r.ed} ВС`)).join('')}
+        <h4 class="god-dlg-h">Броня</h4>${Object.entries(R.ARMOR_REPAIR).map(([k, r]) => opt(k, r.label)).join('')}`,
+      buttons: [{ action: 'ok', label: 'Застосувати', icon: 'fa-solid fa-check', default: true, callback: (e, b) => b.form.querySelector('[name="what"]:checked')?.value ?? null }],
+    })
+    if (!res || typeof res !== 'string') return
+    const r = this.system.resources, upd = {}, lines = []
+    if (R.REST[res]) {
+      const to = Math.min(r.ed.max, r.ed.value + R.REST[res].ed)
+      upd['system.resources.ed.value'] = to
+      lines.push(`${R.REST[res].label}: ВС ${r.ed.value} → ${to}`)
+    } else if (R.ARMOR_REPAIR[res]) {
+      const pct = R.ARMOR_REPAIR[res].pct
+      for (const k of ['pr', 'mr']) {
+        const to = Math.min(r[k].max, r[k].value + Math.ceil(r[k].max * pct / 100))
+        upd[`system.resources.${k}.value`] = to
+        lines.push(`${k.toUpperCase()} ${r[k].value} → ${to}`)
+      }
+      lines.unshift(R.ARMOR_REPAIR[res].label)
+    }
+    await this.update(upd)
+    return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor: this }), content: `<div class="god-card"><p><b>${foundry.utils.escapeHTML?.(this.name) ?? this.name}</b> — ${lines.join(' · ')}</p></div>` })
+  }
+
   /** ШУ цього актора як цілі */
   get dodgeValue() { return this.system.derived?.dodge ?? 0 }
 

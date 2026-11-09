@@ -36,6 +36,12 @@
     </div>
   </div>
 
+  {{#if (god-or system.derived.allMod system.derived.overload)}}
+  <div class="god-allmod">
+    {{#if system.derived.allMod}}<span data-tooltip="Додається до всіх перевірок і попадань: {{system.derived.allModParts}}">Усі дії {{god-signed system.derived.allMod}}</span>{{/if}}
+    {{#if system.derived.overload}}<span class="warn" data-tooltip="{{system.derived.overload.label}}"><i class="fa-solid fa-weight-hanging"></i> Перевантаження</span>{{/if}}
+  </div>
+  {{/if}}
 
   {{#if down}}
   <div class="god-down {{#if down.dead}}dead{{/if}}">
@@ -55,6 +61,8 @@
       <i class="fa-solid fa-dice-d20"></i> Кидки</button>
     <button type="button" class="god-tray-open" data-action="openHud" data-tooltip="Компактна панель персонажа поверх сцени, можна закріпити (Shift+C)">
       <i class="fa-solid fa-id-badge"></i> Панель</button>
+    {{#if editable}}<button type="button" class="god-tray-open" data-action="rest" data-tooltip="Відпочинок, сон, відновлення броні">
+      <i class="fa-solid fa-campground"></i></button>{{/if}}
   </div>
 
   <div class="god-tiles">

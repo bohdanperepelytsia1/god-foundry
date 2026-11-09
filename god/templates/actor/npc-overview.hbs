@@ -72,12 +72,18 @@
   </section>
   {{/if}}
 
-  {{#if effectsActive.length}}
-  <section class="god-panel">
-    <header><h3><i class="fa-solid fa-bolt"></i> Діють зараз</h3></header>
+  <section class="god-panel god-eff-panel">
+    <header><h3><i class="fa-solid fa-bolt"></i> Ефекти</h3>
+      {{#if editable}}<a class="god-head-add" data-action="effectCreate" data-tooltip="Додати ефект: шаблон з правил або свій"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
     <div class="god-chips">
-      {{#each effectsActive}}<span class="god-effect-chip" data-tooltip="{{changes}}"><img src="{{img}}" alt="">{{name}}</span>{{/each}}
+      {{#each effectsActive}}
+      <span class="god-effect-chip" data-effect-uuid="{{uuid}}" data-tooltip="{{#if changes}}{{changes}}{{else}}{{name}}{{/if}}">
+        <a data-action="effectEdit"><img src="{{img}}" alt="">{{name}}{{#if duration}} <small>{{duration}}</small>{{/if}}</a>
+        {{#if @root.editable}}<a class="god-chip-x" data-action="effectDelete" data-tooltip="Зняти"><i class="fa-solid fa-xmark"></i></a>{{/if}}
+      </span>
+      {{else}}
+      <p class="god-empty">Нічого не діє{{#if editable}} — «+», щоб додати втому, травму, алкоголь чи свій ефект{{/if}}.</p>
+      {{/each}}
     </div>
   </section>
-  {{/if}}
 </section>

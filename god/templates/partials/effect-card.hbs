@@ -1,0 +1,15 @@
+<article class="god-eff-card {{#if off}}off{{/if}}" data-effect-uuid="{{uuid}}">
+  <img src="{{img}}" alt="">
+  <div class="god-eff-body">
+    <a class="god-eff-name" data-action="effectEdit" data-tooltip="Змінити">{{name}}</a>
+    {{#if meta}}<span class="god-eff-meta">{{#if duration}}<i class="fa-regular fa-hourglass-half"></i> {{/if}}{{meta}}</span>{{/if}}
+    {{#if chips.length}}<div class="god-eff-chips">{{#each chips}}<span class="{{cls}}">{{label}} <b>{{value}}</b></span>{{/each}}</div>{{/if}}
+    {{#if desc}}<p class="god-eff-text">{{desc}}</p>{{/if}}
+  </div>
+  {{#if @root.editable}}
+  <div class="god-eff-actions">
+    {{#unless suppressed}}<a class="god-switch {{#unless disabled}}on{{/unless}}" data-action="effectToggle" data-tooltip="{{#if disabled}}Увімкнути{{else}}Вимкнути{{/if}}"><i></i></a>{{/unless}}
+    <a data-action="effectDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>
+  </div>
+  {{/if}}
+</article>

@@ -1,37 +1,17 @@
 <section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="effects">
-  <section class="god-panel god-list">
-    <header><h3><i class="fa-solid fa-bolt"></i> Діють</h3>
-      {{#if editable}}<a class="god-head-add" data-action="effectCreate" data-tooltip="Новий ефект"><i class="fa-solid fa-plus"></i></a>{{/if}}</header>
-    <ol class="god-rows">
-      {{#each effectsActive}}
-      <li class="god-effect" data-effect-uuid="{{uuid}}">
-        <img src="{{img}}" alt="">
-        <a class="god-row-name" data-action="effectEdit">{{name}}{{#if isStance}} <small class="god-dim">стійка</small>{{/if}}{{#if source}} <small class="god-dim">· {{source}}</small>{{/if}}</a>
-        <span class="god-effect-changes">{{changes}}</span>
-        <a class="god-switch on" data-action="effectToggle" data-tooltip="Вимкнути"><i></i></a>
-        <a data-action="effectDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>
-      </li>
-      {{else}}
-      <p class="god-empty">Нічого не діє.</p>
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-bolt"></i> Діють <small class="god-dim">{{effectsActive.length}}</small></h3>
+      {{#if editable}}<button type="button" class="god-btn god-btn-sm" data-action="effectCreate"><i class="fa-solid fa-plus"></i> Ефект</button>{{/if}}</header>
+    <div class="god-eff-grid">
+      {{#each effectsActive}}{{> god-effect-card}}{{else}}
+      <p class="god-empty">Нічого не діє.{{#if @root.editable}} Додай ефект — з шаблону правил (втома, травми, алкоголь…) або свій.{{/if}}</p>
       {{/each}}
-    </ol>
+    </div>
   </section>
   {{#if effectsOff.length}}
-  <section class="god-panel god-list">
-    <header><h3><i class="fa-solid fa-moon"></i> Не діють</h3></header>
-    <ol class="god-rows">
-      {{#each effectsOff}}
-      <li class="god-effect off" data-effect-uuid="{{uuid}}">
-        <img src="{{img}}" alt="">
-        <a class="god-row-name" data-action="effectEdit">{{name}}{{#if source}} <small class="god-dim">· {{source}}</small>{{/if}}</a>
-        <span class="god-effect-changes">{{#if suppressed}}діє, коли предмет одягнено{{else}}{{changes}}{{/if}}</span>
-        {{#if suppressed}}<span></span>{{else}}<a class="god-switch" data-action="effectToggle" data-tooltip="Увімкнути"><i></i></a>{{/if}}
-        <a data-action="effectDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>
-      </li>
-      {{/each}}
-    </ol>
+  <section class="god-panel">
+    <header><h3><i class="fa-solid fa-moon"></i> Не діють <small class="god-dim">{{effectsOff.length}}</small></h3></header>
+    <div class="god-eff-grid">{{#each effectsOff}}{{> god-effect-card off=true}}{{/each}}</div>
   </section>
   {{/if}}
-  <p class="god-hint">Ефект змінює будь-яке поле. Корисні ключі: <code>system.combat.dodgeBonus</code>, <code>system.combat.hitMod</code>,
-    <code>system.combat.damageMod</code>, <code>system.resources.hp.bonus</code>.</p>
 </section>

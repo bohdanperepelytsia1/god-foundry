@@ -71,6 +71,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         dodgeBonus: int(0),   // ручна правка майстра (±), поверх динамічного ШУ
         hitMod: int(0),       // від стійок/ефектів
         damageMod: int(0),
+        allMod: int(0),       // «МОД на всі дії» — від ефектів (травми, втома, алкоголь…)
       }),
       encumbrance: new f.SchemaField({ override: flt(0, { min: 0 }) }),
       money: moneyField(),
@@ -199,6 +200,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       spellStatMult: t.spellStatMult,
     }
     this.derived.overloaded = this.derived.totalWeight > this.derived.maxWeight
+    // Перевантаження і стан свідомості — штрафи з правил, поверх ефектів
+    const over = R.overloadEffect(this.derived.totalWeight - this.derived.maxWeight)
+    const mind = R.mentalState(this.resources.mt.value)
+    this.derived.overload = over
+    if (over) this.derived.dodge = Math.max(0, this.derived.dodge + over.dodge)
+    this.derived.allMod = (this.combat.allMod || 0) + (over?.all ?? 0) + (mind?.all ?? 0)
+    this.derived.mindDmg = mind?.dmg ?? 0
+    this.derived.allModParts = [
+      this.combat.allMod ? `ефекти ${this.combat.allMod > 0 ? '+' : ''}${this.combat.allMod}` : '',
+      over?.all ? `перевантаження ${over.all}` : '', mind?.all ? `${mind.label.toLowerCase()} ${mind.all}` : '',
+    ].filter(Boolean).join(', ')
     this.derived.pendingBuild = this.hasPendingBuild
   }
 }
@@ -237,7 +249,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         phys: int(0),
         mag: int(0),
       }),
-      combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0) }),
+      combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0), allMod: int(0) }),
       money: moneyField(),
       notes: new f.HTMLField({ initial: '' }),
     }
@@ -277,6 +289,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       belt: { slots: t.beltSlots, used: t.beltUsed },
       armorPr: t.pr, armorMr: t.mr,
       spellStatMult: t.spellStatMult,
+      allMod: this.combat.allMod || 0, mindDmg: 0,
+      allModParts: this.combat.allMod ? `ефекти ${this.combat.allMod}` : '',
     }
   }
 }

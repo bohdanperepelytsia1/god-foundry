@@ -75,6 +75,7 @@ console.log('✓ схеми предметів')
 // ── рендер усіх шаблонів ──
 Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
 Handlebars.registerHelper('god-eq', (a, b) => a === b)
+Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
 Handlebars.registerHelper('checked', v => v ? 'checked' : '')
 Handlebars.registerHelper('selectOptions', (choices, o) => new Handlebars.SafeString(
   Object.entries(choices || {}).map(([k, v]) => `<option value="${k}" ${k === o.hash.selected ? 'selected' : ''}>${v}</option>`).join('')))
@@ -82,6 +83,7 @@ Handlebars.registerPartial('god-row', readFileSync('god/templates/partials/row.h
 Handlebars.registerPartial('god-skill-controls', readFileSync('god/templates/partials/skill-controls.hbs', 'utf8'))
 Handlebars.registerPartial('god-res', readFileSync('god/templates/partials/res.hbs', 'utf8'))
 Handlebars.registerPartial('god-weapon-card', readFileSync('god/templates/partials/weapon-card.hbs', 'utf8'))
+Handlebars.registerPartial('god-effect-card', readFileSync('god/templates/partials/effect-card.hbs', 'utf8'))
 Handlebars.registerHelper('and', (...a) => a.slice(0, -1).every(Boolean))
 Handlebars.registerHelper('or', (...a) => a.slice(0, -1).some(Boolean))
 Handlebars.registerHelper('god-array', (...a) => { const r = a.slice(0, -1), o = []; for (let i = 0; i < r.length; i += 3) o.push({ key: r[i], label: r[i + 1], icon: r[i + 2] }); return o })
@@ -160,7 +162,7 @@ for (const editMode of [false, true]) {
       assert.ok(html.includes('data-inv-sort'), 'сортування')
       assert.ok(html.includes('class="god-inv-detail" data-item-id="igear"'), 'інспектор прив\'язаний до предмета')
       assert.ok(html.includes('HP <b>+50</b>') && html.includes('Червона рідина') && html.includes('Розділити'), 'відновлення, опис, розділення')
-      assert.equal((html.match(/<option/g) || []).length, 2 + 7, 'сортування + місце в інспекторі')
+      assert.equal((html.match(/<option/g) || []).length, 2 + 9, 'сортування + місце в інспекторі')
     }
     if (f === 'skills.hbs') {
       assert.equal(html.includes('data-action="skillUp"'), editMode, '± лише в режимі редагування')

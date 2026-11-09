@@ -126,7 +126,8 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
 
   _baseMod(actor) {
     if (!this._pick || actor?.type !== 'character') return 0
-    return this._pick.kind === 'stat' ? actor.system.stats[this._pick.key]?.mod ?? 0 : actor.system.skill(this._pick.key)
+    const all = actor.system.derived?.allMod || 0   // «на всі дії»: ефекти, перевантаження, свідомість
+    return (this._pick.kind === 'stat' ? actor.system.stats[this._pick.key]?.mod ?? 0 : actor.system.skill(this._pick.key)) + all
   }
   _pickLabel() {
     if (!this._pick) return ''

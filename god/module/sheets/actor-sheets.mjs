@@ -14,6 +14,7 @@ import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
+import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { GodDiceTray } from '../apps/dice-tray.mjs'
 import { GodHud } from '../apps/hud.mjs'
 import { bindResourceControls } from '../apps/res-controls.mjs'
@@ -42,6 +43,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       editImage: GodActorSheetBase.#editImage,
       showPortrait: GodActorSheetBase.#showPortrait,
       tokenImage: GodActorSheetBase.#tokenImage,
+      rest: GodActorSheetBase.#rest,
       deathSave: GodActorSheetBase.#deathSave,
       itemUse: GodActorSheetBase.#itemUse,
       itemEdit: GodActorSheetBase.#itemEdit,
@@ -330,6 +332,9 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
   async _gearContext(context, items) {
     const d = this.document.system.derived
     context.gearCats = Object.entries(GOD.GEAR_CATEGORIES).map(([id, g]) => ({ id, label: g.label, icon: `systems/god/assets/icons/gear/${g.icon}.svg` }))
+    context.gearGroups = Object.entries(GOD.GEAR_GROUPS).map(([gid, label]) => ({
+      label, cats: Object.entries(GOD.GEAR_CATEGORIES).filter(([, g]) => g.group === gid).map(([id, g]) => ({ id, label: g.label, icon: `systems/god/assets/icons/gear/${g.icon}.svg` })),
+    })).filter(g => g.cats.length)
     const armor = items.filter(i => i.type === 'armor')
     context.slots = Object.entries(GOD.ARMOR_SLOTS).map(([slot, label]) => {
       const it = armor.find(a => a.system.equipped && a.system.slot === slot)
@@ -382,6 +387,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (globalThis.ImagePopout) return new globalThis.ImagePopout(a.img, { title: a.name, uuid: a.uuid }).render(true)
   }
   static #tokenImage() { if (this.isEditable) pickTokenImage(this.document) }
+  static #rest() { if (this.isEditable) this.document.restDialog() }
   static #deathSave() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.deathSave(this.document)) }
   static #itemUse(ev, target) { this._item(target)?.use() }
   static #itemEdit(ev, target) { this._item(target)?.sheet.render(true) }
@@ -429,12 +435,9 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     }
   }
   static #effectToggle(ev, target) { const e = this._effect(target); e?.update({ disabled: !e.disabled }) }
-  static #effectEdit(ev, target) { this._effect(target)?.sheet.render(true) }
-  static #effectDelete(ev, target) { this._effect(target)?.delete() }
-  static async #effectCreate() {
-    const [e] = await this.document.createEmbeddedDocuments('ActiveEffect', [{ name: 'Новий ефект', img: 'icons/svg/aura.svg' }])
-    e?.sheet.render(true)
-  }
+  static #effectEdit(ev, target) { const e = this._effect(target); if (e && this.isEditable) editEffect(this.document, e); else e?.sheet.render(true) }
+  static #effectDelete(ev, target) { ev.stopPropagation(); this._effect(target)?.delete() }
+  static #effectCreate() { if (this.isEditable) editEffect(this.document) }
   /** Стійка v4.5.0 — активний ефект; одночасно лише одна */
   static #stance(ev, target) { this.document.setStance(target.dataset.stance) }
 
@@ -448,7 +451,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       editable, editMode: editable && this._editMode,
       isNpc: actor.type === 'npc',
       down: (actor.system.resources?.hp?.value ?? 1) <= 0 ? {
-        dead: actor.statuses?.has('dead'),
+        dead: actor.type === 'npc' || actor.statuses?.has('dead'),
         ok: actor.getFlag('god', 'deathSaves')?.ok ?? 0, fail: actor.getFlag('god', 'deathSaves')?.fail ?? 0,
       } : null,
       portraitIcon: !actor.img || actor.img.startsWith("systems/god/assets/icons") || actor.img.startsWith("icons/svg"),
@@ -459,10 +462,15 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     // Усі ефекти, що можуть діяти на актора: власні + з предметів
     const effects = []
     for (const e of actor.allApplicableEffects()) {
+      const chips = changeChips(e)
+      const left = e.duration?.remaining
       effects.push({
         uuid: e.uuid, name: e.name, img: e.img, disabled: e.disabled, suppressed: e.isSuppressed,
         isStance: !!e.getFlag('god', 'stance'), source: e.parent instanceof Item ? e.parent.name : null,
-        changes: e.changes.map(c => `${GodActorSheetBase.changeLabel(c.key)} ${Number(c.value) >= 0 ? '+' : ''}${c.value}`).join(' · '),
+        chips, desc: (e.description ?? '').replace(/<[^>]+>/g, ''),
+        duration: e.duration?.rounds ? (Number.isFinite(left) && left !== null ? `${Math.max(0, Math.ceil(left))} р.` : `${e.duration.rounds} р.`) : '',
+        get meta() { return [this.duration, this.isStance ? 'стійка' : '', this.source ? `з «${this.source}»` : '', this.suppressed ? 'діє, коли предмет одягнено' : ''].filter(Boolean).join(' · ') },
+        changes: [chips.map(c => `${c.label} ${c.value}`).join(' · '), (e.description ?? '').replace(/<[^>]+>/g, '')].filter(Boolean).join(' — '),
       })
     }
     context.effectsActive = effects.filter(e => !e.disabled && !e.suppressed)
@@ -484,12 +492,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     return context
   }
 
-  static changeLabel(key) {
-    return ({
-      'system.combat.dodgeBonus': 'ШУ', 'system.combat.hitMod': 'попадання', 'system.combat.damageMod': 'урон',
-      'system.resources.hp.bonus': 'макс. HP', 'system.resources.mp.bonus': 'макс. OM',
-    })[key] ?? key.replace('system.', '')
-  }
+  static changeLabel(key) { return effectChangeLabel(key) }
 
   /** Рядок предмета для шаблону */
   static itemRow(item, extra = {}) {

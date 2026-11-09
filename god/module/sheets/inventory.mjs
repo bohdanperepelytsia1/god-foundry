@@ -15,7 +15,7 @@ export const INV_TYPES = [
   { id: 'magic', label: 'Магічне', icon: 'fa-sparkles', test: i => i.system.isMagic },
 ]
 export const INV_SORTS = { manual: 'Свій порядок', name: 'За назвою', weight: 'Найважчі', qty: 'Найбільше штук', type: 'За типом' }
-const LOC_ICONS = { main: 'fa-sack', belt: 'fa-grip-lines', quest: 'fa-scroll', tools: 'fa-screwdriver-wrench', books: 'fa-book', ingredients: 'fa-leaf', potions: 'fa-flask' }
+const LOC_ICONS = { main: 'fa-sack', belt: 'fa-grip-lines', quest: 'fa-scroll', tools: 'fa-screwdriver-wrench', books: 'fa-book', ingredients: 'fa-leaf', potions: 'fa-flask', materials: 'fa-cubes', valuables: 'fa-gem' }
 const TYPE_ORDER = { weapon: 0, armor: 1, gear: 2 }
 const abbr = k => GOD.RESOURCES[k]?.abbr ?? k.toUpperCase()
 const round = n => Math.round(n * 100) / 100

@@ -62,6 +62,7 @@ Hooks.once('init', () => {
     'god-row': 'systems/god/templates/partials/row.hbs',
     'god-skill-controls': 'systems/god/templates/partials/skill-controls.hbs',
     'god-res': 'systems/god/templates/partials/res.hbs',
+    'god-effect-card': 'systems/god/templates/partials/effect-card.hbs',
     'god-weapon-card': 'systems/god/templates/partials/weapon-card.hbs',
   })
 
@@ -124,6 +125,7 @@ Hooks.once('init', () => {
 
   Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
   Handlebars.registerHelper('god-eq', (a, b) => a === b)
+  Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
   if (!Handlebars.helpers.and) Handlebars.registerHelper('and', (...a) => a.slice(0, -1).every(Boolean))
   Handlebars.registerHelper('god-lte', (a, b) => Number(a) <= Number(b))
   Handlebars.registerHelper('god-range', n => Array.from({ length: Number(n) || 0 }, (_, i) => i + 1))
@@ -398,6 +400,16 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
 // Витривалість на нулі — герой непритомніє (пише лише той, хто змінив значення)
 Hooks.on('updateActor', (actor, changes, options, userId) => {
   if (userId !== game.user.id) return
+  // НІП не непритомніють і не кидають спаскидків: HP ≤ 0 — мертвий (і навпаки, вилікували — живий)
+  if (actor.type === 'npc') {
+    const hp = foundry.utils.getProperty(changes, 'system.resources.hp.value')
+    if (hp === undefined) return
+    const dead = actor.statuses?.has('dead')
+    if (hp <= 0 && !dead) actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
+    if (hp > 0 && dead) actor.toggleStatusEffect?.('dead', { active: false })
+    return
+  }
+  if (actor.type !== 'character') return
   const ed = foundry.utils.getProperty(changes, 'system.resources.ed.value')
   if (ed !== undefined && ed <= 0 && (actor.system.resources.ed?.max ?? 0) > 0 && !actor.statuses?.has('unconscious')) {
     actor.toggleStatusEffect?.('unconscious', { active: true })
