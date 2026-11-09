@@ -1,48 +1,57 @@
 /**
- * Анімації ударів і магії через модуль Sequencer + ассети JB2A (безкоштовний чи Patreon).
- * Якщо Sequencer не ввімкнено або потрібної анімації немає — тихо нічого не робимо.
- * Шляхи шукаємо за списком кандидатів: беремо перший, що є в базі Sequencer.
+ * Анімації — у момент НАНЕСЕННЯ урону (кнопка «Урон» / «Захист»), а не при кидку.
+ * Sequencer + JB2A (безкоштовний чи Patreon). Шари: удар/снаряд → вибух на цілі → червоний спалах токена →
+ * на криті й смертельному — сильніший вибух і трясіння екрана. Сила ефекту росте з рівнем урону.
+ * Без Sequencer нічого не відбувається.
  */
-const ON = () => {
-  try { return game.settings.get('god', 'animations') } catch { return 'all' }
-}
-export const fxReady = () => !!globalThis.Sequencer && !!globalThis.Sequence && game.modules.get('sequencer')?.active && ON() !== 'off'
+const ON = () => { try { return game.settings.get('god', 'animations') } catch { return 'all' } }
+export const fxReady = () => !!globalThis.Sequencer && !!globalThis.Sequence && !!game.modules?.get('sequencer')?.active && ON() !== 'off'
 
-/** Кандидати за типом: від конкретного до загального */
+/** Кандидати від найефектніших (кольорові, дворучні) до загальних; береться перший наявний */
 const FX = {
-  fist: ['jb2a.unarmed_strike.physical.01', 'jb2a.unarmed_strike.physical', 'jb2a.melee_generic.creature_attack.fist', 'jb2a.impact.001'],
-  light: ['jb2a.dagger.melee.02.white', 'jb2a.dagger.melee', 'jb2a.shortsword.melee', 'jb2a.melee_generic.slash'],
-  onehand: ['jb2a.sword.melee.01.white', 'jb2a.sword.melee', 'jb2a.longsword.melee', 'jb2a.scimitar.melee', 'jb2a.melee_generic.slash'],
-  heavy1h: ['jb2a.mace.melee.01.white', 'jb2a.mace.melee', 'jb2a.warhammer.melee', 'jb2a.club.melee', 'jb2a.melee_generic.bludgeoning'],
-  twohand: ['jb2a.greatsword.melee.standard.white', 'jb2a.greatsword.melee', 'jb2a.greataxe.melee', 'jb2a.glaive.melee', 'jb2a.melee_generic.slashing'],
+  fist: ['jb2a.unarmed_strike.magical.01', 'jb2a.unarmed_strike.physical.02', 'jb2a.unarmed_strike.physical', 'jb2a.flurry_of_blows', 'jb2a.melee_generic.bludgeoning'],
+  light: ['jb2a.dagger.melee.fire', 'jb2a.dagger.melee.02.white', 'jb2a.dagger.melee', 'jb2a.melee_generic.piercing', 'jb2a.melee_generic.slash'],
+  onehand: ['jb2a.sword.melee.fire', 'jb2a.sword.melee.01.white', 'jb2a.sword.melee', 'jb2a.longsword.melee', 'jb2a.melee_generic.slashing.one_handed', 'jb2a.melee_generic.slash'],
+  heavy1h: ['jb2a.warhammer.melee.01.white', 'jb2a.mace.melee.01.white', 'jb2a.mace.melee', 'jb2a.melee_generic.bludgeoning.one_handed', 'jb2a.melee_generic.bludgeoning'],
+  twohand: ['jb2a.greatsword.melee.fire', 'jb2a.greataxe.melee.standard.white', 'jb2a.greatsword.melee.standard.white', 'jb2a.greatsword.melee', 'jb2a.melee_generic.slashing.two_handed', 'jb2a.melee_generic.slashing'],
   bow: ['jb2a.arrow.physical.white.01', 'jb2a.arrow.physical', 'jb2a.arrow'],
-  throw: ['jb2a.dagger.throw.01.white', 'jb2a.dagger.throw', 'jb2a.throwing_hammer', 'jb2a.javelin', 'jb2a.arrow.physical'],
-  staff: ['jb2a.quarterstaff.melee', 'jb2a.magic_missile', 'jb2a.guiding_bolt'],
-  wand: ['jb2a.magic_missile', 'jb2a.eldritch_blast', 'jb2a.guiding_bolt'],
-  codex: ['jb2a.magic_missile', 'jb2a.guiding_bolt'],
-  trident: ['jb2a.spear.melee', 'jb2a.melee_generic.piercing'],
+  throw: ['jb2a.throwing_hammer', 'jb2a.dagger.throw.01.white', 'jb2a.dagger.throw', 'jb2a.javelin', 'jb2a.arrow.physical'],
+  staff: ['jb2a.guiding_bolt', 'jb2a.magic_missile', 'jb2a.eldritch_blast'],
+  wand: ['jb2a.eldritch_blast', 'jb2a.magic_missile', 'jb2a.guiding_bolt'],
+  codex: ['jb2a.guiding_bolt', 'jb2a.magic_missile'],
+  trident: ['jb2a.spear.melee.01.white', 'jb2a.spear.melee', 'jb2a.melee_generic.piercing'],
   chakram: ['jb2a.chakram', 'jb2a.boomerang', 'jb2a.dagger.throw'],
   amulet: ['jb2a.magic_missile'],
-  creature: ['jb2a.claws.400px', 'jb2a.claws', 'jb2a.melee_generic.creature_attack', 'jb2a.bite', 'jb2a.melee_generic.slash'],
-  // школи магії
+  creature: ['jb2a.claws.400px.red', 'jb2a.claws', 'jb2a.bite', 'jb2a.melee_generic.creature_attack', 'jb2a.melee_generic.slash'],
+  // школи: снаряд і вибух на цілі
   fire: ['jb2a.fire_bolt.orange', 'jb2a.fire_bolt', 'jb2a.scorching_ray', 'jb2a.fireball.beam'],
+  fireHit: ['jb2a.fireball.explosion.orange', 'jb2a.explosion.01.orange', 'jb2a.fireball.explosion', 'jb2a.explosion'],
   water: ['jb2a.ray_of_frost.blue', 'jb2a.ray_of_frost', 'jb2a.snowball_toss', 'jb2a.magic_missile'],
-  air: ['jb2a.lightning_bolt.narrow.blue', 'jb2a.chain_lightning.primary', 'jb2a.witch_bolt', 'jb2a.magic_missile'],
-  earth: ['jb2a.boulder.toss', 'jb2a.ice_spikes', 'jb2a.magic_missile'],
+  waterHit: ['jb2a.impact_themed.ice_shard', 'jb2a.explosion.02.blue', 'jb2a.ice_spikes', 'jb2a.explosion'],
+  air: ['jb2a.chain_lightning.primary.blue', 'jb2a.lightning_bolt.narrow.blue', 'jb2a.chain_lightning', 'jb2a.witch_bolt', 'jb2a.magic_missile'],
+  airHit: ['jb2a.static_electricity.03.blue', 'jb2a.explosion.04.blue', 'jb2a.static_electricity', 'jb2a.explosion'],
+  earth: ['jb2a.boulder.toss', 'jb2a.magic_missile'],
+  earthHit: ['jb2a.impact.ground_crack.orange.02', 'jb2a.impact.ground_crack', 'jb2a.explosion'],
   light_school: ['jb2a.guiding_bolt.01.blueyellow', 'jb2a.guiding_bolt', 'jb2a.magic_missile'],
-  dark: ['jb2a.eldritch_blast.purple', 'jb2a.eldritch_blast', 'jb2a.toll_the_dead', 'jb2a.magic_missile'],
+  light_schoolHit: ['jb2a.sacred_flame.target.yellow', 'jb2a.divine_smite.target.yellowwhite', 'jb2a.explosion.01.yellow', 'jb2a.explosion'],
+  dark: ['jb2a.eldritch_blast.purple', 'jb2a.eldritch_blast', 'jb2a.magic_missile'],
+  darkHit: ['jb2a.toll_the_dead.purple.skull_smoke', 'jb2a.explosion.03.purple', 'jb2a.toll_the_dead', 'jb2a.explosion'],
   spell: ['jb2a.magic_missile', 'jb2a.eldritch_blast', 'jb2a.guiding_bolt'],
-  // попадання, криты, лікування, захист
-  impact: ['jb2a.impact.ground_crack.orange.02', 'jb2a.impact.ground_crack', 'jb2a.impact.001', 'jb2a.impact'],
-  crit: ['jb2a.impact.ground_crack.orange.02', 'jb2a.explosion.01.orange', 'jb2a.impact.ground_crack', 'jb2a.impact'],
+  spellHit: ['jb2a.explosion.02.blue', 'jb2a.explosion.01', 'jb2a.explosion'],
+  // удари по цілі
+  impact: ['jb2a.impact.ground_crack.orange.02', 'jb2a.impact.ground_crack', 'jb2a.impact.004', 'jb2a.impact.001', 'jb2a.impact'],
+  crit: ['jb2a.explosion.01.orange', 'jb2a.impact.ground_crack.orange.02', 'jb2a.explosion', 'jb2a.impact.ground_crack'],
+  deadly: ['jb2a.divine_smite.target.reddark', 'jb2a.divine_smite.target', 'jb2a.explosion.07.orange', 'jb2a.explosion.01.orange', 'jb2a.explosion'],
+  // інше
   heal: ['jb2a.healing_generic.200px.green', 'jb2a.healing_generic', 'jb2a.cure_wounds', 'jb2a.markers.light'],
   mana: ['jb2a.healing_generic.200px.blue', 'jb2a.healing_generic', 'jb2a.markers.light'],
-  shield: ['jb2a.shield.01.intro.blue', 'jb2a.shield.01', 'jb2a.shield', 'jb2a.markers.shield'],
-  death: ['jb2a.toll_the_dead.purple.skull_smoke', 'jb2a.toll_the_dead', 'jb2a.markers.skull', 'jb2a.impact'],
+  shield: ['jb2a.shield.01.complete.blue', 'jb2a.shield.01.intro.blue', 'jb2a.shield.01', 'jb2a.shield'],
+  death: ['jb2a.toll_the_dead.purple.skull_smoke', 'jb2a.toll_the_dead', 'jb2a.markers.skull', 'jb2a.explosion'],
 }
-/** Школа → набір */
 const SCHOOL_FX = { fire: 'fire', water: 'water', air: 'air', earth: 'earth', light: 'light_school', dark: 'dark', necro: 'dark', chaos: 'dark', psionic: 'spell', summon: 'spell', odhi: 'spell' }
 const RANGED = new Set(['bow', 'throw', 'wand', 'staff', 'codex', 'amulet', 'chakram'])
+/** Сила за рівнем урону: масштаб вибуху й трясіння */
+const POWER = { none: 0, t10: .7, t25: .8, t50: 1, t75: 1.15, t100: 1.3, crit: 1.8, deadly: 2.4 }
 
 const cache = new Map()
 function resolve(kind) {
@@ -59,52 +68,54 @@ function resolve(kind) {
   cache.set(kind, found)
   return found
 }
-const tokenOf = (doc) => {
+const tokenOf = doc => {
   if (!doc || !globalThis.canvas?.ready) return null
-  if (doc.object) return doc.object                     // TokenDocument
   if (doc.documentName === 'Token') return doc.object
-  return doc.getActiveTokens?.()?.[0] ?? null           // Actor
+  if (doc.object) return doc.object
+  return doc.getActiveTokens?.()?.[0] ?? null
 }
 
-/** Атака зброєю: від нападника до цілі; промах — повз ціль */
-export function playAttack(actor, targetDoc, category, { hit = true, natural = false } = {}) {
-  if (!fxReady() || (!hit && ON() === 'hits')) return
-  const src = tokenOf(actor), tgt = tokenOf(targetDoc)
-  const file = resolve(natural ? 'creature' : (FX[category] ? category : 'onehand'))
-  if (!src || !tgt || !file) return
+/** Червоний спалах і поштовх токена цілі */
+function hurt(seq, tgt, power) {
+  try { seq.effect().copySprite(tgt).atLocation(tgt).tint('#ff2a2a').opacity(.75).fadeIn(60).fadeOut(320).duration(420).belowTokens(false) } catch { }
+}
+
+/**
+ * Урон завдано: fx — дані з картки урону ({ attacker, kind: 'weapon'|'spell', cat, school, tier, natural }),
+ * target — документ цілі (токен чи актор). amount — скільки HP реально знято (0 — броня все поглинула).
+ */
+export function playDamage(fx, target, { hpLoss = 1 } = {}) {
+  if (!fx || !fxReady()) return
+  const tgt = tokenOf(target)
+  if (!tgt) return
+  const src = fx.attacker ? tokenOf(fromUuidSync(fx.attacker)) : null
+  const power = POWER[fx.tier] ?? 1
+  const isSpell = fx.kind === 'spell'
+  const key = isSpell ? (SCHOOL_FX[fx.school] ?? 'spell') : (fx.natural ? 'creature' : (FX[fx.cat] ? fx.cat : 'onehand'))
+  const strike = resolve(key)
+  const boom = resolve(fx.tier === 'deadly' ? 'deadly' : fx.tier === 'crit' ? 'crit' : isSpell ? `${key}Hit` : 'impact') ?? resolve('impact')
   try {
-    const seq = new Sequence().effect().file(file).atLocation(src).stretchTo(tgt)
-    if (!hit) seq.missed()
-    if (hit && !RANGED.has(category)) seq.effect().file(resolve('impact')).atLocation(tgt).scaleToObject(1.2).delay(350).fadeOut(300)
+    const seq = new Sequence()
+    // 1. удар / снаряд
+    if (strike && src && src !== tgt) {
+      const e = seq.effect().file(strike).atLocation(src).stretchTo(tgt)
+      if (!isSpell && !RANGED.has(fx.cat)) e.scale(Math.max(1, power * .9))
+      e.waitUntilFinished(isSpell || RANGED.has(fx.cat) ? -350 : -650)
+    }
+    // 2. вибух на цілі — тим більший, чим сильніший урон
+    if (boom) seq.effect().file(boom).atLocation(tgt).scaleToObject(1.1 + power * .9).randomRotation().fadeOut(350)
+    // 3. спалах токена, якщо пробито до HP
+    if (hpLoss > 0) hurt(seq, tgt, power)
+    // 4. крит і смертельний — трясіння екрана
+    if (power >= 1.8) { try { seq.canvasPan().shake({ duration: power >= 2.4 ? 900 : 500, strength: power >= 2.4 ? 14 : 7, rotation: false }) } catch { } }
     seq.play()
-  } catch (e) { console.warn('G.O.D. | анімація атаки', e) }
+  } catch (e) { console.warn('G.O.D. | анімація урону', e) }
 }
 
-/** Урон за сіткою: крит і смертельний — помітний ефект на цілі */
-export function playDamageTier(targetDoc, tier) {
-  if (!fxReady() || !['crit', 'deadly'].includes(tier)) return
-  const tgt = tokenOf(targetDoc), file = resolve('crit')
-  if (!tgt || !file) return
-  try { new Sequence().effect().file(file).atLocation(tgt).scaleToObject(tier === 'deadly' ? 2.2 : 1.6).play() } catch (e) { console.warn('G.O.D. | анімація криту', e) }
-}
-
-/** Заклинання: снаряд школи від мага до цілі (або на самого мага, якщо цілі немає) */
-export function playSpell(actor, targetDoc, school, { hit = true } = {}) {
-  if (!fxReady() || (!hit && ON() === 'hits')) return
-  const src = tokenOf(actor), tgt = tokenOf(targetDoc)
-  const file = resolve(SCHOOL_FX[school] ?? 'spell') ?? resolve('spell')
-  if (!src || !file) return
-  try {
-    const seq = new Sequence().effect().file(file).atLocation(src)
-    if (tgt && tgt !== src) { seq.stretchTo(tgt); if (!hit) seq.missed() } else seq.scaleToObject(2)
-    seq.play()
-  } catch (e) { console.warn('G.O.D. | анімація заклинання', e) }
-}
-
-/** Лікування / відновлення / захист / смерть — на токені актора */
+/** Лікування / мана / захист / смерть — на токені актора */
 export function playOn(actor, kind) {
   if (!fxReady()) return
   const tgt = tokenOf(actor), file = resolve(kind)
   if (!tgt || !file) return
-  try { new Sequence().effect().file(file).atLocation(tgt).scaleToObject(kind === 'death' ? 1.6 : 1.8).fadeOut(400).play() } catch (e) { console.warn('G.O.D. | анімація', e) }
+  try { new Sequence().effect().file(file).atLocation(tgt).scaleToObject(kind === 'death' ? 1.8 : 2).fadeOut(400).play() } catch (e) { console.warn('G.O.D. | анімація', e) }
 }

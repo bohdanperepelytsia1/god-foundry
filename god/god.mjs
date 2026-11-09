@@ -12,6 +12,7 @@ import { GodCharacterSheet, GodNpcSheet } from './module/sheets/actor-sheets.mjs
 import { GodItemSheet } from './module/sheets/item-sheet.mjs'
 import * as R from './module/rules.mjs'
 import * as Dice from './module/dice/rolls.mjs'
+import * as FX from './module/fx.mjs'
 import { GodDiceTray } from './module/apps/dice-tray.mjs'
 import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
@@ -73,9 +74,9 @@ Hooks.once('init', () => {
   registerRotationHandle()
   game.settings.register('god', 'animations', {
     name: 'Анімації ударів і магії',
-    hint: 'Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
+    hint: 'Програються в момент нанесення урону. Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
     scope: 'world', config: true, type: String, default: 'all',
-    choices: { all: 'Усі (влучання й промахи)', hits: 'Лише влучання', off: 'Вимкнено' },
+    choices: { all: 'Увімкнено', off: 'Вимкнено' },
   })
   registerQuickbarSettings()
   game.settings.register('god', 'combatStamina', {
@@ -310,6 +311,7 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       lockApplyButton(btn, null)
       try {
         const out = await API.dealDamage(actor, btn.dataset.pierce ? { amount: left, ignorePr: true } : left)
+        if (left > 0) FX.playDamage(message.getFlag('god', 'fx'), doc, { hpLoss: out?.toHp ?? 1 })
         await markApplied(message, key, { by: game.user.id, text: `Захист — ${API.damageSummary(actor.name, out)}` })
       } catch (err) { console.error('G.O.D. | захист', err); pendingApply.delete(pk); unlockApplyButton(btn) }
     })
@@ -327,6 +329,7 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
         if (btn.dataset.target) {
           const ok = await applyToTarget(btn.dataset.target, amount, { messageId: message.id, key })
           if (!ok) { pendingApply.delete(pk); unlockApplyButton(btn) }
+          else FX.playDamage(message.getFlag('god', 'fx'), fromUuidSync(btn.dataset.target), { hpLoss: typeof ok === 'object' ? (ok.toHp ?? 1) : 1 })
           return
         }
         const tokens = (canvas.tokens?.controlled ?? []).filter(t => t.actor?.isOwner)
@@ -335,7 +338,11 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
           return ui.notifications.warn('Обери токен(и), яким застосувати урон')
         }
         const lines = []
-        for (const t of tokens) lines.push(API.damageSummary(t.actor.name, await API.dealDamage(t.actor, amount)))
+        for (const t of tokens) {
+          const out = await API.dealDamage(t.actor, amount)
+          FX.playDamage(message.getFlag('god', 'fx'), t.document, { hpLoss: out?.toHp ?? 1 })
+          lines.push(API.damageSummary(t.actor.name, out))
+        }
         await markApplied(message, key, { by: game.user.id, text: lines.join('; ') })
       } catch (err) {
         console.error('G.O.D. | урон не застосовано', err)
@@ -488,12 +495,14 @@ async function applyToTarget(uuid, amount, mark) {
   if (actor.isOwner) {
     const out = await API.dealDamage(actor, amount)
     await markApplied(game.messages.get(mark.messageId), mark.key, { by: game.user.id, text: API.damageSummary(actor.name, out) })
-    return true
+    return out ?? true
   }
   if (!game.users.activeGM) { ui.notifications.warn('Немає майстра онлайн, щоб застосувати урон'); return false }
   game.socket.emit('system.god', { op: 'damage', uuid, amount, from: game.user.id, ...mark })
   ui.notifications.info(`Урон ${amount?.amount ?? amount} → ${actor.name}: надіслано майстру`)
-  return true
+  // для анімації: оцінка, чи дійде урон до HP (застосує майстер)
+  const r = actor.system.resources ?? {}
+  try { return R.applyDamage({ hp: r.hp?.value ?? 0, pr: r.pr?.value ?? 0, mr: r.mr?.value ?? 0 }, amount) } catch { return true }
 }
 
 /** Ключі кнопок урону, які вже натиснуто на цьому клієнті (до приходу прапорця з сервера) */

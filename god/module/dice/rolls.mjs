@@ -428,11 +428,9 @@ export async function weaponAttack(actor, item, opts = {}) {
     }
     if (!hitOk) {
       html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
-      FX.playAttack(actor, fromUuidSync(target.uuid), cat, { hit: false, natural })
       return sendCard(actor, html, rolls, replay, luck)
     }
   }
-  FX.playAttack(actor, fromUuidSync(target.uuid), cat, { hit: true, natural })
   if (hc.guaranteed) html += `<div class="god-note">Урон щонайменше: ${esc(R.TIER[profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)].label.toLowerCase())}.</div>`
   html += `<div class="god-apply god-apply-one"><button type="button" class="god-roll-dmg" data-god-damage="1"
     data-tooltip="Окремий кидок урону${critsOf(actor) ? '. Крити на урон — перед кидком' : ''}"><i class="fa-solid fa-dice-d20"></i> Кинути урон</button></div>`
@@ -537,10 +535,11 @@ export async function weaponDamage(actor, item, state, opts = {}) {
 
   const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : '', guaranteedNote].filter(Boolean).join(' · ')
   html += `<div class="god-tier tier-${key}">${R.TIER[key].label}<small>${pct}%${tierNote ? ` · ${esc(tierNote)}` : ''}</small></div>`
-  FX.playDamageTier(fromUuidSync(state.target), key)
   const baseNote = `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${base.notes.length ? ` (${base.notes.join(', ')})` : ''}`
   html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
-  return sendCard(actor, html, rolls, replay, luck)
+  // анімація удару — коли натиснуть «Урон» (god.mjs → FX.playDamage)
+  const attacker = actor.isToken ? actor.token.uuid : (actor.getActiveTokens?.()?.[0]?.document?.uuid ?? actor.uuid)
+  return sendCard(actor, html, rolls, replay, luck, { fx: { attacker, kind: 'weapon', cat, tier: key, natural } })
 }
 
 /** Кнопка «Кинути урон» на картці попадання: кидає власник нападника або майстер, лише раз */
@@ -696,7 +695,6 @@ export async function castSpell(actor, spell, opts = {}) {
     if (!ok) {
       await pay()
       html += `<div class="god-note">${luck ? 'Ресурси вже списані первинним кидком' : p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>` + manaWarn()
-      FX.playSpell(actor, fromUuidSync(target.uuid), s.school, { hit: false })
       return sendCard(actor, html, rolls, replay, luck)
     }
   }
@@ -728,8 +726,9 @@ export async function castSpell(actor, spell, opts = {}) {
     html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target, { kind: 'magic' })
   }
   if (p.pay && !luck) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>` + manaWarn()
-  if (ev.success) FX.playSpell(actor, target ? fromUuidSync(target.uuid) : null, s.school, { hit: true })
-  return sendCard(actor, html, rolls, replay, luck)
+  // анімація — у момент натискання «Урон»: дані для неї кладемо в картку
+  const caster = actor.isToken ? actor.token.uuid : (actor.getActiveTokens?.()?.[0]?.document?.uuid ?? actor.uuid)
+  return sendCard(actor, html, rolls, replay, luck, ev.success ? { fx: { attacker: caster, kind: 'spell', school: s.school, tier: 't100' } } : null)
 }
 
 export async function useAbility(actor, item) {
