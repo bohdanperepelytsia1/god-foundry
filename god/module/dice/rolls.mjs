@@ -7,6 +7,7 @@ import * as R from '../rules.mjs'
 import { GOD } from '../config.mjs'
 import * as M from '../roll-mods.mjs'
 import { applyRollMode } from '../compat.mjs'
+import * as FX from '../fx.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const signed = n => (n >= 0 ? `+${n}` : `${n}`)
@@ -427,9 +428,11 @@ export async function weaponAttack(actor, item, opts = {}) {
     }
     if (!hitOk) {
       html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
+      FX.playAttack(actor, fromUuidSync(target.uuid), cat, { hit: false, natural })
       return sendCard(actor, html, rolls, replay, luck)
     }
   }
+  FX.playAttack(actor, fromUuidSync(target.uuid), cat, { hit: true, natural })
   if (hc.guaranteed) html += `<div class="god-note">Урон щонайменше: ${esc(R.TIER[profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)].label.toLowerCase())}.</div>`
   html += `<div class="god-apply god-apply-one"><button type="button" class="god-roll-dmg" data-god-damage="1"
     data-tooltip="Окремий кидок урону${critsOf(actor) ? '. Крити на урон — перед кидком' : ''}"><i class="fa-solid fa-dice-d20"></i> Кинути урон</button></div>`
@@ -534,6 +537,7 @@ export async function weaponDamage(actor, item, state, opts = {}) {
 
   const tierNote = [tier.note && !tier.chance ? tier.note : '', key !== tier.tier ? `покращено з «${tier.label}»` : '', guaranteedNote].filter(Boolean).join(' · ')
   html += `<div class="god-tier tier-${key}">${R.TIER[key].label}<small>${pct}%${tierNote ? ` · ${esc(tierNote)}` : ''}</small></div>`
+  FX.playDamageTier(fromUuidSync(state.target), key)
   const baseNote = `100% = ${base.phys} фіз${base.mag ? ` / ${base.mag} маг` : ''}${base.notes.length ? ` (${base.notes.join(', ')})` : ''}`
   html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
   return sendCard(actor, html, rolls, replay, luck)
@@ -607,6 +611,7 @@ export async function defend(actor, amount, kind = 'melee') {
     ok = total >= dc
     html += step('Захист', total, `${esc(opts[p.by].split(' — ')[0])}: 1d10 ≥ ${dc}${critNote(crits, naturalOf(r))}`, { ok, text: ok ? 'Відбито' : 'Не вдалося' })
   }
+  if (ok) FX.playOn(actor, 'shield')
   const pct = ok ? 0 : R.defenseFailPct(reflexes, ranged)
   const left = Math.floor(amount * pct / 100)
   html += `<div class="god-note">${ok ? 'Урон повністю відбито.' : `Проходить ${pct}% урону: <b>${left}</b>${pct < 100 ? ` (Бойові рефлекси ${reflexes})` : ranged ? ' (стріли й магія — повністю)' : ''}.`}</div>`
@@ -691,6 +696,7 @@ export async function castSpell(actor, spell, opts = {}) {
     if (!ok) {
       await pay()
       html += `<div class="god-note">${luck ? 'Ресурси вже списані первинним кидком' : p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>` + manaWarn()
+      FX.playSpell(actor, fromUuidSync(target.uuid), s.school, { hit: false })
       return sendCard(actor, html, rolls, replay, luck)
     }
   }
@@ -722,6 +728,7 @@ export async function castSpell(actor, spell, opts = {}) {
     html += damageBlock(s.damageKind === 'phys' ? dmg : 0, s.damageKind === 'mag' ? dmg : 0, `${s.baseDamage} × ${mult}`, target, { kind: 'magic' })
   }
   if (p.pay && !luck) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>` + manaWarn()
+  if (ev.success) FX.playSpell(actor, target ? fromUuidSync(target.uuid) : null, s.school, { hit: true })
   return sendCard(actor, html, rolls, replay, luck)
 }
 
@@ -754,6 +761,10 @@ export async function consumeItem(actor, item) {
   const { changes, applied } = R.applyRestore(actor.system.resources, s.restore)
   const upd = Object.fromEntries(Object.entries(changes).map(([k, v]) => [`system.resources.${k}.value`, v]))
   if (Object.keys(upd).length) await actor.update(upd)
+  const rs = s.restore ?? {}
+  if (rs.hp > 0 || rs.ed > 0 || rs.mt > 0) FX.playOn(actor, 'heal')
+  else if (rs.mp > 0) FX.playOn(actor, 'mana')
+  else if (rs.pr > 0 || rs.mr > 0) FX.playOn(actor, 'shield')
   const left = s.quantity - 1
   if (left > 0) await item.update({ 'system.quantity': left })
   else await item.delete()
@@ -866,6 +877,7 @@ export async function hitConsequences(actor, out) {
   if (actor.type === 'npc') {
     if (r.value > 0 || actor.statuses?.has('dead')) return
     await actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
+    FX.playOn(actor, 'death')
     return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="god-card">${head(actor.img, 'Загинув', `${esc(actor.name)}: HP ${r.value}`)}<div class="god-tier tier-none">Смерть</div></div>` })
   }

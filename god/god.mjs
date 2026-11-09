@@ -17,6 +17,7 @@ import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
+import { registerRotationHandle } from './module/rotate-handle.mjs'
 import { registerResourceSync } from './module/resource-sync.mjs'
 import { GodQuickbar, registerQuickbarSettings, syncNativeHotbar, replacesHotbar } from './module/apps/quickbar.mjs'
 
@@ -69,6 +70,13 @@ Hooks.once('init', () => {
   registerPinSettings()
   registerMigrationSettings()
   registerMigrationMenu()
+  registerRotationHandle()
+  game.settings.register('god', 'animations', {
+    name: 'Анімації ударів і магії',
+    hint: 'Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
+    scope: 'world', config: true, type: String, default: 'all',
+    choices: { all: 'Усі (влучання й промахи)', hits: 'Лише влучання', off: 'Вимкнено' },
+  })
   registerQuickbarSettings()
   game.settings.register('god', 'combatStamina', {
     name: 'Витривалість за бій', hint: 'Після бою списувати 10 ВС за кожен раунд (якщо бій дійшов до 2-го раунду), як у Combat manual.',
