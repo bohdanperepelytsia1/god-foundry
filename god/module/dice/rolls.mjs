@@ -6,6 +6,7 @@
 import * as R from '../rules.mjs'
 import { GOD } from '../config.mjs'
 import * as M from '../roll-mods.mjs'
+import { applyRollMode } from '../compat.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const signed = n => (n >= 0 ? `+${n}` : `${n}`)
@@ -122,7 +123,7 @@ async function sendCard(actor, html, rolls, replay = null, luck = false, extra =
   }
   if (replay && isPC(actor)) data.flags = { god: { replay: { ...replay, actor: actor.uuid } } }
   if (extra) data.flags = { god: { ...(data.flags?.god ?? {}), ...extra } }
-  ChatMessage.applyRollMode(data, game.settings.get('core', 'rollMode'))
+  applyRollMode(data)
   return ChatMessage.create(data)
 }
 

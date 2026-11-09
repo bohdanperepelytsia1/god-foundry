@@ -40,6 +40,7 @@ export class GodItem extends Item {
 
   async _preUpdate(changes, options, user) {
     if ((await super._preUpdate(changes, options, user)) === false) return false
+    if (options.godMigration) return   // оновлення даних світу: нічого не підлаштовуємо
     if (foundry.utils.getProperty(changes, 'system.location') === 'belt' && this.system.location !== 'belt'
         && GodItem.beltFull(this.parent, this.id)) {
       ui.notifications.warn(`Пояс заповнений (${this.parent.system.derived.belt.slots} слотів). Одягни пояс більшого розміру.`)

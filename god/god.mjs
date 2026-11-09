@@ -16,7 +16,7 @@ import { GodDiceTray } from './module/apps/dice-tray.mjs'
 import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
-import { registerMigrationSettings, migrateWorld } from './module/migration.mjs'
+import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerResourceSync } from './module/resource-sync.mjs'
 import { GodQuickbar, registerQuickbarSettings, syncNativeHotbar, replacesHotbar } from './module/apps/quickbar.mjs'
 
@@ -68,6 +68,7 @@ Hooks.once('init', () => {
 
   registerPinSettings()
   registerMigrationSettings()
+  registerMigrationMenu()
   registerQuickbarSettings()
   game.settings.register('god', 'combatStamina', {
     name: 'Витривалість за бій', hint: 'Після бою списувати 10 ВС за кожен раунд (якщо бій дійшов до 2-го раунду), як у Combat manual.',
@@ -82,7 +83,7 @@ Hooks.once('init', () => {
   registerResourceSync()
 
   game.god = {
-    useItem, ...API, rules: R,
+    useItem, ...API, rules: R, migrate: () => migrateWorldForce(),
     diceTray: actor => GodDiceTray.open(actor),
     hud: actor => GodHud.open(actor ?? defaultActor()),
     quickbar: () => GodQuickbar.refresh(),
@@ -399,7 +400,7 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
 // ── Старт світу: міграція і відновлення закріплених вікон ───────────────────
 // Витривалість на нулі — герой непритомніє (пише лише той, хто змінив значення)
 Hooks.on('updateActor', (actor, changes, options, userId) => {
-  if (userId !== game.user.id) return
+  if (userId !== game.user.id || options.godMigration) return
   // НІП не непритомніють і не кидають спаскидків: HP ≤ 0 — мертвий (і навпаки, вилікували — живий)
   if (actor.type === 'npc') {
     const hp = foundry.utils.getProperty(changes, 'system.resources.hp.value')

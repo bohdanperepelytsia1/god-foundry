@@ -48,7 +48,7 @@ const items = []
 const effect = (itemId, name, img, changes) => {
   const _id = id(`effect:${itemId}:${name}`)
   return { _id, _key: `!items.effects!${itemId}.${_id}`, name, img, type: 'base', system: {}, disabled: false, transfer: true,
-    changes: Object.entries(changes).map(([key, value]) => ({ key, mode: 2, value: String(value), priority: null })),
+    changes: Object.entries(changes).map(([key, value]) => ({ key, mode: 2, type: 'add', value: String(value), priority: null })),
     duration: {}, origin: null, description: '', statuses: [], tint: '#ffffff', sort: 0, flags: {}, _stats: STATS }
 }
 const item = (name, type, system, { folderId, img, description = '', effects } = {}) => {

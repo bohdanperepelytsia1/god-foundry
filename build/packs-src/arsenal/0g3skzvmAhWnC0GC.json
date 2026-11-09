@@ -24,6 +24,7 @@
         {
           "key": "system.resources.mp.bonus",
           "mode": 2,
+          "type": "add",
           "value": "200",
           "priority": null
         }

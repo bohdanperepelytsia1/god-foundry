@@ -1,12 +1,14 @@
 import * as R from '../rules.mjs'
 import { GOD } from '../config.mjs'
 import * as Dice from '../dice/rolls.mjs'
+import { addChange } from '../compat.mjs'
 
 export class GodActor extends Actor {
 
   /** Підвищення рівня → автоматично нараховуємо очки вмінь і характеристик */
   async _preUpdate(changes, options, user) {
     if ((await super._preUpdate(changes, options, user)) === false) return false
+    if (options.godMigration) return
     if (this.type !== 'character') return
     const newXp = foundry.utils.getProperty(changes, 'system.progress.xp')
     if (newXp === undefined) return
@@ -207,7 +209,7 @@ export class GodActor extends Actor {
     const st = GOD.STANCES[id]
     return this.createEmbeddedDocuments('ActiveEffect', [{
       name: st.label, img: st.icon, flags: { god: { stance: id } },
-      changes: Object.entries(st.changes).map(([key, value]) => ({ key, mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: String(value) })),
+      changes: Object.entries(st.changes).map(([key, value]) => addChange(key, value)),
     }])
   }
 

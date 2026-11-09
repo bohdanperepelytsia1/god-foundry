@@ -2,10 +2,10 @@
   "id": "god",
   "title": "G.O.D.",
   "description": "Ігрова система G.O.D. — лист персонажа, вміння, сітка урону v4.5, перевірка сотворення заклинань, стійки.",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "compatibility": {
     "minimum": "13",
-    "verified": "14",
+    "verified": "14.360",
     "maximum": "14"
   },
   "authors": [
@@ -132,6 +132,6 @@
   ],
   "url": "https://github.com/bohdanperepelytsia1/god-foundry",
   "manifest": "https://github.com/bohdanperepelytsia1/god-foundry/releases/latest/download/system.json",
-  "download": "https://github.com/bohdanperepelytsia1/god-foundry/releases/download/v0.9.8/god.zip",
+  "download": "https://github.com/bohdanperepelytsia1/god-foundry/releases/download/v0.9.9/god.zip",
   "bugs": "https://github.com/bohdanperepelytsia1/god-foundry/issues"
 }

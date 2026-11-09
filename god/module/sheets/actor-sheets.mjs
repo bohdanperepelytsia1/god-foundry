@@ -16,6 +16,7 @@ import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { chooseNewItem } from '../apps/item-creator.mjs'
+import { effectRounds, effectRoundsLeft } from '../compat.mjs'
 import { GodDiceTray } from '../apps/dice-tray.mjs'
 import { GodHud } from '../apps/hud.mjs'
 import { bindResourceControls } from '../apps/res-controls.mjs'
@@ -477,12 +478,12 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const effects = []
     for (const e of actor.allApplicableEffects()) {
       const chips = changeChips(e)
-      const left = e.duration?.remaining
+      const rounds = effectRounds(e), left = effectRoundsLeft(e)
       effects.push({
         uuid: e.uuid, name: e.name, img: e.img, disabled: e.disabled, suppressed: e.isSuppressed,
         isStance: !!e.getFlag('god', 'stance'), source: e.parent instanceof Item ? e.parent.name : null,
         chips, desc: (e.description ?? '').replace(/<[^>]+>/g, ''),
-        duration: e.duration?.rounds ? (Number.isFinite(left) && left !== null ? `${Math.max(0, Math.ceil(left))} р.` : `${e.duration.rounds} р.`) : '',
+        duration: rounds ? `${left ?? rounds} р.` : '',
         get meta() { return [this.duration, this.isStance ? 'стійка' : '', this.source ? `з «${this.source}»` : '', this.suppressed ? 'діє, коли предмет одягнено' : ''].filter(Boolean).join(' · ') },
         changes: [chips.map(c => `${c.label} ${c.value}`).join(' · '), (e.description ?? '').replace(/<[^>]+>/g, '')].filter(Boolean).join(' — '),
       })

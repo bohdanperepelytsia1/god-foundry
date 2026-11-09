@@ -3,10 +3,10 @@
  * зрозумілі назви полів замість ключів, тривалість у раундах. Розширене — стандартний лист ефекту.
  */
 import { GOD, skillKey } from '../config.mjs'
+import { addChange, roundsDuration, effectRounds } from '../compat.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const ICON = k => `systems/god/assets/icons/status/${k}.svg`
-const ADD = 2
 
 /** Що може змінювати ефект — групи для списку */
 export const EFFECT_TARGETS = {
@@ -107,7 +107,7 @@ const changeRow = (c = {}) => `
 export async function editEffect(actor, effect = null) {
   const cur = effect ? {
     name: effect.name, img: effect.img, changes: effect.changes.map(c => ({ key: c.key, value: c.value })),
-    rounds: effect.duration?.rounds || 0, desc: effect.description ?? '',
+    rounds: effectRounds(effect), desc: effect.description ?? '',
   } : { name: '', img: ICON('blessed'), changes: [], rounds: 0, desc: '' }
   const content = `
     ${effect ? '' : `<label class="god-dlg-field"><span>Шаблон з правил</span><select name="preset"><option value="">— свій ефект —</option>
@@ -156,7 +156,7 @@ export async function editEffect(actor, effect = null) {
           name: f.elements.name.value.trim() || 'Ефект', img: f.querySelector('.god-eff-img img').getAttribute('src'),
           rounds: Math.max(0, Number(f.elements.rounds.value) || 0), desc: f.elements.desc.value.trim(),
           changes: [...f.querySelectorAll('.god-eff-change')].map(r => ({ key: r.querySelector('[name="key"]').value, value: r.querySelector('[name="value"]').value.trim().replace(/^\+/, '') }))
-            .filter(c => c.key && c.value !== '' && !Number.isNaN(Number(c.value))).map(c => ({ ...c, mode: ADD })),
+            .filter(c => c.key && c.value !== '' && !Number.isNaN(Number(c.value))).map(c => addChange(c.key, c.value)),
         }
       } },
     ],
@@ -165,7 +165,7 @@ export async function editEffect(actor, effect = null) {
   if (!res || typeof res !== 'object') return
   const data = {
     name: res.name, img: res.img, changes: res.changes, description: res.desc,
-    duration: res.rounds ? { rounds: res.rounds, startRound: game.combat?.round ?? 0, startTurn: game.combat?.turn ?? 0, combat: game.combat?.id ?? null } : { rounds: null },
+    duration: roundsDuration(res.rounds),
   }
   if (effect) return effect.update(data)
   // ефект предмета діє на власника (transfer)
