@@ -2,7 +2,7 @@
  * Зручне створення й редагування активних ефектів: шаблони з правил (травми, втома, алкоголь…),
  * зрозумілі назви полів замість ключів, тривалість у раундах. Розширене — стандартний лист ефекту.
  */
-import { GOD } from '../config.mjs'
+import { GOD, skillKey } from '../config.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const ICON = k => `systems/god/assets/icons/status/${k}.svg`
@@ -15,12 +15,23 @@ export const EFFECT_TARGETS = {
     'system.combat.dodgeBonus': 'ШУ',
   },
   'Максимум ресурсів': Object.fromEntries(Object.entries(GOD.RESOURCES).map(([k, r]) => [`system.resources.${k}.bonus`, `Макс. ${r.abbr}`])),
-  'Характеристики': Object.fromEntries(Object.entries(GOD.STATS).map(([k, s]) => [`system.stats.${k}.value`, s.label])),
+  'Характеристики (значення)': Object.fromEntries(Object.entries(GOD.STATS).map(([k, s]) => [`system.stats.${k}.value`, s.label])),
+  'Перевірки характеристик': Object.fromEntries(Object.entries(GOD.STATS).map(([k, s]) => [`system.rollMods.stat.${k}`, `Перевірка: ${s.label}`])),
+  'Гілки вмінь (усі перевірки гілки)': Object.fromEntries(Object.entries(GOD.SKILL_CATEGORIES).map(([k, c]) => [`system.rollMods.cat.${k}`, `Гілка: ${c.label}`])),
+  ...Object.fromEntries(Object.entries(GOD.SKILL_CATEGORIES).map(([k, c]) => [`Вміння — ${c.label.toLowerCase()}`,
+    Object.fromEntries(c.skills.filter(sk => sk.key !== c.gate).map(sk => [`system.rollMods.skill.${sk.key}`, sk.name]))])),
+  'Недолік (значення 1)': {
+    'system.rollDis.hit': 'Попадання з недоліком',
+    ...Object.fromEntries(Object.values(GOD.SKILL_CATEGORIES).flatMap(c => c.skills.filter(sk => sk.key !== c.gate).map(sk => [`system.rollDis.skill.${sk.key}`, `Недолік: ${sk.name}`]))),
+  },
 }
 export const TARGET_LABEL = Object.assign({}, ...Object.values(EFFECT_TARGETS))
 export const changeLabel = key => TARGET_LABEL[key] ?? key.replace('system.', '')
 
 const C = (key, value) => ({ key, value })
+const SK = (name, value) => C(`system.rollMods.skill.${skillKey(name)}`, value)
+const CAT = (cat, value) => C(`system.rollMods.cat.${cat}`, value)
+const DIS = name => C(name === 'hit' ? 'system.rollDis.hit' : `system.rollDis.skill.${skillKey(name)}`, 1)
 /** Шаблони з Player manual («Ефекти і відпочинок») */
 export const EFFECT_PRESETS = {
   'Втома': {
@@ -29,9 +40,9 @@ export const EFFECT_PRESETS = {
     tired3: { name: 'Тяжка втома', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3)] },
   },
   'Травми й калітства': {
-    armT: { name: 'Травма руки', img: ICON('restrained'), changes: [], desc: 'Дії цією рукою та предметами в ній — з недоліком.' },
-    legT: { name: 'Травма ноги', img: ICON('restrained'), changes: [], desc: 'Акробатика, атлетика й біг — з недоліком; швидкість удвічі менша. Обидві ноги — пересуватись неможливо.' },
-    headT: { name: 'Травма голови', img: ICON('stunned'), changes: [], desc: 'ШУ удвічі менше; уважність і попадання — з недоліком (кожна спроба — шанс на БМП).' },
+    armT: { name: 'Травма руки', img: ICON('restrained'), changes: [], desc: 'Дії цією рукою та предметами в ній — з недоліком (кидай з недоліком вручну).' },
+    legT: { name: 'Травма ноги', img: ICON('restrained'), changes: [DIS('Акробатика'), DIS('Плавання')], desc: 'Акробатика, атлетика й біг — з недоліком; швидкість удвічі менша. Обидві ноги — пересуватись неможливо.' },
+    headT: { name: 'Травма голови', img: ICON('stunned'), changes: [DIS('Уважність'), DIS('hit')], desc: 'ШУ удвічі менше; уважність і попадання — з недоліком (кожна спроба — шанс на БМП). Можна забути заклинання.' },
     bodyT: { name: 'Травма тулуба (ЖВО)', img: ICON('bleeding'), changes: [], desc: 'Не заснути від болю; −50 HP щогодини; d20 від Тілобудови ≤ 12 — блювота після їжі, води, зілля.' },
     maim1: { name: 'Легкі калітства', img: ICON('bleeding'), changes: [C('system.combat.allMod', -2)], desc: 'Кожні 24 год 1d4 — 50% шанс погіршення.' },
     maim2: { name: 'Середні калітства', img: ICON('bleeding'), changes: [C('system.combat.allMod', -3)], desc: 'd20, успіх 16+, інакше БМП. Кожні 12 год 1d4 — 50% шанс погіршення.' },
@@ -43,13 +54,18 @@ export const EFFECT_PRESETS = {
     bleed3: { name: 'Сильна кровотеча', img: ICON('bleeding'), changes: [], desc: '−10 HP кожен ПХ (200 HP/хв).' },
   },
   'Алкоголь': {
-    drunk1: { name: 'Легке сп\'яніння', img: ICON('poisoned'), changes: [C('system.combat.damageMod', 1)], desc: 'МОД −1: нейтральні, наука, поза законом; МОД +1: соціальні; фіз. урон +1.' },
-    drunk2: { name: 'Середнє сп\'яніння', img: ICON('poisoned'), changes: [], desc: 'МОД −2: бойові, нейтральні, наука, поза законом; МОД +1: соціальні й магічні (вже вивчені).' },
+    drunk1: { name: 'Легке сп\'яніння', img: ICON('poisoned'), changes: [CAT('neutral', -1), CAT('science', -1), CAT('crime', -1), CAT('social', 1), C('system.combat.damageMod', 1)],
+      desc: 'Публічна розвага відновлює 2 MT.' },
+    drunk2: { name: 'Середнє сп\'яніння', img: ICON('poisoned'), changes: [CAT('combat', -2), CAT('neutral', -2), CAT('science', -2), CAT('crime', -2), CAT('social', 1), CAT('magic', 1)],
+      desc: 'Магія +1 — лише до вже вивчених умінь. Відновлює 1 MT (публічна розвага — 5).' },
     drunk3: { name: 'Тяжке сп\'яніння', img: ICON('poisoned'), changes: [C('system.combat.allMod', -3)], desc: 'Кожні 20 хв 1d20 від Алкоголю (12+), інакше засинає.' },
   },
   'Голод, вода, виснага': {
-    hunger: { name: 'Тяжкий голод', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3)], desc: 'Не заснути; скритність і маскування — з недоліком або МОД −2.' },
-    thirst: { name: 'Тяжке зневоднення', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3)], desc: 'Не заснути й не поїсти; не відчуває запахів і смаку.' },
+    hunger1: { name: 'Легкий голод', img: ICON('fatigued'), changes: [SK('Полювання', 1), SK('Слідопитство', 1)], desc: 'З\'являється легка втома; легше вистежити дичину.' },
+    hunger: { name: 'Тяжкий голод', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3), SK('Скритність', -2), SK('Маскування', -2)], desc: 'Не заснути; живіт гучно бурчить.' },
+    thirst1: { name: 'Легке зневоднення', img: ICON('fatigued'), changes: [SK('Виживання', 1)], desc: 'Легка втома; легше знайти джерело води.' },
+    thirst: { name: 'Тяжке зневоднення', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3), SK('Нюх', -2)], desc: 'Не заснути й не поїсти; не відчуває запахів і смаку.' },
+    exhaust1: { name: 'Легка виснага', img: ICON('fatigued'), changes: [SK('Уважність', -2), SK('Пошук скарбів', -2)], desc: 'Чутливість до холоду подвоюється; рефлекси −2.' },
     exhaust: { name: 'Тяжка виснага', img: ICON('fatigued'), changes: [C('system.combat.allMod', -1)], desc: 'БМП. −5 MT і шанс −10; кожні 4 год шанс −5 MT; кожні 20 хв Тілобудова 13+, щоб не заснути.' },
   },
   'Холод і жара': {
@@ -57,9 +73,19 @@ export const EFFECT_PRESETS = {
     cold2: { name: 'Обмороження', img: ICON('frozen'), changes: [C('system.combat.allMod', -2)], desc: 'БМП; дрібна моторика з потрійним недоліком; −50 HP кожні 10 хв.' },
     heat: { name: 'Пекло', img: ICON('burning'), changes: [C('system.combat.allMod', -2)], desc: 'БМП; удвічі більше води; −100 HP блокується; HP < 100 — втрата свідомості.' },
   },
+  'Положення в бою': {
+    crouch: { name: 'Пригнувшись', img: ICON('prone'), changes: [C('system.combat.hitMod', -1)], desc: 'Попадання −1 (крім скритних атак), бігти не можна.' },
+    flee: { name: 'Втеча', img: ICON('frightened'), changes: [C('system.combat.dodgeBonus', 1)], desc: 'ШУ +1, якщо тікає зі схованою зброєю.' },
+  },
+  'Холод і жара (попередження)': {
+    chill: { name: 'Охолодження', img: ICON('frozen'), changes: [], desc: 'Без штрафів — попередження.' },
+    sultry: { name: 'Духота', img: ICON('burning'), changes: [], desc: 'Удвічі більше води, втома настає швидше.' },
+  },
   'Освітлення': {
-    dark: { name: 'Темно', img: ICON('blind'), changes: [C('system.combat.hitMod', -2)], desc: 'Уважність і пошук МОД −5.' },
-    gloom: { name: 'Морок', img: ICON('blind'), changes: [C('system.combat.hitMod', -5)], desc: 'Уважність і пошук МОД −10.' },
+    bright: { name: 'Яскраво', img: ICON('blind'), changes: [SK('Уважність', -1), SK('Пошук скарбів', -1)] },
+    dim: { name: 'Тускло', img: ICON('blind'), changes: [SK('Уважність', -2), SK('Пошук скарбів', -2)] },
+    dark: { name: 'Темно', img: ICON('blind'), changes: [SK('Уважність', -5), SK('Пошук скарбів', -5), C('system.combat.hitMod', -2)] },
+    gloom: { name: 'Морок', img: ICON('blind'), changes: [SK('Уважність', -10), SK('Пошук скарбів', -10), C('system.combat.hitMod', -5)] },
   },
 }
 const PRESET_INDEX = Object.assign({}, ...Object.values(EFFECT_PRESETS))
@@ -149,6 +175,7 @@ export async function editEffect(actor, effect = null) {
 
 /** Підписи змін для листа: «ШУ +2», окремо — плюс чи мінус */
 export const changeChips = effect => effect.changes.map(c => {
+  if (c.key.startsWith('system.rollDis.')) return { label: changeLabel(c.key).replace(/^Недолік: /, ''), value: 'недолік', cls: 'down' }
   const n = Number(c.value)
   const sign = Number.isNaN(n) ? '' : n >= 0 ? '+' : ''
   return { label: changeLabel(c.key), value: `${sign}${c.value}`, cls: Number.isNaN(n) ? '' : n >= 0 ? 'up' : 'down' }

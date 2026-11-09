@@ -138,7 +138,7 @@ assert.equal(msgs.at(-1).flags.god.replay.preset.crits, 2)
 rolled.length = 0; nextTotals = [12, 15]; ups.length = 0
 await weaponAttack(lucky, sword, { luck: true, preset: rp.preset })
 assert.equal(rolled.length, 1); assert.ok(rolled[0].startsWith('2d20kh'), 'перевага')
-assert.ok(cards.at(-1).includes('Вдача') && cards.at(-1).includes('куб 12 +0'), 'від\'ємний модифікатор відкинуто')
+assert.ok(cards.at(-1).includes('Вдача') && cards.at(-1).includes('куб 12 +3'), 'від\'ємна ручна правка відкинута, прицільність лишилась')
 assert.equal(ups.length, 0, 'нічого не списано вдруге')
 // натуральна 1 — крити згорають
 rolled.length = 0; nextTotals = [1]; lucky.system.reputation.crits = 4

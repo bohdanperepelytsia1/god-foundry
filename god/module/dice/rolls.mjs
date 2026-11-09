@@ -5,6 +5,7 @@
  */
 import * as R from '../rules.mjs'
 import { GOD } from '../config.mjs'
+import * as M from '../roll-mods.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const signed = n => (n >= 0 ? `+${n}` : `${n}`)
@@ -128,12 +129,12 @@ async function sendCard(actor, html, rolls, replay = null, luck = false, extra =
 // ── Діалог параметрів ────────────────────────────────────────────────────────
 async function rollDialog({ title, fields, info }) {
   const rows = fields.map(fd => {
-    if (fd.type === 'mode') return `
+    if (fd.type === 'mode') { const v = fd.value ?? 'norm'; return `
       <div class="god-mode" role="radiogroup">
-        <label><input type="radio" name="mode" value="dis"><span>Недолік</span></label>
-        <label><input type="radio" name="mode" value="norm" checked><span>Звичайний</span></label>
-        <label><input type="radio" name="mode" value="adv"><span>Перевага</span></label>
-      </div>`
+        <label><input type="radio" name="mode" value="dis" ${v === 'dis' ? 'checked' : ''}><span>Недолік</span></label>
+        <label><input type="radio" name="mode" value="norm" ${v === 'norm' ? 'checked' : ''}><span>Звичайний</span></label>
+        <label><input type="radio" name="mode" value="adv" ${v === 'adv' ? 'checked' : ''}><span>Перевага</span></label>
+      </div>` }
     if (fd.type === 'select') return `
       <label class="god-dlg-field"><span>${esc(fd.label)}</span>
         <select name="${fd.name}">${Object.entries(fd.options).map(([k, v]) => `<option value="${k}" ${k === fd.value ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></label>`
@@ -175,7 +176,7 @@ async function rollDialog({ title, fields, info }) {
       callback: (event, button) => {
         const el = button.form.elements, out = {}
         for (const fd of fields) {
-          if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? 'norm'
+          if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? fd.value ?? 'norm'
           else if (fd.type === 'check') out[fd.name] = el[fd.name]?.checked ?? !!fd.value
           else if (fd.type === 'target' || fd.type === 'select') out[fd.name] = el[fd.name]?.value ?? fd.value ?? ''
           else out[fd.name] = Number(el[fd.name]?.value ?? fd.value) || 0
@@ -220,31 +221,41 @@ function clearTargetHover() {
 }
 
 // ── Прості перевірки ─────────────────────────────────────────────────────────
-async function d20Check(actor, label, mod, sub, replay, opts = {}) {
+/** «МОД на всі дії» з ефектів, перевантаження і стану свідомості */
+const allMod = actor => actor?.system?.derived?.allMod || 0
+/** Рядок «з чого складається» для картки */
+const modsLine = m => m?.parts?.length > 1 || m?.dis?.length ? `<div class="god-mods"><i class="fa-solid fa-calculator"></i> ${esc(m.text)}</div>` : ''
+const modsInfo = m => m?.parts?.length > 1 || m?.dis?.length ? `<div class="god-mods">${esc(m.text)}</div>` : ''
+/** Вдача: лише додатні складові */
+const luckTotal = m => (m?.parts ?? []).reduce((a, x) => a + Math.max(0, Number(x.value) || 0), 0)
+
+async function d20Check(actor, label, mods, sub, replay, opts = {}) {
   const luck = !!opts.luck
-  const p = opts.preset ?? await rollDialog({ title: label, fields: [{ name: 'mod', label: 'Модифікатор', value: mod }, ...critField(actor), { type: 'mode' }] })
+  const p = opts.preset ?? await rollDialog({ title: label,
+    info: modsInfo(mods) + (mods.dis.length ? 'Кидок з <b>недоліком</b> — можна змінити нижче.' : ''),
+    fields: [{ name: 'mod', label: 'Модифікатор', value: mods.total }, ...critField(actor), { type: 'mode', value: mods.dis.length ? 'dis' : 'norm' }] })
   if (!p) return
   const crits = luck ? (p.crits ?? 0) : await spendCrits(actor, p.crits)
-  const m = luck ? pos(p.mod) : p.mod, mode = luck ? 'adv' : p.mode
+  // Ручна правка в діалозі (якщо гравець змінив число) — окремою складовою
+  const extra = (Number(p.mod) || 0) - mods.total
+  const m = luck ? luckTotal(mods) + Math.max(0, extra) : p.mod, mode = luck ? 'adv' : p.mode
   const roll = await new Roll(d20f(mode, crits), { m, c: crits }).evaluate()
   const nat = naturalOf(roll)
   const cls = nat === 20 ? 'nat20' : nat === 1 ? 'nat1' : ''
+  const shown = { ...mods, text: mods.text + (extra && !luck ? ` · вручну ${signed(extra)}` : '') + (luck ? ' · вдача: лише додатні' : '') }
   return sendCard(actor, `
     ${head(actor.img, label, sub)}
     <div class="god-big ${cls}">${withCrits(roll, crits)}</div>
-    <div class="god-note">куб ${nat} ${signed(m)}${critNote(crits, nat)}${MODE_LABEL[mode] ? ` · ${MODE_LABEL[mode]}` : ''}</div>`, [roll],
+    <div class="god-note">куб ${nat} ${signed(m)}${critNote(crits, nat)}${MODE_LABEL[mode] ? ` · ${MODE_LABEL[mode]}` : ''}</div>
+    ${modsLine(shown)}`, [roll],
     { ...replay, preset: { ...p, crits } }, luck)
 }
 
-/** «МОД на всі дії» з ефектів, перевантаження і стану свідомості */
-const allMod = actor => actor?.system?.derived?.allMod || 0
-const allNote = actor => allMod(actor) ? ` (з них ${actor.system.derived.allModParts || `на всі дії ${allMod(actor)}`})` : ''
-
 export const statCheck = (actor, key, opts) =>
-  d20Check(actor, GOD.STATS[key].label, actor.system.stats[key].mod + allMod(actor), `перевірка характеристики${allNote(actor)}`, { fn: 'stat', args: [key] }, opts)
+  d20Check(actor, GOD.STATS[key].label, M.statMods(actor, key), 'перевірка характеристики', { fn: 'stat', args: [key] }, opts)
 
 export const skillCheck = (actor, key, opts) =>
-  d20Check(actor, GOD.SKILL_INDEX[key].name, actor.system.skill(key) + allMod(actor), `вміння, рівень ${actor.system.skill(key)}${allNote(actor)}`, { fn: 'skill', args: [key] }, opts)
+  d20Check(actor, GOD.SKILL_INDEX[key].name, M.skillMods(actor, key), `вміння, рівень ${actor.system.skill(key)}`, { fn: 'skill', args: [key] }, opts)
 
 // ── Швидкий кидок з панелі (без діалогу) ─────────────────────────────────────
 /**
@@ -256,7 +267,7 @@ export async function quickRoll(actor, spec = {}, opts = {}) {
   const luck = !!opts.luck
   const dice = Object.entries(pool).filter(([, n]) => n > 0)
   const crits = luck ? (spec.crits ?? 0) : await spendCrits(actor, spec.crits)
-  const mod = luck ? pos(base) + pos(extra) : base + extra
+  const mod = luck ? (spec.posBase ?? pos(base)) + pos(extra) : base + extra
   const mode = luck ? 'adv' : mode0
   const tail = (mod ? ` ${mod >= 0 ? '+' : '-'} ${Math.abs(mod)}` : '') + (crits ? ` + ${crits}` : '')
   const poolF = dice.map(([d, n]) => `${n}${d}`).join(' + ')
@@ -276,7 +287,8 @@ export async function quickRoll(actor, spec = {}, opts = {}) {
     ${head(actor?.img, label, sub)}
     <div class="god-big ${cls}">${isCheck ? withCrits(roll, crits) : roll.total}</div>
     ${faces}
-    <div class="god-note">${detail}</div>`, rolls, { fn: 'quick', args: [{ ...spec, crits }] }, luck)
+    <div class="god-note">${detail}</div>
+    ${isCheck && spec.modsText ? `<div class="god-mods"><i class="fa-solid fa-calculator"></i> ${esc(spec.modsText)}${extra ? ` · вручну ${signed(extra)}` : ''}</div>` : ''}`, rolls, { fn: 'quick', args: [{ ...spec, crits }] }, luck)
 }
 
 // ── Атака зброєю ─────────────────────────────────────────────────────────────
@@ -335,12 +347,14 @@ export async function weaponAttack(actor, item, opts = {}) {
   if (!opts.preset && !choices.length) return ui.notifications.warn('На сцені немає цілей для атаки')
 
   // Модифікатори за правилами: прицільність 0 → −5, урон від володіння за «формулою ГМ-а», максимум +12
-  const hitDefault = (isChar ? R.accuracyMod(accLvl) : accLvl) + (cm.hitMod || 0) + allMod(actor)
-  const dmgDefault = (isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0)) + (cm.damageMod || 0) + (sys.derived?.mindDmg || 0)
+  const hm = M.hitMods(actor, isChar ? R.accuracyMod(accLvl) : accLvl, isChar ? `прицільність ${accLvl}` : 'влучність')
+  const dm = M.damageMods(actor, isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0), isChar ? `володіння ${profLvl}` : 'мод урону')
+  const hitDefault = hm.total, dmgDefault = dm.total
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
-    info: 'Спершу кидок попадання: має бути <b>більше</b> за ШУ цілі (17–20 — гарантовано, 1 — промах). Урон — окремим кидком, якщо влучив.',
+    info: 'Спершу кидок попадання: має бути <b>більше</b> за ШУ цілі (17–20 — гарантовано, 1 — промах). Урон — окремим кидком, якщо влучив.' +
+      `<div class="god-mods"><b>Попадання:</b> ${esc(hm.text)}</div><div class="god-mods"><b>Урон:</b> ${esc(dm.text)}</div>`,
     fields: [
       { type: 'target', name: 'target', choices },
       { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
@@ -349,7 +363,7 @@ export async function weaponAttack(actor, item, opts = {}) {
       { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
       { name: 'aim', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
       ...critField(actor, 'critHit', 'Крити на попадання'),
-      { type: 'mode' },
+      { type: 'mode', value: hm.dis.length ? 'dis' : 'norm' },
     ],
   })
   if (!p) return
@@ -366,7 +380,8 @@ export async function weaponAttack(actor, item, opts = {}) {
 
   // Положення: тил — перевага на попадання, фланг +1; сам лежиш −3. Вдача: перевага, від'ємні модифікатори відкидаються
   const notes = []
-  let hitMod = luck ? pos(p.hitMod) : p.hitMod
+  const hitExtra = (Number(p.hitMod) || 0) - (isChar ? R.capMod(hm.total) : hm.total)
+  let hitMod = luck ? luckTotal(hm) + Math.max(0, hitExtra) : p.hitMod
   let hitMode = luck ? 'adv' : p.mode
   if (p.dir === 'flank') { hitMod += 1; notes.push('фланг +1') }
   if (p.dir === 'back') { hitMode = mergeMode(hitMode, 'adv'); notes.push('тил: перевага') }
@@ -396,6 +411,7 @@ export async function weaponAttack(actor, item, opts = {}) {
     html += step('Попадання', hitTotal,
       `куб ${nat} ${signed(hitMod)}${critNote(cHit, nat)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''} · проти ШУ ${target.dodge}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
       { ok: hitOk, text: hitOk ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
+    html += modsLine({ ...hm, text: hm.text + (hitExtra && !luck ? ` · вручну ${signed(hitExtra)}` : '') + (luck ? ' · вдача: лише додатні' : '') })
     if (hc.reason) html += `<div class="god-note">${esc(hc.reason)}</div>`
 
     // 2 — 50% промаху (1d2 = 1), 3 — ШАНС промаху (1d4 = 3)
@@ -435,7 +451,9 @@ export async function weaponDamage(actor, item, state, opts = {}) {
 
   // Тил +2, оцінка +0.5 за кожну; ціль лежить (ближній) — урон з перевагою. Вдача: перевага без від'ємних
   const notes = []
-  let dmgMod = luck ? pos(p.dmgMod) : p.dmgMod, dmgMode = luck ? 'adv' : 'norm'
+  const dm = M.damageMods(actor, isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0), isChar ? `володіння ${profLvl}` : 'мод урону')
+  const dmgExtra = (Number(p.dmgMod) || 0) - (isChar ? R.capMod(dm.total) : dm.total)
+  let dmgMod = luck ? luckTotal(dm) + Math.max(0, dmgExtra) : p.dmgMod, dmgMode = luck ? 'adv' : 'norm'
   if (p.dir === 'back') { dmgMod += 2; notes.push('тил +2') }
   if (melee && hasStatus(target.actor, 'prone')) { dmgMode = 'adv'; notes.push('ціль лежить: перевага') }
   const aim = R.aimBonus(p.aim, melee)
@@ -453,6 +471,7 @@ export async function weaponDamage(actor, item, state, opts = {}) {
   const tier = R.damageTier({ total: dmgTotal, natural: naturalOf(dmg), skillLvl: profLvl })
   let key = tier.tier
   html += step('Урон', dmgTotal, `куб ${naturalOf(dmg)} ${signed(dmgMod)}${critNote(cDmg, naturalOf(dmg))}${MODE_LABEL[dmgMode] ? ` · ${MODE_LABEL[dmgMode]}` : ''}${notes.length ? ` · ${notes.join(', ')}` : ''}`, null)
+  html += modsLine({ ...dm, parts: [...dm.parts, {}], text: dm.text + (dmgExtra && !luck ? ` · вручну ${signed(dmgExtra)}` : '') + (luck ? ' · вдача: лише додатні' : '') })
   if (tier.chance) {
     if (perks.autoChance) {
       html += step('ШАНС', '—', `легка зброя 10 рівня: ${R.TIER[tier.chance].label.toLowerCase()} автоматично`, { ok: true, text: 'Спрацював' })
@@ -605,17 +624,17 @@ export async function castSpell(actor, spell, opts = {}) {
   const choices = needsHit && !opts.preset ? targetChoices(actor) : []
   if (needsHit && !opts.preset && !choices.length) return ui.notifications.warn('На сцені немає цілей для заклинання')
   const n = R.castDiceCount(sys.stats.int.value), die = R.schoolDie(schoolLvl)
+  const macc = sys.skill('Маг_прицільність')
+  const shm = M.hitMods(actor, actor.type === 'character' ? R.accuracyMod(macc) : macc, `маг. прицільність ${macc}`)
 
   const p = opts.preset ?? await rollDialog({
     title: `Сотворення: ${spell.name}`,
     info: `${school}, володіння ${schoolLvl} → <b>${n}d${die}</b>, потрібно ≥ ${s.threshold} хоча б на одному кубі.` +
-      (needsHit ? '<br>Спершу попадання: має бути <b>більше</b> за ШУ цілі.' : ''),
+      (needsHit ? `<br>Спершу попадання: має бути <b>більше</b> за ШУ цілі.<div class="god-mods">${esc(shm.text)}</div>` : ''),
     fields: [
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },
-        { name: 'hitMod', label: 'Маг. прицільність', value: actor.type === 'character'
-          ? R.capMod(R.accuracyMod(sys.skill('Маг_прицільність')) + (sys.combat.hitMod || 0) + allMod(actor))
-          : sys.skill('Маг_прицільність') + (sys.combat.hitMod || 0) + allMod(actor) },
+        { name: 'hitMod', label: 'Маг. прицільність', value: actor.type === 'character' ? R.capMod(shm.total) : shm.total },
         ...critField(actor, 'critHit', 'Крити на попадання'),
       ] : []),
       { name: 'threshold', label: 'Поріг (ПППС)', value: s.threshold },
@@ -650,15 +669,17 @@ export async function castSpell(actor, spell, opts = {}) {
   let html = head(spell.img, spell.name, `${school} · ${GOD.ATTACK_TYPES[s.attackType]}`)
 
   if (needsHit) {
-    const hm = luck ? pos(p.hitMod) : p.hitMod
+    const sx = (Number(p.hitMod) || 0) - (actor.type === 'character' ? R.capMod(shm.total) : shm.total)
+    const hm = luck ? luckTotal(shm) + Math.max(0, sx) : p.hitMod
     const hitMod = actor.type === 'character' ? R.capMod(hm) : hm
-    const hit = await new Roll(d20f(luck ? 'adv' : 'norm', cHit), { m: hitMod, c: cHit }).evaluate()
+    const hit = await new Roll(d20f(luck ? 'adv' : (shm.dis.length ? 'dis' : 'norm'), cHit), { m: hitMod, c: cHit }).evaluate()
     rolls.push(hit)
     const hitTotal = withCrits(hit, cHit)
     const hc = R.hitCheck({ total: hitTotal, natural: naturalOf(hit), dodge: target.dodge })
     let ok = hc.hit
     html += step('Попадання', hitTotal, `куб ${naturalOf(hit)} ${signed(hitMod)}${critNote(cHit, naturalOf(hit))}${luck ? ' · перевага' : ''} · ${esc(target.name)}, ШУ ${target.dodge}`,
       { ok, text: ok ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
+    html += modsLine({ ...shm, text: shm.text + (sx && !luck ? ` · вручну ${signed(sx)}` : '') })
     if (hc.reason && !hc.guaranteed) html += `<div class="god-note">${esc(hc.reason)}</div>`
     if (ok && hc.missCheck) {
       const r = await new Roll(hc.missCheck === 'half' ? '1d2' : '1d4').evaluate(); rolls.push(r)
@@ -762,13 +783,14 @@ export async function thresholdCheck(actor, stat, dc, why = '', opts = {}) {
   const luck = !!opts.luck
   const crits = luck ? (opts.preset?.crits ?? 0) : await askCrits(actor, `${STAT_LABEL(stat)} ${dc}+`)
   if (crits === null) return
-  const mod0 = (actor.system.stats?.[stat]?.mod ?? 0) + allMod(actor)
-  const mod = luck ? pos(mod0) : mod0
+  const tm = actor.system.stats?.[stat] ? M.statMods(actor, stat) : { total: 0, parts: [], dis: [], text: '' }
+  const mod = luck ? luckTotal(tm) : tm.total
   const roll = await new Roll(d20f(luck ? 'adv' : 'norm', crits), { m: mod, c: crits }).evaluate()
   const total = withCrits(roll, crits)
   const ok = total >= dc
   let html = head(actor.img, `${STAT_LABEL(stat)} ${dc}+`, why || 'перевірка')
   html += step('Кидок', total, `куб ${naturalOf(roll)} ${signed(mod)}${critNote(crits, naturalOf(roll))}${luck ? ' · перевага' : ''}`, { ok, text: ok ? 'Успіх' : 'Провал' })
+  html += modsLine(tm)
   return sendCard(actor, html, [roll], { fn: 'threshold', args: [stat, dc, why], preset: { crits } }, luck)
 }
 

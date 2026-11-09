@@ -196,4 +196,22 @@ t('щити, школи магії, захист, 2ПХ, ігнор PR', () => {
   const o = R.applyDamage({ hp: 100, pr: 50, mr: 0 }, { amount: 60, ignorePr: true })
   assert.deepEqual([o.hp, o.pr, o.toPr, o.toHp], [40, 50, 0, 60])
 })
+const M = await import('../god/module/roll-mods.mjs')
+t('складові модифікатора: ефекти гілки й вміння, обладунок, свідомість, недолік', () => {
+  const actor = { type: 'character', system: {
+    skill: () => 3, stats: { con: { mod: 2 } }, combat: { allMod: -1, hitMod: 2 }, resources: { mt: { value: 12 } },
+    derived: { armorWorst: 'heavy', mindDmg: -2 },
+    rollMods: { cat: { neutral: -2 }, skill: { 'Скритність': 1 }, stat: { con: 1 } }, rollDis: { skill: {}, hit: 1 },
+  } }
+  const sk = M.skillMods(actor, 'Скритність')
+  assert.equal(sk.total, 3 - 2 + 1 - 1 - 1, 'рівень + гілка + вміння + усі дії + тривожність')
+  assert.deepEqual(sk.dis, ['тяжкий обладунок — перешкода'])
+  assert.match(sk.text, /рівень 3 · ефекти: нейтральні −?-2/)
+  actor.system.derived.armorWorst = null
+  assert.equal(M.skillMods(actor, 'Скритність').total, 3 - 2 + 1 + 1 - 1 - 1, 'без обладунку +1')
+  assert.equal(M.statMods(actor, 'con').total, 2 + 1 - 1 - 1)
+  const h = M.hitMods(actor, 3, 'прицільність 3')
+  assert.equal(h.total, 3 + 2 - 1 - 1); assert.deepEqual(h.dis, ['ефект'])
+  assert.equal(M.damageMods(actor, 2, 'володіння 2').total, 0)
+})
 console.log(`\n${n} тестів пройдено`)

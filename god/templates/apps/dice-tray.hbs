@@ -63,7 +63,7 @@
 
   <div class="god-tray-mod">
     <span class="god-dim">Модифікатор</span>
-    {{#if pickLabel}}<span class="god-tray-base" data-tooltip="Від обраного: {{pickLabel}}">{{god-signed base}}</span>{{/if}}
+    {{#if pickLabel}}<span class="god-tray-base" data-tooltip="{{pickLabel}}: {{modsText}}">{{god-signed base}}</span>{{/if}}
     <button type="button" data-action="modStep" data-step="-1">−</button>
     <input type="number" name="extra" value="{{extra}}">
     <button type="button" data-action="modStep" data-step="1">+</button>
@@ -75,6 +75,7 @@
   </label>
   {{/if}}
 
+  {{#if modsText}}<p class="god-tray-mods">{{modsText}}</p>{{/if}}
   <button type="button" class="god-tray-roll" data-action="roll">
     <i class="fa-solid fa-dice-d20"></i>
     <span><b>{{#if pickLabel}}{{pickLabel}}{{else}}Кинути{{/if}}</b><small>{{preview}}</small></span>

@@ -8,6 +8,7 @@
  */
 import { GOD } from '../config.mjs'
 import { quickRoll } from '../dice/rolls.mjs'
+import * as M from '../roll-mods.mjs'
 import { PinnableMixin } from './pins.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
@@ -116,7 +117,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
       dice: DIE_TYPES.map(d => ({ d, n: this._pool[d] || 0 })),
       hasPool: poolDice.length > 0,
       modes: [['dis', 'Недолік'], ['norm', 'Звичайний'], ['adv', 'Перевага']].map(([id, label]) => ({ id, label, active: this._mode === id })),
-      base, extra: this._extra,
+      base, extra: this._extra, modsText: this._mods(actor)?.text ?? '', modsDis: !!this._mods(actor)?.dis?.length,
       critsHave: isChar ? Math.max(0, actor.system.reputation?.crits ?? 0) : 0, crits: this._crits,
       preview: `${formula}${total ? ` ${total > 0 ? '+' : '−'} ${Math.abs(total)}` : ''}${this._crits ? ` + ${this._crits} крит.` : ''}`,
       dsn: !!game.modules.get('dice-so-nice')?.active,
@@ -124,11 +125,12 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     }
   }
 
-  _baseMod(actor) {
-    if (!this._pick || actor?.type !== 'character') return 0
-    const all = actor.system.derived?.allMod || 0   // «на всі дії»: ефекти, перевантаження, свідомість
-    return (this._pick.kind === 'stat' ? actor.system.stats[this._pick.key]?.mod ?? 0 : actor.system.skill(this._pick.key)) + all
+  /** Складові модифікатора обраної характеристики/вміння: рівень, ефекти, обладунок, «на всі дії» */
+  _mods(actor) {
+    if (!this._pick || actor?.type !== 'character') return null
+    return this._pick.kind === 'stat' ? M.statMods(actor, this._pick.key) : M.skillMods(actor, this._pick.key)
   }
+  _baseMod(actor) { return this._mods(actor)?.total ?? 0 }
   _pickLabel() {
     if (!this._pick) return ''
     return this._pick.kind === 'stat' ? GOD.STATS[this._pick.key]?.label : GOD.SKILL_INDEX[this._pick.key]?.name
@@ -148,6 +150,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
   static #pick(ev, t) {
     const same = this._pick?.kind === t.dataset.kind && this._pick?.key === t.dataset.key
     this._pick = same ? null : { kind: t.dataset.kind, key: t.dataset.key }
+    if (!same && this._mods(this.actor)?.dis?.length) this._mode = 'dis'   // недолік (обладунок, ефект) — одразу вибраний
     // Подвійний клік по вже обраному — одразу кинути
     if (same && ev.detail >= 2) { this._pick = { kind: t.dataset.kind, key: t.dataset.key }; return GodDiceTray.#roll.call(this) }
     this.render()
@@ -162,7 +165,9 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     if (!actor) return ui.notifications.warn('Обери персонажа для кидка')
     const label = this._pickLabel() || (Object.values(this._pool).some(n => n) ? 'Кидок кубів' : 'Перевірка d20')
     const sub = this._pick ? (this._pick.kind === 'stat' ? 'характеристика' : `вміння, рівень ${this._baseMod(actor)}`) : ''
-    await quickRoll(actor, { label, sub, base: this._baseMod(actor), extra: this._extra, mode: this._mode, pool: { ...this._pool }, crits: this._crits })
+    const mods = this._mods(actor)
+    await quickRoll(actor, { label, sub, base: this._baseMod(actor), extra: this._extra, mode: this._mode, pool: { ...this._pool }, crits: this._crits,
+      modsText: mods?.text ?? '', posBase: mods ? mods.parts.reduce((a, x) => a + Math.max(0, x.value || 0), 0) : undefined })
     this._defaults()   // скидаємо все до дефолту після кидка
     this.render()
   }

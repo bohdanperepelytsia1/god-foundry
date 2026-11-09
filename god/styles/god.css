@@ -1673,3 +1673,11 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
   .god .god-inv-main .god-toolbar .god-inv-sort { flex: 1 1 auto; }
   .god .god-inv-main .god-inv-row { grid-template-columns: 40px minmax(0, 1fr) 56px 34px 36px; }
 }
+
+/* Складові модифікатора: у діалозі кидка, у картці чату, у панелі кидків */
+.god-mods { margin: 4px 0 2px; padding: 4px 8px; border-radius: 6px; font-size: 11.5px; line-height: 1.35; color: var(--g-dim, #aab);
+  background: rgba(255, 255, 255, .04); border: 1px dashed rgba(255, 255, 255, .12); }
+.god-mods i { opacity: .7; margin-right: 3px; }
+.god-mods b { color: var(--g-text, #e9e6f0); font-weight: 600; }
+.god-dialog .god-dlg-info .god-mods { margin-top: 6px; }
+.god-tray .god-tray-mods { margin: 0; padding: 4px 8px; border-radius: 6px; font-size: 11px; color: var(--g-dim); background: rgba(255, 255, 255, .04); }

@@ -59,6 +59,17 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         mr: new f.SchemaField({ value: int(0) }),
       }),
       skills: new f.SchemaField(skillCats),
+      // Модифікатори кидків від ефектів (Active Effects пишуть сюди): окреме вміння, гілка вмінь, перевірка характеристики
+      rollMods: new f.SchemaField({
+        skill: new f.SchemaField(Object.fromEntries(Object.values(GOD.SKILL_CATEGORIES).flatMap(c => c.skills.map(s => [s.key, int(0)])))),
+        cat: new f.SchemaField(Object.fromEntries(Object.keys(GOD.SKILL_CATEGORIES).map(k => [k, int(0)]))),
+        stat: new f.SchemaField(Object.fromEntries(Object.keys(GOD.STATS).map(k => [k, int(0)]))),
+      }),
+      // Недолік (> 0 — кидок з недоліком): окреме вміння або попадання
+      rollDis: new f.SchemaField({
+        skill: new f.SchemaField(Object.fromEntries(Object.values(GOD.SKILL_CATEGORIES).flatMap(c => c.skills.map(s => [s.key, int(0)])))),
+        hit: int(0),
+      }),
       schools: new f.SchemaField(Object.fromEntries(
         Object.keys(GOD.SPELL_SCHOOLS).map(k => [k, int(0, { min: 0, max: 10 })])
       )),

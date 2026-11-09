@@ -157,9 +157,16 @@ export const fistFlatBonus = lvl => { const l = num(lvl); return l >= 10 ? 500 :
  * Клас обладунку → ШУ (Combat manual, «Види обладунків»). Змішаний комплект — штраф
  * найтяжчого елемента, бонуси зникають. Без жодного обладунку — ШУ +1.
  */
-export const ARMOR_DODGE = { light: 0, mediumFit: 0, medium: -1, heavyFit: -1, heavy: -2 }
-const ARMOR_WEIGHT = ['light', 'mediumFit', 'medium', 'heavyFit', 'heavy']
-export const armorClassKey = (cls, fitted) => cls === 'none' || !cls ? null : (fitted && cls !== 'light' ? `${cls}Fit` : cls)
+export const ARMOR_DODGE = { lightFit: 0, light: 0, mediumFit: 0, medium: -1, heavyFit: -1, heavy: -2 }
+const ARMOR_WEIGHT = ['lightFit', 'light', 'mediumFit', 'medium', 'heavyFit', 'heavy']
+export const armorClassKey = (cls, fitted) => cls === 'none' || !cls ? null : (fitted ? `${cls}Fit` : cls)
+/** Скритність, маскування, акробатика від обладунку (найтяжчий елемент; бонуси лише без змішування) */
+export const ARMOR_SKILLS = ['Скритність', 'Маскування', 'Акробатика']
+export const ARMOR_SKILL_EFFECT = {
+  none: { mod: 1, label: 'без обладунку +1' }, lightFit: { mod: 1, label: 'легкий підігнаний +1' }, light: null,
+  mediumFit: { mod: -2, label: 'середній обладунок −2' }, medium: { mod: -2, label: 'середній обладунок −2' },
+  heavyFit: { dis: true, label: 'тяжкий обладунок — перешкода' }, heavy: { dis: true, label: 'тяжкий обладунок — перешкода' },
+}
 export const armorDodgeMod = keys => {
   const list = keys.filter(Boolean)
   if (!list.length) return { mod: 1, worst: null }
