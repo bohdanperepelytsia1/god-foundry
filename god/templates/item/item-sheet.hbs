@@ -12,14 +12,14 @@
 
   {{#if isGear}}
   <fieldset class="god-gear-cats"><legend>Що це</legend>
-    <div class="god-cat-grid">
-      {{#each gearCats}}
-      <button type="button" class="god-cat {{#if active}}active{{/if}}" data-action="gearCategory" data-cat="{{id}}" {{#unless @root.editable}}disabled{{/unless}}
-        data-tooltip="{{label}} → розділ «{{locLabel}}»{{#if consumable}}, розхідне{{/if}}">
-        <img src="{{icon}}" alt=""><span>{{label}}</span></button>
-      {{/each}}
+    <div class="god-form-grid">
+      <label><span>Категорія</span>
+        <select name="system.category" {{#unless editable}}disabled{{/unless}}>
+          {{#each gearGroups}}<optgroup label="{{label}}">{{#each cats}}<option value="{{id}}" {{#if active}}selected{{/if}}>{{label}}</option>{{/each}}</optgroup>{{/each}}
+        </select></label>
+      <label><span>Де лежить</span><select name="system.location">{{selectOptions config.INVENTORY_LOCATIONS selected=system.location}}</select></label>
     </div>
-    <p class="god-hint">Категорія ставить іконку, розділ інвентаря і «розхідне». Розділ потім можна змінити нижче.</p>
+    <p class="god-hint">Категорія ставить іконку і «розхідне»; розділ інвентаря можна змінити окремо.</p>
   </fieldset>
   {{/if}}
 
@@ -126,7 +126,7 @@
     <div class="god-form-grid">
       <label><span>Кількість</span><input type="number" name="system.quantity" value="{{system.quantity}}" min="0"></label>
       <label><span>Вага за 1 шт, кг</span><input type="number" name="system.weight" value="{{system.weight}}" min="0" step="0.01"></label>
-      <label><span>Де лежить</span><select name="system.location">{{selectOptions config.INVENTORY_LOCATIONS selected=system.location}}</select></label>
+      {{#unless isGear}}<label><span>Де лежить</span><select name="system.location">{{selectOptions config.INVENTORY_LOCATIONS selected=system.location}}</select></label>{{/unless}}
     </div>
     <div class="god-price">
       <span>Ціна</span>
@@ -157,7 +157,7 @@
     {{else}}<p class="god-empty">Без ефектів.</p>{{/each}}
     {{#if editable}}<a class="god-custom-add" data-action="effectCreate"><i class="fa-solid fa-plus"></i> Додати ефект</a>{{/if}}
     <p class="god-hint">{{#if equipGated}}Ефекти діють на власника, лише поки предмет одягнений чи в руці.{{else}}Ефекти діють на власника постійно.{{/if}}
-      Корисні ключі: <code>system.combat.dodgeBonus</code>, <code>system.combat.hitMod</code>, <code>system.combat.damageMod</code>, <code>system.resources.mp.bonus</code>.</p>
+</p>
   </fieldset>
 
   <fieldset class="god-desc-set"><legend>Опис</legend>

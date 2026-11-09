@@ -15,6 +15,7 @@ import * as R from '../rules.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
+import { chooseNewItem } from '../apps/item-creator.mjs'
 import { GodDiceTray } from '../apps/dice-tray.mjs'
 import { GodHud } from '../apps/hud.mjs'
 import { bindResourceControls } from '../apps/res-controls.mjs'
@@ -60,7 +61,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       openHud: GodActorSheetBase.#openHud,
       tabSwitch: GodActorSheetBase.#tabSwitch,
       invSelect: GodActorSheetBase.#invSelect,
-      invType: GodActorSheetBase.#invType,
+      invType: GodActorSheetBase.#invType, invClose: GodActorSheetBase.#invClose,
       invCollapse: GodActorSheetBase.#invCollapse,
       invQty: GodActorSheetBase.#invQty,
       invSplit: GodActorSheetBase.#invSplit,
@@ -203,6 +204,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     this._inv.selected = id
     this._renderInv(true)
   }
+  static #invClose() { this._inv.selected = null; this._renderInv(true) }
   static #invType(ev, target) { this._inv.type = target.dataset.type; this._renderInv() }
   static #invCollapse(ev, target) {
     if (ev.target.closest('[data-action="itemCreate"]')) return
@@ -410,6 +412,18 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
   static #itemEquip(ev, target) { const it = this._item(target); if (it) this.document.toggleEquip(it) }
   static async #itemCreate(ev, target) {
     const type = target.dataset.type
+    // Речі інвентаря — одне вікно вибору; створене одразу видно в інспекторі, без окремого листа
+    if (['gear', 'weapon', 'armor'].includes(type) && !target.dataset.kind) {
+      const preset = target.dataset.category ? `gear:${target.dataset.category}` : type !== 'gear' ? `${type}:${type === 'weapon' ? 'onehand' : 'Кираса'}` : null
+      const data = await chooseNewItem({ preset, location: target.dataset.location ?? null })
+      if (!data) return
+      const [item] = await this.document.createEmbeddedDocuments('Item', [data], { godNoStack: true })
+      if (!item) return
+      this._inv.selected = item.id
+      if (this._tab !== 'gear' && this.constructor.PARTS?.gear) this._tab = 'gear'
+      this.render()
+      return ui.notifications.info(`«${item.name}» додано — деталі праворуч, повний лист — «Редагувати»`)
+    }
     const system = {}
     if (target.dataset.location) system.location = target.dataset.location
     if (target.dataset.kind) system.kind = target.dataset.kind

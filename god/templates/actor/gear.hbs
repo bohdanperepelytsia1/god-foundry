@@ -33,22 +33,7 @@
         <div class="god-search"><i class="fa-solid fa-magnifying-glass"></i>
           <input type="search" data-filter="inventory" placeholder="Пошук…" class="god-select-on-focus"></div>
         <select class="god-inv-sort" data-inv-sort data-tooltip="Сортування">{{selectOptions sorts selected=sort}}</select>
-        <div class="god-create">
-          <details class="god-create-menu">
-            <summary data-tooltip="Новий предмет — обери, що це"><i class="fa-solid fa-plus"></i> Додати</summary>
-            <div class="god-create-list">
-              <button type="button" data-action="itemCreate" data-type="weapon"><img src="systems/god/assets/icons/weapons/onehand.svg" alt="">Зброя</button>
-              <button type="button" data-action="itemCreate" data-type="armor"><img src="systems/god/assets/icons/armor/cuirass.svg" alt="">Обладунок</button>
-              <hr>
-              {{#each gearGroups}}
-              <h5>{{label}}</h5>
-              {{#each cats}}
-              <button type="button" data-action="itemCreate" data-type="gear" data-category="{{id}}"><img src="{{icon}}" alt="">{{label}}</button>
-              {{/each}}
-              {{/each}}
-            </div>
-          </details>
-        </div>
+        <button type="button" class="god-inv-add" data-action="itemCreate" data-type="gear" data-tooltip="Новий предмет: зброя, обладунок чи річ"><i class="fa-solid fa-plus"></i> Додати</button>
       </div>
 
       <nav class="god-inv-types">
@@ -107,6 +92,7 @@
           <h3>{{name}}{{#each tags}}<i class="fa-solid {{icon}} god-tag {{cls}}" data-tooltip="{{tip}}"></i>{{/each}}</h3>
           <span>{{typeLabel}}{{#if equipped}} · <b class="god-insp-on">одягнено</b>{{/if}}</span>
         </div>
+        <a class="god-insp-close" data-action="invClose" data-tooltip="Закрити"><i class="fa-solid fa-xmark"></i></a>
       </header>
 
       <div class="god-insp-actions">

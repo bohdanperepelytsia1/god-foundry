@@ -1,6 +1,7 @@
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
 import { fitToScreen } from './actor-sheets.mjs'
+import { editEffect, changeLabel } from '../apps/effect-builder.mjs'
 
 const { HandlebarsApplicationMixin } = foundry.applications.api
 const { ItemSheetV2 } = foundry.applications.sheets
@@ -38,13 +39,8 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   }
 
   _eff(t) { return this.document.effects.get(t.closest('[data-effect-id]')?.dataset.effectId) }
-  static async #effectCreate() {
-    const [e] = await this.document.createEmbeddedDocuments('ActiveEffect', [{
-      name: `${this.document.name}: ефект`, img: this.document.img, transfer: true,
-    }])
-    e?.sheet.render(true)
-  }
-  static #effectEdit(ev, t) { this._eff(t)?.sheet.render(true) }
+  static #effectCreate() { if (this.isEditable) editEffect(this.document) }
+  static #effectEdit(ev, t) { const e = this._eff(t); if (e && this.isEditable) editEffect(this.document, e); else e?.sheet.render(true) }
   static #effectDelete(ev, t) { this._eff(t)?.delete() }
   static #effectToggle(ev, t) { const e = this._eff(t); e?.update({ disabled: !e.disabled }) }
 
@@ -104,6 +100,9 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       handOptions: { main: 'Основна рука (+СИЛ×5)', off: 'Друга рука (без СИЛ)' },
       damageKinds: { mag: 'Магічний', phys: 'Фізичний', none: 'Без урону' },
       facts: GodItemSheet.facts(item),
+      gearGroups: item.type === 'gear' ? Object.entries(GOD.GEAR_GROUPS).map(([gid, label]) => ({
+        label, cats: Object.entries(GOD.GEAR_CATEGORIES).filter(([, g]) => g.group === gid).map(([id, g]) => ({ id, label: g.label, active: item.system.category === id })),
+      })) : [],
       gearCats: item.type === 'gear' ? Object.entries(GOD.GEAR_CATEGORIES).map(([id, g]) => ({
         id, label: g.label, consumable: g.consumable, locLabel: GOD.INVENTORY_LOCATIONS[g.loc],
         icon: `systems/god/assets/icons/gear/${g.icon}.svg`, active: item.system.category === id,
@@ -116,7 +115,7 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
       equipGated: ['weapon', 'armor'].includes(item.type),
       effects: item.effects.map(e => ({
         id: e.id, name: e.name, img: e.img, disabled: e.disabled,
-        changes: e.changes.map(ch => `${ch.key.replace('system.', '')} ${Number(ch.value) >= 0 ? '+' : ''}${ch.value}`).join(' · ') || 'без змін',
+        changes: e.changes.map(ch => `${changeLabel(ch.key)} ${Number(ch.value) >= 0 ? '+' : ''}${ch.value}`).join(' · ') || 'без змін',
       })),
     })
     return context

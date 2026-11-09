@@ -56,7 +56,8 @@ export function buildInventory(actor, state) {
   const physical = actor.items.filter(i => i.isPhysical)
   const filter = INV_TYPES.find(t => t.id === state.type) ?? INV_TYPES[0]
   const shown = physical.filter(filter.test).sort(sorters[state.sort] ?? sorters.manual)
-  if (!state.selected || !actor.items.has(state.selected)) state.selected = shown[0]?.id ?? null
+  // Нічого не вибираємо самі: деталі з'являються, коли клікнеш предмет (у вузькому вікні — шухляда знизу)
+  if (state.selected && !actor.items.has(state.selected)) state.selected = null
   const belt = actor.system.derived?.belt
 
   const sections = Object.entries(GOD.INVENTORY_LOCATIONS).map(([loc, label]) => {

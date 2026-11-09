@@ -142,6 +142,8 @@ export async function editEffect(actor, effect = null) {
     duration: res.rounds ? { rounds: res.rounds, startRound: game.combat?.round ?? 0, startTurn: game.combat?.turn ?? 0, combat: game.combat?.id ?? null } : { rounds: null },
   }
   if (effect) return effect.update(data)
+  // ефект предмета діє на власника (transfer)
+  if (actor.documentName === 'Item') data.transfer = true
   return actor.createEmbeddedDocuments('ActiveEffect', [data])
 }
 
