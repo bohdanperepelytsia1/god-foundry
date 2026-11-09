@@ -352,6 +352,10 @@ export async function weaponAttack(actor, item, opts = {}) {
   const hm = M.hitMods(actor, isChar ? R.accuracyMod(accLvl) : accLvl, isChar ? `прицільність ${accLvl}` : 'влучність')
   const dm = M.damageMods(actor, isChar ? R.proficiencyDamageMod(profLvl) : (sys.attack?.damageMod ?? 0), isChar ? `володіння ${profLvl}` : 'мод урону')
   const hitDefault = hm.total, dmgDefault = dm.total
+  // Дві руки (Combat manual, «Легка»): спершу б'є основна рука, потім друга — кожна з окремим попаданням і уроном
+  const pair = !natural && R.DUAL_WIELD.has(cat) && item.system.equipped
+    ? actor.items.find(o => o.id !== item.id && o.type === 'weapon' && o.system.equipped && R.DUAL_WIELD.has(o.system.category)
+      && (o.system.hand === 'off') !== (item.system.hand === 'off')) : null
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
@@ -365,6 +369,7 @@ export async function weaponAttack(actor, item, opts = {}) {
       { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
       { name: 'aim', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
       ...critField(actor, 'critHit', 'Крити на попадання'),
+      ...(pair ? [{ type: 'check', name: 'both', label: `Обома руками: потім «${pair.name}» (${pair.system.hand === 'off' ? 'ліва' : 'права'})`, value: true }] : []),
       { type: 'mode', value: hm.dis.length ? 'dis' : 'norm' },
     ],
   })
@@ -393,10 +398,16 @@ export async function weaponAttack(actor, item, opts = {}) {
   if (isChar) hitMod = R.capMod(hitMod)
   const cHit = luck ? (p.critHit ?? 0) : await spendCrits(actor, p.critHit)
   const ref = itemRef(item)
-  const replay = { fn: 'weapon', args: [ref], preset: { ...p, critHit: cHit } }
+  const replay = { fn: 'weapon', args: [ref], preset: { ...p, critHit: cHit, both: false } }
+  // друга рука: те саме налаштування, без здібності й критів (кожна рука — свої кидки)
+  const secondHand = async () => {
+    if (!p.both || !pair || opts.offhand || luck) return
+    return weaponAttack(actor, pair, { preset: { ...p, ability: '', critHit: 0, both: false }, offhand: true })
+  }
 
   const rolls = []
-  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')} · володіння ${profLvl} → ${esc(target.name)}`
+  const hand = !natural && pair ? (item.system.hand === 'off' ? ' · ліва рука' : ' · права рука') : ''
+  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')}${hand} · володіння ${profLvl} → ${esc(target.name)}`
   let html = head(item.img ?? actor.img, item.name, sub)
   if (ab) html += `<div class="god-ability"><i class="fa-solid fa-star"></i> ${esc(ab.name)}${ab.level > 1 ? ` · ${ab.level} рівень` : ''} <small>${luck ? 'ВС уже списано' : `−${ab.ed} ВС`}</small></div>`
 
@@ -428,14 +439,18 @@ export async function weaponAttack(actor, item, opts = {}) {
     }
     if (!hitOk) {
       html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
-      return sendCard(actor, html, rolls, replay, luck)
+      const msg = await sendCard(actor, html, rolls, replay, luck)
+      await secondHand()
+      return msg
     }
   }
   if (hc.guaranteed) html += `<div class="god-note">Урон щонайменше: ${esc(R.TIER[profLvl >= 1 ? hc.guaranteed : (hc.guaranteed === 'crit' ? 't100' : hc.guaranteed)].label.toLowerCase())}.</div>`
   html += `<div class="god-apply god-apply-one"><button type="button" class="god-roll-dmg" data-god-damage="1"
     data-tooltip="Окремий кидок урону${critsOf(actor) ? '. Крити на урон — перед кидком' : ''}"><i class="fa-solid fa-dice-d20"></i> Кинути урон</button></div>`
   const attack = { actor: actor.uuid, item: ref, p: { ...p, critHit: cHit }, guaranteed: hc.guaranteed ?? null, target: target.uuid }
-  return sendCard(actor, html, rolls, replay, luck, { attack })
+  const msg = await sendCard(actor, html, rolls, replay, luck, { attack })
+  await secondHand()
+  return msg
 }
 
 /**
@@ -483,6 +498,30 @@ export async function weaponDamage(actor, item, state, opts = {}) {
       html += step('ШАНС', ch.value, `1d4: 3 — ${R.TIER[tier.chance].label.toLowerCase()}`, { ok: ch.ok, text: ch.ok ? 'Спрацював' : 'Ні' })
       if (ch.ok) key = R.betterTier(key, tier.chance)
     }
+  }
+  // Кулачний бій: сітка й шанси змінюються з рівнем (6 — крит на 17, 8–10 — больовий шок, вибивання зброї, 10 — нокаут)
+  if (cat === 'fist' && isChar) {
+    const fe = R.fistExtras(profLvl, dmgTotal, naturalOf(dmg))
+    const chance = async (label, what, ok) => {
+      const ch = perks.autoChance ? { value: '—', ok: true } : await rollChance(rolls)
+      html += step(label, ch.value, `1d4: 3 — ${what}`, { ok: ch.ok, text: ch.ok ? 'Так' : 'Ні' })
+      if (ch.ok) ok()
+    }
+    if (fe.chanceCrit && R.betterTier(key, 'crit') !== key) await chance('ШАНС', 'критичний урон (кулаки 6+, на 17)', () => { key = R.betterTier(key, 'crit') })
+    if (fe.shock) await chance('Больовий шок', 'ціль пропускає хід', () => after.push('Больовий шок: ціль пропускає наступний хід.'))
+    if (fe.knockout) await chance('Нокаут', 'ціль вирубано', () => after.push('Ціль вирубано (кулаки 10, натуральна 20).'))
+    if (fe.disarmAt) {
+      const r = await new Roll('1d20').evaluate(); rolls.push(r)
+      const ok = r.total >= fe.disarmAt
+      html += step('Вибити зброю', r.total, `чистий d20, ${fe.disarmAt}+`, { ok, text: ok ? 'Вибив' : 'Ні' })
+      if (ok) after.push('Зброю вибито з рук цілі.')
+    }
+  }
+  // Луки: чи лишилась стріла цілою
+  if (cat === 'bow' && isChar) {
+    const kind = R.arrowSurvival(profLvl)
+    if (kind === 'always') after.push('Стріла лишилась цілою.')
+    else if (kind) { const o = await rollOdds(rolls, kind); after.push(o.ok ? `Стріла ціла (${o.label}).` : `Стріла зламалась (${o.label}).`) }
   }
   // Тіньовий удар: шанс криту/смертельного від результату урону
   if (ab?.id === 'shadow' && profLvl >= 1) {

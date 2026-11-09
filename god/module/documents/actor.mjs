@@ -75,15 +75,32 @@ export class GodActor extends Actor {
 
     const updates = [{ _id: item.id, 'system.equipped': true }]
     const off = id => updates.push({ _id: id, 'system.equipped': false })
-    for (const other of this.items) {
-      if (other.id === item.id || !other.system.equipped) continue
-      if (item.type === 'armor' && other.type === 'armor' && other.system.slot === s.slot) off(other.id)
-      if (item.type === 'weapon' && other.type === 'weapon') {
-        if (s.twoHanded || other.system.twoHanded || other.system.hand === s.hand) off(other.id)
+    const worn = this.items.filter(o => o.id !== item.id && o.system.equipped)
+    const weapons = worn.filter(o => o.type === 'weapon')
+    const shield = worn.find(o => o.type === 'armor' && o.system.slot === 'Щит')
+
+    if (item.type === 'armor') {
+      for (const o of worn) if (o.type === 'armor' && o.system.slot === s.slot) off(o.id)
+      // щит займає другу руку: знімаємо дворучну зброю і зброю в другій руці
+      if (s.slot === 'Щит') for (const w of weapons) if (w.system.twoHanded || w.system.hand === 'off') off(w.id)
+    } else if (item.type === 'weapon') {
+      if (s.twoHanded) {
+        for (const w of weapons) off(w.id)
+        if (shield) off(shield.id)
+      } else {
+        // Дві руки (Combat manual, «Легка»): у другу руку — лише легка зброя (і чакрами — парні)
+        const DUAL = R.DUAL_WIELD
+        for (const w of weapons) if (w.system.twoHanded) off(w.id)
+        const inHand = h => weapons.find(w => !w.system.twoHanded && (w.system.hand === 'off' ? 'off' : 'main') === h)
+        let hand = s.hand === 'off' ? 'off' : 'main'
+        if (hand === 'off' && !DUAL.has(s.category)) hand = 'main'
+        // основна рука зайнята, а друга вільна — легку зброю кладемо в другу
+        if (hand === 'main' && inHand('main') && !inHand('off') && !shield && DUAL.has(s.category)) hand = 'off'
+        const busy = inHand(hand)
+        if (busy) off(busy.id)
+        if (hand === 'off' && shield) off(shield.id)
+        if (hand !== (s.hand === 'off' ? 'off' : 'main')) updates[0]['system.hand'] = hand
       }
-      // дворучна зброя і щит несумісні
-      if (item.type === 'weapon' && s.twoHanded && other.type === 'armor' && other.system.slot === 'Щит') off(other.id)
-      if (item.type === 'armor' && s.slot === 'Щит' && other.type === 'weapon' && other.system.twoHanded) off(other.id)
     }
     return this.updateEmbeddedDocuments('Item', updates)
   }

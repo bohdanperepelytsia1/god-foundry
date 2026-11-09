@@ -544,3 +544,22 @@ export const REST = {
 }
 /** Відновлення броні: підгонка — 50% фіз. і маг. броні (1 год), відновлення — 100% (2 год) */
 export const ARMOR_REPAIR = { fit: { label: 'Підгонка броні (1 год) — 50%', pct: 50 }, full: { label: 'Відновлення броні (2 год) — 100%', pct: 100 } }
+
+/** Що можна тримати в другій руці (Combat manual: дві легкі зброї; чакрами — парні) */
+export const DUAL_WIELD = new Set(['light', 'chakram'])
+
+/**
+ * Кулачний бій за рівнем (Combat manual, «Без зброї»): зміни сітки урону і додаткові шанси.
+ * total — результат кидка урону, natural — куб.
+ */
+export function fistExtras(lvl, total, natural) {
+  const l = num(lvl), t = num(total), out = { chanceCrit: false, shock: false, knockout: false, disarmAt: 0 }
+  if (l >= 6 && t === 17) out.chanceCrit = true                          // 6: при 17 — шанс криту
+  if ((l >= 10 && t >= 17) || (l >= 9 && t >= 19) || (l >= 8 && t >= 20)) out.shock = true   // больовий шок
+  if (l >= 10 && natural === 20) out.knockout = true                      // 10: при 20 — шанс вирубити
+  out.disarmAt = l >= 10 ? 16 : l >= 9 ? 18 : l >= 8 ? 19 : 0             // окремий чистий d20 на вибивання зброї
+  return out
+}
+
+/** Луки: шанс, що стріла лишиться цілою (4 — ШАНС, 6 — 50%, 8 — 75%, 9+ — завжди) */
+export const arrowSurvival = lvl => { const l = num(lvl); return l >= 9 ? 'always' : l >= 8 ? 'threeQuarters' : l >= 6 ? 'half' : l >= 4 ? 'chance' : null }

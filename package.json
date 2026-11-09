@@ -1,11 +1,11 @@
 {
   "name": "god-foundry",
   "private": true,
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "G.O.D. — ігрова система для Foundry VTT v13–v14",
   "type": "module",
   "scripts": {
-    "test": "node tests/rules.test.mjs && node tests/sync.test.mjs && node tests/inventory.test.mjs && node tests/tray.test.mjs && node tests/combat.test.mjs && node tests/migration.test.mjs && node tests/smoke.test.mjs",
+    "test": "node tests/rules.test.mjs && node tests/sync.test.mjs && node tests/inventory.test.mjs && node tests/tray.test.mjs && node tests/combat.test.mjs && node tests/equip.test.mjs && node tests/migration.test.mjs && node tests/smoke.test.mjs",
     "build:packs": "node build/packs.mjs",
     "zip": "cd god && zip -qr ../god-foundry.zip . -x 'packs/*/LOG*' && cd .. && echo god-foundry.zip"
   },

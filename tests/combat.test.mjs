@@ -146,6 +146,18 @@ dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 
 await weaponAttack(lucky, sword)
 assert.ok(cards.at(-1).includes('згоріли') && cards.at(-1).includes('Промах'))
 console.log('✓ крити і вдача: списання, +N, натуральна 1, перекидання з перевагою')
+// 7. Дві руки: спершу права, потім ліва — дві окремі картки попадання
+const dA = { name: 'Кинджал А', img: 'a.png', uuid: 'Item.a', id: 'a', type: 'weapon', system: { category: 'light', phys: 10, mag: 0, hand: 'main', equipped: true } }
+const dB = { name: 'Кинджал Б', img: 'b.png', uuid: 'Item.b', id: 'b', type: 'weapon', system: { category: 'light', phys: 10, mag: 0, hand: 'off', equipped: true } }
+const duelist = { ...hero, items: [dA, dB] }
+rolled.length = 0; nextTotals = [12, 12]; const nBefore = cards.length
+dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0, both: true }
+await weaponAttack(duelist, dA)
+assert.ok(lastDialog.includes('Обома руками'), 'пропозиція бити обома руками')
+assert.equal(cards.length - nBefore, 2, 'дві картки попадання')
+assert.ok(cards.at(-2).includes('права рука') && cards.at(-1).includes('ліва рука') && cards.at(-1).includes('Кинджал Б'))
+console.log('✓ дві руки: окремі попадання правою і лівою')
+
 
 
 
