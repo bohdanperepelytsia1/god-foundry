@@ -1,0 +1,65 @@
+<div class="god-cb">
+  {{#if none}}
+  <div class="god-cb-empty">
+    <i class="fa-solid fa-swords"></i>
+    {{#if gm}}
+    <p>Бою немає. Виділи учасників на сцені{{#if sceneName}} «{{sceneName}}»{{/if}} або почни з усіма токенами.</p>
+    <button type="button" class="god-btn" data-action="start">
+      <i class="fa-solid fa-play"></i> {{#if selected}}Почати бій: виділені ({{selected}}){{else}}Почати бій: усі на сцені ({{onScene}}){{/if}}</button>
+    <p class="god-hint">Ініціатива береться з листів, кидати не треба. Порядок: більша ініціатива ходить раніше.</p>
+    {{else}}
+    <p>Зараз бою немає. Коли майстер його почне, тут з'явиться порядок ходів.</p>
+    {{/if}}
+  </div>
+  {{else}}
+  <header class="god-cb-head">
+    {{#if gm}}<a class="god-cb-arrow" data-action="prevRound" data-tooltip="Попередній раунд"><i class="fa-solid fa-chevron-left"></i></a>{{/if}}
+    <div class="god-cb-round">{{#if started}}<small>раунд</small><b>{{round}}</b>{{else}}<small>бій ще не почато</small>{{/if}}</div>
+    {{#if gm}}<a class="god-cb-arrow" data-action="nextRound" data-tooltip="Наступний раунд"><i class="fa-solid fa-chevron-right"></i></a>{{/if}}
+  </header>
+  {{#if otherScene}}<p class="god-hint god-cb-scene">Бій іде на сцені «{{otherScene}}».</p>{{/if}}
+  {{#if current}}<div class="god-cb-now">Ходить: <b>{{current.name}}</b></div>{{/if}}
+
+  <ol class="god-cb-list">
+    {{#each rows}}
+    <li class="god-cb-row side-{{side}} {{#if active}}active{{/if}} {{#if done}}done{{/if}} {{#if defeated}}defeated{{/if}} {{#if hidden}}is-hidden{{/if}}" data-combatant-id="{{id}}">
+      <span class="god-cb-num">{{num}}</span>
+      <a class="god-cb-img" data-action="pan" data-tooltip="Показати на сцені"><img src="{{img}}" alt=""></a>
+      <div class="god-cb-name">
+        <a data-action="sheet">{{name}}</a>
+        {{#if double}}<span class="god-2ph" data-tooltip="2 повні ходи на раунд">2ПХ</span>{{/if}}
+        {{#if hp}}<span class="god-cb-hp {{#if hp.low}}low{{/if}}" data-tooltip="HP {{hp.value}} / {{hp.max}}"><i style="width: {{hp.pct}}%"></i></span>{{/if}}
+      </div>
+      {{#if @root.gm}}
+      <input class="god-cb-ini" type="text" inputmode="numeric" data-ini value="{{ini}}" data-tooltip="Ініціатива: число, або +2 / -1 до поточної">
+      <span class="god-cb-tools">
+        <a data-action="hide" data-tooltip="{{#if hidden}}Показати гравцям{{else}}Сховати від гравців{{/if}}"><i class="fa-solid {{#if hidden}}fa-eye-slash{{else}}fa-eye{{/if}}"></i></a>
+        <a data-action="defeated" data-tooltip="{{#if defeated}}Повернути в бій{{else}}Вибув (мертвий / втік){{/if}}"><i class="fa-solid fa-skull"></i></a>
+        <a data-action="remove" data-tooltip="Прибрати з бою"><i class="fa-solid fa-xmark"></i></a>
+      </span>
+      {{else}}
+      <b class="god-cb-ini">{{ini}}</b>
+      {{/if}}
+    </li>
+    {{/each}}
+  </ol>
+
+  {{#if (god-or gm myTurn)}}
+  <footer class="god-cb-foot">
+    {{#if gm}}
+    {{#if started}}
+    <button type="button" data-action="prevTurn" data-tooltip="Попередній хід"><i class="fa-solid fa-backward-step"></i></button>
+    <button type="button" class="god-btn god-cb-next" data-action="nextTurn"><i class="fa-solid fa-forward-step"></i> Наступний хід</button>
+    {{else}}
+    <button type="button" class="god-btn god-cb-next" data-action="start"><i class="fa-solid fa-play"></i> Почати</button>
+    {{/if}}
+    <button type="button" data-action="add" {{#unless selected}}disabled{{/unless}} data-tooltip="Додати виділені токени{{#if selected}} ({{selected}}){{/if}}"><i class="fa-solid fa-user-plus"></i></button>
+    <button type="button" data-action="resetIni" data-tooltip="Перерахувати ініціативу з листів"><i class="fa-solid fa-arrow-down-wide-short"></i></button>
+    <button type="button" class="god-cb-end" data-action="end" data-tooltip="Завершити бій"><i class="fa-solid fa-flag-checkered"></i></button>
+    {{else if myTurn}}
+    <button type="button" class="god-btn god-cb-next" data-action="nextTurn"><i class="fa-solid fa-forward-step"></i> Завершити хід</button>
+    {{/if}}
+  </footer>
+  {{/if}}
+  {{/if}}
+</div>

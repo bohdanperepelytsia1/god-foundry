@@ -13,6 +13,7 @@
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
 import * as M from '../roll-mods.mjs'
+import { skillInfo } from '../skill-info.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
@@ -666,7 +667,8 @@ export class GodCharacterSheet extends GodActorSheetBase {
     const skillRow = (s, lvl, floor, locked, extra = {}) => {
       const next = R.skillNextCost(s.cost, lvl, s.max)
       return {
-        ...s, lvl, floor, locked, next, maxed: next === null, search: s.name.toLowerCase(),
+        ...s, lvl, floor, locked, next, maxed: next === null, info: skillInfo(s.key),
+        search: `${s.name} ${skillInfo(s.key)}`.toLowerCase(),
         hidden: this._onlyLearned && !lvl,
         fixed: lvl > 0 && lvl <= floor,
         pips: s.max <= 10 ? Array.from({ length: s.max }, (_, i) => ({ on: i < lvl, fixed: i < Math.min(lvl, floor) })) : [],
@@ -720,7 +722,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
 
 // ═════════════════════════════════════════════════════════════════════════════
 const NPC_TABS = [
-  { id: 'overview', label: 'Бій',         icon: 'fa-solid fa-swords' },
+  { id: 'overview', label: 'Ворог',       icon: 'fa-solid fa-skull-crossbones' },
   { id: 'gear',     label: 'Інвентар',    icon: 'fa-solid fa-sack' },
   { id: 'magic',    label: 'Магія',       icon: 'fa-solid fa-wand-sparkles' },
   { id: 'effects',  label: 'Ефекти',      icon: 'fa-solid fa-bolt' },
@@ -731,7 +733,7 @@ const NPC_TABS = [
 export class GodNpcSheet extends GodActorSheetBase {
   static DEFAULT_OPTIONS = {
     classes: ['god', 'sheet', 'actor', 'npc'],
-    position: { width: 860, height: 720 },
+    position: { width: 780, height: 700 },
     actions: { npcAttack: GodNpcSheet.#npcAttack, rollStat: GodNpcSheet.#rollStat },
   }
   static PARTS = {
@@ -747,7 +749,7 @@ export class GodNpcSheet extends GodActorSheetBase {
 
   static #npcAttack() {
     const a = this.document
-    weaponAttack(a, { name: a.system.attack.name || 'Атака', img: a.img, natural: true, system: { category: 'onehand', phys: 0, mag: 0, hand: 'main' } })
+    weaponAttack(a, { name: 'Атака', img: a.img, natural: true, system: { category: 'onehand', phys: 0, mag: 0, hand: 'main' } })
   }
   static #rollStat(ev, target) { this.document.rollStat(target.dataset.stat) }
 
@@ -757,17 +759,41 @@ export class GodNpcSheet extends GodActorSheetBase {
     const items = actor.items.contents.sort((a, b) => (a.sort || 0) - (b.sort || 0))
     const pct = r => r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0
     context.tabs = NPC_TABS.map(t => ({ ...t, active: t.id === this._tab }))
-    context.resources = ['hp', 'mp', 'ed'].map(key => {
+    // HP завжди; OM, MT, ВС — якщо задано максимум (або в режимі редагування, щоб задати)
+    const edit = context.editMode
+    context.resources = ['hp', 'mp', 'mt', 'ed'].filter(key => key === 'hp' || edit || (sys.resources[key]?.max ?? 0) > 0).map(key => {
       const r = sys.resources[key]
-      return { key, abbr: GOD.RESOURCES[key]?.abbr ?? key.toUpperCase(), value: r.value, max: r.max, pct: pct(r) }
+      return { key, abbr: key === 'ed' ? 'ВС' : (GOD.RESOURCES[key]?.abbr ?? key.toUpperCase()), value: r.value, max: r.max, pct: pct(r),
+        tip: { hp: "Здоров'я", mp: 'Одхі (мана)', mt: 'Ментальне', ed: 'Витривалість — для здібностей' }[key] }
     })
     context.armorRes = ['pr', 'mr'].map(key => {
       const r = sys.resources[key], fromItems = key === 'pr' ? sys.derived.armorPr : sys.derived.armorMr
       return { key, abbr: key.toUpperCase(), value: r.value, max: r.max, base: r.base, pct: pct(r),
         tip: `${key === 'pr' ? 'Фізичний' : 'Магічний'} захист: природний ${r.base} + броня ${fromItems}` }
     })
-    context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: sys.stats[key].value, mod: sys.stats[key].mod }))
-    context.equippedWeapons = items.filter(i => i.type === 'weapon' && i.system.equipped).map(i => this._weaponRow(i))
+    // Картка ворога як на сайті: показники з формулами і таблиця уражень 10–150% від PD/MD
+    const d = sys.derived
+    const dodgeTip = `База ${sys.dodge}${d.armorDodge ? `, обладунок ${d.armorDodge > 0 ? '+' : ''}${d.armorDodge}` : ''}${d.shieldDodge ? `, щит +${d.shieldDodge}` : ''}${sys.combat.dodgeBonus ? `, ефекти ${sys.combat.dodgeBonus > 0 ? '+' : ''}${sys.combat.dodgeBonus}` : ''}${sys.size !== 'medium' ? `, ${GOD.CREATURE_SIZES[sys.size]}` : ''}`
+    context.foeStats = [
+      { label: 'PD', path: 'system.attack.phys', value: sys.attack.phys, min: true, cls: 'phys', tip: 'Фізичний урон на 100% — база таблиці уражень' },
+      { label: 'MD', path: 'system.attack.mag', value: sys.attack.mag, min: true, cls: 'mag', tip: 'Магічний урон на 100% — база таблиці уражень' },
+      { label: 'ШУ', path: 'system.dodge', value: sys.dodge, min: true, cls: 'dodge', tip: `Шанс ухилення: попадання по ворогу має бути більше. ${dodgeTip}`,
+        shown: d.dodge !== sys.dodge ? d.dodge : null, shownTip: `Підсумкове ШУ: ${dodgeTip}` },
+      { label: 'Ініціатива', path: 'system.initiative', value: sys.initiative, tip: 'Порядок ходу в бою: більше — раніше' },
+      { label: 'Швидкість', path: 'system.speed', value: sys.speed, min: true, tip: 'Клітинок за хід' },
+      { label: 'Влучність', path: 'system.attack.hitMod', value: sys.attack.hitMod, tip: 'Додається до кидка попадання' },
+    ]
+    const hm = M.hitMods(actor, sys.attack.hitMod, 'влучність')
+    context.hitTotal = hm.total
+    const MULTS = [[10, 'Дотик'], [25, 'Слабке'], [50, 'Половина'], [75, 'Сильне'], [100, 'Повне'], [150, 'Крит']]
+    const pd = sys.attack.phys || 0, md = sys.attack.mag || 0
+    const r1 = n => Math.round(n * 10) / 10
+    context.dmgCols = MULTS.map(([pct, tip]) => ({ pct, tip }))
+    context.dmgRows = [
+      pd && { label: 'PD', cls: 'phys', tip: 'Фізичний урон', values: MULTS.map(([p]) => r1(pd * p / 100)) },
+      md && { label: 'MD', cls: 'mag', tip: 'Магічний урон', values: MULTS.map(([p]) => r1(md * p / 100)) },
+      pd && md && { label: 'Σ', cls: 'sum', tip: 'Разом: фізичний + магічний', values: MULTS.map(([p]) => r1((pd + md) * p / 100)) },
+    ].filter(Boolean)
     context.readySpells = items.filter(i => i.type === 'spell').map(i => GodActorSheetBase.itemRow(i, {
       school: GOD.SPELL_SCHOOLS[i.system.school], castable: (sys.schools[i.system.school] ?? 0) > 0,
     }))

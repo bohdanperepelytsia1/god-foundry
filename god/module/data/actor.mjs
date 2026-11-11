@@ -227,9 +227,10 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
 }
 
 /**
- * НІП — повноцінний супротивник: характеристики, школи магії, броня з предметів,
- * інвентар. Здоров'я/мана/витривалість — ручний максимум; PR/MR = власна база + одягнена броня.
- * Влучність і володіння беруться з блоку «Атака» (у НІП немає дерева вмінь).
+ * НІП — картка ворога як на сайті: HP/OM/MT (і ВС за потреби), PD/MD — готовий урон на 100%,
+ * PR/MR = власна база + одягнена броня, ШУ, ініціатива, швидкість, влучність.
+ * PD/MD зберігаються в attack.phys/attack.mag (так старі НІП не втрачають даних).
+ * Характеристики лишаються в даних (для старих світів і кидків), але на листі їх немає.
  */
 export class NpcData extends foundry.abstract.TypeDataModel {
   static defineSchema() {
@@ -240,6 +241,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       resources: new f.SchemaField({
         hp: new f.SchemaField({ value: int(100), max: int(100) }),
         mp: new f.SchemaField({ value: int(0), max: int(0) }),
+        mt: new f.SchemaField({ value: int(0), max: int(0) }),   // ментальне, як на сайті
         ed: new f.SchemaField({ value: int(0), max: int(0) }),
         pr: new f.SchemaField({ value: int(0), base: int(0) }),
         mr: new f.SchemaField({ value: int(0), base: int(0) }),

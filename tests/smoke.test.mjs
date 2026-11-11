@@ -114,7 +114,7 @@ const base = {
     { cat: 'combat', label: 'Бойові', open: true, learned: 2, total: 3, invested: 13, collapsed: false, gateName: 'Бойові навички',
       gate: { key: 'Бойові_навички', name: 'Бойові навички', lvl: 1, max: 1, maxed: true, search: 'бой', pips: [{ on: true, fixed: true }], fixed: true, upTip: 'u', downTip: 'd' },
       skills: [
-        { key: 'Спринт', name: 'Спринт', lvl: 1, max: 2, next: 10, maxed: false, search: 'спринт', pips: [{ on: true, fixed: false }, { on: false }], upTip: 'u', downTip: 'd' },
+        { key: 'Спринт', name: 'Спринт', info: 'Кожен рівень — +1 клітинка', lvl: 1, max: 2, next: 10, maxed: false, search: 'спринт', pips: [{ on: true, fixed: false }, { on: false }], upTip: 'u', downTip: 'd' },
         { key: 'custom:x1', id: 'x1', custom: true, name: 'Кров', cost: 5, max: 10, lvl: 0, next: 5, search: 'кров', pips: [], upTip: 'u', downTip: '' }] },
     { cat: 'social', label: 'Соціальні', open: false, learned: 0, total: 15, invested: 0, collapsed: false, gateName: 'Говорливість',
       gate: { key: 'Говорливість', name: 'Говорливість', lvl: 0, max: 1, next: 4, search: 'гов', pips: [{ on: false }], upTip: 'u', downTip: '' },
@@ -148,7 +148,11 @@ for (const editMode of [false, true]) {
     if (f.startsWith('npc')) { ctx.system = { ...sys, dodge: 5, speed: 3, initiative: 1, attack: { name: 'Укус', hitMod: 2, damageMod: 1, skillLvl: 3, phys: 40, mag: 0 } };
       ctx.isNpc = true
       ctx.resources = [{ key: 'hp', abbr: 'HP', value: 50, max: 100, pct: 50 }]
-      ctx.armorRes = [{ key: 'pr', abbr: 'PR', value: 30, max: 40, base: 10, pct: 75 }, { key: 'mr', abbr: 'MR', value: 0, max: 0, base: 0, pct: 0 }] }
+      ctx.armorRes = [{ key: 'pr', abbr: 'PR', value: 30, max: 40, base: 10, pct: 75 }, { key: 'mr', abbr: 'MR', value: 0, max: 0, base: 0, pct: 0 }]
+      ctx.foeStats = [{ label: 'PD', path: 'system.attack.phys', value: 40, min: true, cls: 'phys', tip: 't' }, { label: 'ШУ', path: 'system.dodge', value: 5, shown: 6, shownTip: 't' }]
+      ctx.hitTotal = 2
+      ctx.dmgCols = [10, 25, 50, 75, 100, 150].map(pct => ({ pct, tip: 't' }))
+      ctx.dmgRows = [{ label: 'PD', cls: 'phys', tip: 't', values: [4, 10, 20, 30, 40, 60] }] }
     const html = Handlebars.compile(readFileSync(`${dir}/${f}`, 'utf8'), { strict: false })(ctx)
     assert.ok(/^<(\w[\w-]*)/.test(html.trim()), `${f}: порожній вивід`)
     const roots = html.trim().match(/^<(\w+)/)[1]
@@ -185,11 +189,14 @@ for (const editMode of [false, true]) {
     if (f === 'npc-sidebar.hbs') {
       assert.ok(html.includes('god-res-pr') && html.includes('god-res-mr'), 'НІП: смуги PR/MR')
       assert.equal(html.includes('data-delta="system.resources.pr.base"'), editMode, 'НІП: природна броня редагується')
+      assert.equal(html.includes('name="system.size"'), editMode, 'НІП: розмір — у режимі редагування')
     }
     if (f === 'npc-overview.hbs') {
-      assert.ok(html.includes('Укус') && html.includes('data-action="npcAttack"'), 'НІП: природна атака')
-      assert.ok(html.includes('god-weapon-card" data-item-id'), 'НІП: зброя в руках')
-      assert.equal(html.includes('data-delta="system.stats.str.value"'), editMode, 'НІП: характеристики з дельтою')
+      assert.ok(html.includes('data-action="npcAttack"'), 'НІП: кнопка атаки')
+      assert.ok(html.includes('data-delta="system.attack.phys"'), 'НІП: PD редагується одразу, з формулою')
+      assert.ok(html.includes('<td>60</td>') && html.includes('150%'), 'НІП: таблиця уражень 10–150%')
+      assert.ok(html.includes('→ 6'), 'НІП: підсумкове ШУ поруч із базою')
+      assert.ok(!html.includes('system.stats.str.value'), 'НІП: без характеристик')
     }
     if (f === 'gear.hbs') assert.equal(html.includes('god-enc-bar'), !ctx.isNpc, 'смуга ваги лише в персонажа')
   }
@@ -204,6 +211,25 @@ for (const [type, flags] of [['weapon', { isWeapon: true, isPhysical: true }], [
   if (type === 'armor') assert.ok(html.includes('system.beltSlots'), 'поле слотів для пояса')
 }
 console.log('✓ лист предмета — 5 типів')
+
+// ── описи вмінь: є для кожного вміння з правил ──
+const { SKILL_INFO } = await import('../god/module/skill-info.mjs')
+const noInfo = Object.keys(GOD.SKILL_INDEX).filter(k => !SKILL_INFO[k])
+assert.deepEqual(noInfo, [], 'вміння без опису')
+assert.ok(GOD.SKILL_INDEX['Зібраність'], 'Зібраність у бойових')
+console.log('✓ описи всіх вмінь')
+
+// ── панель бою ──
+const cbT = Handlebars.compile(readFileSync('god/templates/apps/combat-panel.hbs', 'utf8'))
+assert.ok(cbT({ none: true, gm: true, selected: 0, onScene: 4 }).includes('усі на сцені (4)'), 'бою немає: старт з усіма')
+assert.ok(!cbT({ none: true, gm: false }).includes('data-action="start"'), 'гравець не починає бій')
+const cbRows = [{ id: 'a', num: 1, name: 'Герой', img: 'x', ini: 12, side: 'friendly', active: true, hp: { value: 5, max: 10, pct: 50 } },
+  { id: 'b', num: 2, name: 'Орк', img: 'y', ini: 8, side: 'hostile', defeated: true }]
+const cbGm = cbT({ gm: true, started: true, round: 3, rows: cbRows, current: { name: 'Герой' }, selected: 0 })
+assert.ok(cbGm.includes('<b>3</b>') && cbGm.includes('god-cb-row side-friendly active') && cbGm.includes('data-ini') && cbGm.includes('data-action="nextRound"'), 'майстер: раунд, хід, ініціатива')
+const cbPl = cbT({ gm: false, started: true, round: 3, rows: cbRows, myTurn: true })
+assert.ok(cbPl.includes('Завершити хід') && !cbPl.includes('data-ini') && !cbPl.includes('nextRound'), 'гравець: лише свій хід')
+console.log('✓ панель бою')
 
 // ── панелі: персонаж і швидка панель ──
 const bar = (key, extra = {}) => ({ key, abbr: key.toUpperCase(), value: 5, max: 10, pct: 50, ...extra })

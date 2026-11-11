@@ -1735,3 +1735,93 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 /* Токен іде за портретом — мініатюра тьмяніша, поки окремого токена немає */
 .god .god-token-pick span { white-space: nowrap; font-size: 9px; }
 .god .god-token-pick.follows img { opacity: .75; border-style: dashed; }
+
+/* ── Вміння: назви переносяться, під назвою — короткий опис ───────────────── */
+.god .god-skillcats { columns: 2 340px; }
+.god .god-skill { align-items: start; padding: 4px 6px; }
+.god .god-skill > .god-pips, .god .god-skill > .god-mini, .god .god-skill > .god-skill-lvl, .god .god-skill > .god-cost { margin-top: 3px; }
+.god .god-skill-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; white-space: normal; overflow: visible; line-height: 1.25; }
+.god .god-skill-name > span { overflow-wrap: anywhere; }
+.god .god-skill-info { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 11px; font-weight: 400; line-height: 1.3; color: var(--g-faint); opacity: .85; }
+.god .god-skill:hover .god-skill-info { -webkit-line-clamp: 3; }
+.god .god-skill-gate .god-skill-info { color: var(--g-dim); }
+.god .god-skill-hint { margin: 0 0 8px; }
+
+/* ── Картка ворога (НІП), як на сайті ─────────────────────────────────────── */
+.god .god-foe-pills { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; padding: 8px 0 2px; }
+.god .god-foe-pill {
+  display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 8px; border-radius: 8px;
+  background: var(--g-card, rgba(255,255,255,.04)); border: 1px solid var(--g-line2, var(--g-line));
+}
+.god .god-foe-pill > span { flex: none; font-size: 11px; font-weight: 700; letter-spacing: .03em; color: var(--g-dim); text-transform: uppercase; }
+.god .god-foe-pill input { flex: 1; min-width: 0; width: 100%; height: 26px; text-align: right; font-weight: 600; font-size: 14px; background: transparent; border: none; box-shadow: none; }
+.god .god-foe-pill input:focus { background: rgba(0, 0, 0, .25); }
+.god .god-foe-pill b { flex: 1; text-align: right; font-size: 14px; }
+.god .god-foe-pill small { flex: none; font-size: 11px; color: var(--g-accent2); font-weight: 600; }
+.god .god-foe-pill.phys { border-color: color-mix(in srgb, var(--g-phys) 45%, transparent); }
+.god .god-foe-pill.phys > span, .god .god-foe-pill.phys input { color: var(--g-phys); }
+.god .god-foe-pill.mag { border-color: color-mix(in srgb, var(--g-mag) 45%, transparent); }
+.god .god-foe-pill.mag > span, .god .god-foe-pill.mag input { color: var(--g-mag); }
+.god .god-foe-pill.dodge { border-color: color-mix(in srgb, var(--g-accent) 45%, transparent); }
+.god .god-foe-pill.dodge > span { color: var(--g-accent2); }
+.god .god-foe-attack > header .god-btn { margin-left: auto; }
+.god .god-foe-table { width: 100%; margin: 8px 0 2px; border-collapse: separate; border-spacing: 0; background: none; border: none; font-variant-numeric: tabular-nums; }
+.god .god-foe-table th { padding: 3px 6px; font-size: 11px; font-weight: 600; color: var(--g-faint); text-align: center; background: none; border-bottom: 1px solid var(--g-line); }
+.god .god-foe-table td { padding: 5px 6px; text-align: center; font-weight: 600; border-bottom: 1px dotted var(--g-line); }
+.god .god-foe-table td:first-child { width: 34px; text-align: left; font-size: 11px; font-weight: 700; color: var(--g-dim); }
+.god .god-foe-table th:nth-child(6), .god .god-foe-table td:nth-child(6) { background: rgba(243, 194, 103, .07); }
+.god .god-foe-table th:last-child, .god .god-foe-table td:last-child { color: var(--g-red); }
+.god .god-foe-table tr.phys td { color: var(--g-phys); }
+.god .god-foe-table tr.mag td { color: var(--g-mag); }
+.god .god-foe-table tr.sum td { color: var(--g-text); border-bottom: none; }
+.god .god-foe-table tr td:first-child { color: var(--g-dim); }
+.god .god-foe-table .god-empty { text-align: center; font-weight: 400; }
+
+/* ── Панель бою ───────────────────────────────────────────────────────────── */
+.god-combat .window-content { padding: 0; }
+.god-cb { display: flex; flex-direction: column; min-height: 0; max-height: 70vh; }
+.god-cb-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 16px; text-align: center; }
+.god-cb-empty > i { font-size: 26px; color: var(--g-accent); opacity: .8; }
+.god-cb-empty p { margin: 0; color: var(--g-dim); font-size: 13px; }
+.god-cb-head { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px 12px 6px; }
+.god-cb-round { display: flex; flex-direction: column; align-items: center; line-height: 1; min-width: 70px; }
+.god-cb-round small { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--g-dim); }
+.god-cb-round b { font-size: 26px; font-family: 'Rubik', var(--g-font); color: var(--g-accent2); }
+.god-cb-arrow { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--g-line2, var(--g-line)); color: var(--g-dim); }
+.god-cb-arrow:hover { color: var(--g-accent); border-color: var(--g-accent); text-shadow: none; }
+.god-cb-now { margin: 0 12px 6px; padding: 5px 10px; border-radius: 6px; font-size: 12px; text-align: center; color: var(--g-dim);
+  background: color-mix(in srgb, var(--g-accent) 10%, transparent); }
+.god-cb-now b { color: var(--g-text); }
+.god-cb-scene { margin: 0 12px 6px; text-align: center; }
+.god-cb-list { list-style: none; margin: 0; padding: 0 8px 6px; overflow-y: auto; min-height: 0; flex: 1; }
+.god-cb-row { display: grid; grid-template-columns: 16px 34px minmax(0, 1fr) 46px auto; align-items: center; gap: 7px;
+  padding: 4px 6px; margin-bottom: 3px; border-radius: 7px; border: 1px solid transparent; border-left: 3px solid var(--g-line); background: rgba(255, 255, 255, .03); }
+.god-cb-row.side-friendly { border-left-color: #6fbf73; }
+.god-cb-row.side-hostile { border-left-color: var(--g-red); }
+.god-cb-row.side-neutral { border-left-color: #d8c26a; }
+.god-cb-row.active { background: color-mix(in srgb, var(--g-accent) 16%, transparent); border-color: color-mix(in srgb, var(--g-accent) 55%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--g-accent) 25%, transparent); }
+.god-cb-row.done { opacity: .62; }
+.god-cb-row.defeated { opacity: .45; }
+.god-cb-row.defeated .god-cb-name a { text-decoration: line-through; }
+.god-cb-row.is-hidden { background: repeating-linear-gradient(135deg, rgba(255,255,255,.03) 0 6px, transparent 6px 12px); }
+.god-cb-num { font-size: 11px; color: var(--g-faint); text-align: center; }
+.god-cb-row.active .god-cb-num { color: var(--g-accent2); font-weight: 700; }
+.god-cb-img img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid var(--g-line2, var(--g-line)); background: rgba(0, 0, 0, .3); display: block; }
+.god-cb-name { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-width: 0; }
+.god-cb-name > a { min-width: 0; font-weight: 600; font-size: 13px; overflow-wrap: anywhere; color: var(--g-text); }
+.god-cb-hp { flex-basis: 100%; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .4); overflow: hidden; }
+.god-cb-hp i { display: block; height: 100%; background: linear-gradient(90deg, #a83a32, #e2574a); }
+.god-cb-hp.low i { background: #ff3b2f; }
+.god-cb-ini { width: 46px; height: 26px; text-align: center; font-weight: 700; font-size: 14px; color: var(--g-accent2); }
+input.god-cb-ini { background: rgba(0, 0, 0, .25); border: 1px solid var(--g-line); border-radius: 5px; }
+.god-cb-tools { display: flex; gap: 6px; font-size: 11px; color: var(--g-faint); }
+.god-cb-tools a:hover { color: var(--g-accent); text-shadow: none; }
+.god-cb-foot { display: flex; gap: 6px; padding: 8px 10px 10px; border-top: 1px solid var(--g-line); }
+.god-cb-foot:empty { display: none; }
+.god-cb-foot button { flex: none; width: 34px; height: 32px; padding: 0; display: grid; place-items: center; }
+.god-cb-foot .god-cb-next { flex: 1; width: auto; display: flex; justify-content: center; gap: 6px; }
+.god-cb-foot .god-cb-end:hover { color: var(--g-red); border-color: var(--g-red); }
+b.god-cb-ini { display: grid; place-items: center; }
+/* У ворога 5 коротких вкладок — підписи вміщаються й у вужчому листі */
+@container (min-width: 470px) { .god.npc .god-tab-link:not(.active) span { display: inline; } }

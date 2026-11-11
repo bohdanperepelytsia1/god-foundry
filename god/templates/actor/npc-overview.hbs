@@ -1,51 +1,35 @@
 <section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="overview">
-  <div class="god-stats">
-    {{#each stats}}
-    <div class="god-stat-tile">
-      <a class="god-stat-roll" data-action="rollStat" data-stat="{{key}}" data-tooltip="Перевірка: d20 {{god-signed mod}}">
-        <span class="god-stat-abbr">{{abbr}}</span>
-        <b class="god-stat-mod">{{god-signed mod}}</b>
-        <span class="god-stat-label">{{label}}</span>
-      </a>
-      {{#if @root.editMode}}
-      <div class="god-stat-edit god-stat-edit-npc">
-        <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{value}}" data-tooltip="Можна рахувати: допиши -5, +3, *2 або введи 150-100; =30 — задати">
-      </div>
-      {{else}}
-      <div class="god-stat-value">{{value}}</div>
-      {{/if}}
+  {{!-- Бойові показники: як на сайті — усе редагується одразу, з формулами (-20, +5, *2) --}}
+  <section class="god-panel god-foe-stats">
+    <header><h3><i class="fa-solid fa-skull-crossbones"></i> Показники</h3>
+      <span class="god-dim">поля рахують: допиши -20, +5, *2</span></header>
+    <div class="god-foe-pills">
+      {{#each foeStats}}
+      <label class="god-foe-pill {{cls}}" data-tooltip="{{tip}}">
+        <span>{{label}}</span>
+        {{#if @root.editable}}<input type="text" inputmode="numeric" data-delta="{{path}}" {{#if min}}data-min="0"{{/if}} value="{{value}}">
+        {{else}}<b>{{value}}</b>{{/if}}
+        {{#if shown}}<small data-tooltip="{{shownTip}}">→ {{shown}}</small>{{/if}}
+      </label>
+      {{/each}}
     </div>
-    {{/each}}
-  </div>
+  </section>
 
-  <section class="god-panel">
-    <header><h3><i class="fa-solid fa-swords"></i> Атаки</h3>
-      <span class="god-dim">попадання — більше за ШУ цілі, тоді урон</span></header>
-    <div class="god-weapon-cards">
-      <div class="god-weapon-card god-natural">
-        <img src="{{actor.img}}" alt="">
-        <div class="god-weapon-info">
-          <span class="god-weapon-name">{{system.attack.name}}</span>
-          <span class="god-dim">попадання {{god-signed system.attack.hitMod}} · урон {{god-signed system.attack.damageMod}} · володіння {{system.attack.skillLvl}}</span>
-        </div>
-        <div class="god-dmg-badge" data-tooltip="100% урону природної атаки">
-          <span class="phys">{{system.attack.phys}}<small>фіз</small></span>{{#if system.attack.mag}}<span class="mag">{{system.attack.mag}}<small>маг</small></span>{{/if}}
-        </div>
-        <button type="button" class="god-btn" data-action="npcAttack"><i class="fa-solid fa-dice-d20"></i> Атака</button>
-      </div>
-      {{#each equippedWeapons}}{{> god-weapon-card}}{{/each}}
-    </div>
-    {{#if editMode}}
-    <div class="god-form-grid god-npc-attack">
-      <label class="wide"><span>Назва природної атаки</span><input type="text" name="system.attack.name" value="{{system.attack.name}}"></label>
-      <label data-tooltip="Додається до кидка попадання будь-якою зброєю й закляттям"><span>Влучність</span><input type="number" name="system.attack.hitMod" value="{{system.attack.hitMod}}"></label>
-      <label data-tooltip="Додається до кидка урону"><span>Мод урону</span><input type="number" name="system.attack.damageMod" value="{{system.attack.damageMod}}"></label>
-      <label data-tooltip="Рівень володіння для сітки урону (крит/смертельний)"><span>Володіння</span><input type="number" name="system.attack.skillLvl" value="{{system.attack.skillLvl}}" min="0" max="10"></label>
-      <label><span>Фіз 100%</span><input type="text" inputmode="numeric" data-delta="system.attack.phys" data-min="0" value="{{system.attack.phys}}"></label>
-      <label><span>Маг 100%</span><input type="text" inputmode="numeric" data-delta="system.attack.mag" data-min="0" value="{{system.attack.mag}}"></label>
-    </div>
-    <p class="god-hint">Зброю з предметів НІП бере в руки на вкладці «Інвентар»; її урон рахується як у гравців: СИЛ×5 + урон зброї.</p>
-    {{/if}}
+  {{!-- Атака й таблиця уражень: відсотки від PD/MD --}}
+  <section class="god-panel god-foe-attack">
+    <header><h3><i class="fa-solid fa-swords"></i> Атака</h3>
+      {{#if editable}}<button type="button" class="god-btn" data-action="npcAttack" data-tooltip="Ціль → d20 {{god-signed hitTotal}} проти її ШУ → якщо влучив, урон кидком за сіткою з цієї таблиці"><i class="fa-solid fa-dice-d20"></i> Атакувати</button>{{/if}}
+    </header>
+    <table class="god-foe-table">
+      <thead><tr><th></th>{{#each dmgCols}}<th data-tooltip="{{tip}}">{{pct}}%</th>{{/each}}</tr></thead>
+      <tbody>
+        {{#each dmgRows}}
+        <tr class="{{cls}}"><td data-tooltip="{{tip}}">{{label}}</td>{{#each values}}<td>{{this}}</td>{{/each}}</tr>
+        {{else}}
+        <tr><td colspan="7" class="god-empty">Вкажи PD або MD — тут з'явиться готовий урон за силою влучання.</td></tr>
+        {{/each}}
+      </tbody>
+    </table>
   </section>
 
   {{#if readySpells.length}}
@@ -82,8 +66,9 @@
         {{#if @root.editable}}<a class="god-chip-x" data-action="effectDelete" data-tooltip="Зняти"><i class="fa-solid fa-xmark"></i></a>{{/if}}
       </span>
       {{else}}
-      <p class="god-empty">Нічого не діє{{#if editable}} — «+», щоб додати втому, травму, алкоголь чи свій ефект{{/if}}.</p>
+      <p class="god-empty">Нічого не діє{{#if editable}} — «+», щоб додати отруту, травму, оглушення чи свій ефект{{/if}}.</p>
       {{/each}}
     </div>
   </section>
+
 </section>

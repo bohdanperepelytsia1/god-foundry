@@ -17,7 +17,8 @@
   {{/if}}
   {{#if editMode}}<p class="god-hint">Кожна гілка відкривається ключовим вмінням. Майстер: Shift+клік на ± — без витрат і одразу з фіксацією.</p>{{/if}}
 
-  <div class="god-skillcats" data-filter-scope="skills">
+  <p class="god-hint god-skill-hint">Клік по вмінню — кидок d20 + рівень. Наведи — повний опис з правил. Пошук шукає і в описах.</p>
+  <div class="god-skillcats {{#if showInfo}}with-info{{/if}}" data-filter-scope="skills">
     {{#each skillCats}}
     <section class="god-skillcat {{#if collapsed}}collapsed{{/if}} {{#unless open}}closed{{/unless}}">
       <header data-action="toggleCat" data-cat="{{cat}}">
@@ -28,8 +29,9 @@
       </header>
       <ul class="god-skill-list">
         {{#with gate}}
-        <li class="god-skill god-skill-gate {{#if lvl}}learned{{/if}}" data-search="{{search}}" data-tooltip="Ключ гілки: відкриває решту вмінь">
-          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}"><i class="fa-solid fa-key"></i> {{name}}</a>
+        <li class="god-skill god-skill-gate {{#if lvl}}learned{{/if}}" data-search="{{search}}">
+          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{info}}"><span><i class="fa-solid fa-key"></i> {{name}}</span>
+            <small class="god-skill-info">Відкриває гілку «{{../label}}»</small></a>
           {{> god-skill-controls}}
         </li>
         {{/with}}
@@ -39,7 +41,9 @@
           {{#if (and custom @root.editMode @root.isGM)}}
           <input class="god-custom-name" type="text" data-custom-field="name" value="{{name}}">
           {{else}}
-          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}">{{#if locked}}<i class="fa-solid fa-lock"></i> {{/if}}{{name}}{{#if custom}} <i class="fa-solid fa-gem god-custom-mark" data-tooltip="Особливе вміння від майстра"></i>{{/if}}</a>
+          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{#if info}}{{info}}{{else}}Кидок: d20 + рівень{{/if}}">
+            <span>{{#if locked}}<i class="fa-solid fa-lock"></i> {{/if}}{{name}}{{#if custom}} <i class="fa-solid fa-gem god-custom-mark" data-tooltip="Особливе вміння від майстра"></i>{{/if}}</span>
+            {{#if info}}<small class="god-skill-info">{{info}}</small>{{/if}}</a>
           {{/if}}
           {{> god-skill-controls}}
         </li>

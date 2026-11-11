@@ -16,6 +16,7 @@ import * as FX from './module/fx.mjs'
 import { GodDiceTray } from './module/apps/dice-tray.mjs'
 import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
+import { GodCombatPanel, registerCombatPanel } from './module/apps/combat-panel.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -72,6 +73,7 @@ Hooks.once('init', () => {
   registerMigrationSettings()
   registerMigrationMenu()
   registerRotationHandle()
+  registerCombatPanel()
   game.settings.register('god', 'animations', {
     name: 'Анімації ударів і магії',
     hint: 'Програються в момент нанесення урону. Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
@@ -96,6 +98,7 @@ Hooks.once('init', () => {
     diceTray: actor => GodDiceTray.open(actor),
     hud: actor => GodHud.open(actor ?? defaultActor()),
     quickbar: () => GodQuickbar.refresh(),
+    combat: () => GodCombatPanel.toggle(),
     guide: openGuide,
   }
 
@@ -174,7 +177,7 @@ Hooks.on('preCreateActor', (actor, data) => {
   if (actor.type === 'npc') {
     // НІП: ресурси повні, токен ворожий і не прив'язаний (кожен на сцені — окремий екземпляр)
     const fill = {}
-    for (const k of ['hp', 'mp', 'ed']) {
+    for (const k of ['hp', 'mp', 'mt', 'ed']) {
       if (foundry.utils.getProperty(data, `system.resources.${k}.value`) === undefined) fill[`system.resources.${k}.value`] = actor.system.resources[k].max
     }
     for (const k of ['pr', 'mr']) {
@@ -428,7 +431,7 @@ async function welcome() {
         <li><b>Клік по характеристиці, вмінню чи кнопці «Атака»</b> — кидок. Усі бонуси й штрафи підставляються самі й підписані у вікні кидка.</li>
         <li><b>Атака:</b> обери ціль → кидок попадання → якщо влучив, на картці з'явиться «Кинути урон» → «Урон» застосовує його до цілі.</li>
         <li><b>Числа можна рахувати:</b> у HP, грошах, досвіді допиши <code>-25</code> чи <code>+10</code> і натисни Enter.</li>
-        <li><b>Shift+R</b> — панель кидків, <b>Shift+Q</b> — швидка панель унизу екрана.</li>${gm}
+        <li><b>Shift+R</b> — панель кидків, <b>Shift+Q</b> — швидка панель унизу екрана, <b>Shift+B</b> — бій: порядок ходів і раунди.</li>${gm}
       </ul>
       <div class="god-apply god-apply-one"><button type="button" data-god-guide><i class="fa-solid fa-circle-question"></i> Відкрити довідник</button></div></div>`,
   })
