@@ -2,7 +2,7 @@
  * Міграція світу між версіями системи. Запускається один раз у майстра на старті,
  * якщо світ створено старішою версією. Кожен крок ідемпотентний.
  */
-import { defaultIcon, ACTOR_ICONS, STANCE_ICONS } from './config.mjs'
+import { GOD, defaultIcon, ACTOR_ICONS, STANCE_ICONS } from './config.mjs'
 import { isV14 } from './compat.mjs'
 
 const LEGACY_ITEM_ICONS = new Set(['icons/svg/sword.svg', 'icons/svg/shield.svg', 'icons/svg/item-bag.svg', 'icons/svg/fire.svg', 'icons/svg/lightning.svg'])
@@ -25,7 +25,6 @@ async function migrateIcons() {
   await fixItems(game.items)
   for (const actor of game.actors) {
     await fixItems(actor.items, actor)
-    if (actor.img === 'icons/svg/mystery-man.svg' && ACTOR_ICONS[actor.type]) { await actor.update({ img: ACTOR_ICONS[actor.type] }); n++ }
     const stances = actor.effects.filter(e => e.getFlag('god', 'stance') && LEGACY_STANCE[e.img])
       .map(e => ({ _id: e.id, img: STANCE_ICONS[LEGACY_STANCE[e.img]] }))
     if (stances.length) { await actor.updateEmbeddedDocuments('ActiveEffect', stances); n += stances.length }
@@ -140,6 +139,37 @@ async function persistMigratedData() {
   return n
 }
 
+/**
+ * 0.12.0: типова картинка актора — стандартний силует Foundry замість іконок системи (орк у НІП);
+ * токен без окремої картинки показує портрет. Розмір токена НІП — за розміром істоти.
+ */
+async function migrateActorImages() {
+  const OLD = new Set(Object.values(ACTOR_ICONS)), STD = 'icons/svg/mystery-man.svg'
+  const opts = { godMigration: true }
+  let n = 0
+  for (const a of game.actors) {
+    const upd = {}
+    const img = OLD.has(a.img) ? STD : a.img
+    if (img !== a.img) upd.img = img
+    const ts = a.prototypeToken?.texture?.src
+    if (!ts || OLD.has(ts) || (ts === STD && img !== STD)) upd['prototypeToken.texture.src'] = img
+    if (a.type === 'npc') {
+      const k = GOD.TOKEN_SIZES[a.system.size] ?? 1
+      if (k !== 1 && a.prototypeToken.width === 1 && a.prototypeToken.height === 1) Object.assign(upd, { 'prototypeToken.width': k, 'prototypeToken.height': k })
+    }
+    if (Object.keys(upd).length) { await a.update(upd, opts); n++ }
+  }
+  for (const scene of game.scenes) {
+    const ups = []
+    for (const t of scene.tokens) {
+      const ts = t.texture?.src, base = t.actor?.img || game.actors.get(t.actorId)?.img || STD
+      if (!ts || OLD.has(ts)) ups.push({ _id: t.id, 'texture.src': OLD.has(base) ? STD : base })
+    }
+    if (ups.length) { await scene.updateEmbeddedDocuments('Token', ups, opts); n += ups.length }
+  }
+  return n
+}
+
 /** Стара версія з'їдала ШУ-ефекти лише у світових акторів — тепер і на картах */
 async function migrateArmorDodgeEverywhere() {
   let n = 0
@@ -155,7 +185,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

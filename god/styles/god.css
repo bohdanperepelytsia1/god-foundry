@@ -1731,3 +1731,7 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god-card .god-welcome li { margin-bottom: 5px; line-height: 1.35; }
 .god-card .god-welcome code { padding: 0 4px; border-radius: 3px; background: rgba(255, 255, 255, .08); }
 .god .god-inv-row .god-inv-w:not(:empty)::after { content: ' кг'; font-size: 10px; color: var(--g-faint); }
+
+/* Токен іде за портретом — мініатюра тьмяніша, поки окремого токена немає */
+.god .god-token-pick span { white-space: nowrap; font-size: 9px; }
+.god .god-token-pick.follows img { opacity: .75; border-style: dashed; }

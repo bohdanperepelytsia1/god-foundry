@@ -6,9 +6,9 @@
   {{/if}}
 
   <div class="god-portrait-wrap">
-    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Портрет листа: картинка й шматок"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити картинку (токен на мапі зміниться разом з нею) або вибрати її шматок"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
     <div class="god-level-badge" data-tooltip="Рівень">{{system.derived.level}}</div>
-    {{#if editMode}}<a class="god-token-pick" data-action="tokenImage" data-tooltip="Окрема картинка токена (готовий токен). Портрет листа не змінюється"><img src="{{tokenImg}}" alt=""><span>Токен</span></a>{{/if}}
+    {{#if editMode}}<a class="god-token-pick {{#if tokenFollows}}follows{{/if}}" data-action="tokenImage" data-tooltip="{{#if tokenFollows}}Токен на мапі показує портрет і зміниться разом з ним. Клік — задати окремий готовий токен{{else}}Окремий токен. Клік — інший файл, ПКМ — знову як портрет{{/if}}"><img src="{{tokenImg}}" alt=""><span>{{#if tokenFollows}}Токен = портрет{{else}}Окремий токен{{/if}}</span></a>{{/if}}
   </div>
 
   {{#if editMode}}

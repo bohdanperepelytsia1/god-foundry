@@ -164,7 +164,13 @@ Hooks.on('preCreateItem', (item, data, options) => {
 
 // Нові персонажі: токен прив'язаний до актора і показує HP/OM
 Hooks.on('preCreateActor', (actor, data) => {
-  if (!data.img || data.img === 'icons/svg/mystery-man.svg') actor.updateSource({ img: ACTOR_ICONS[actor.type], 'prototypeToken.texture.src': ACTOR_ICONS[actor.type] })
+  // Картинка — стандартна для Foundry (силует), токен = портрет, поки не задано окремий.
+  // Токен: рівно в клітинку, без власного масштабу; ім'я — при наведенні.
+  const n = actor.type === 'npc' ? (CONFIG.GOD.TOKEN_SIZES[actor.system.size] ?? 1) : 1
+  const tok = { 'prototypeToken.displayName': CONST.TOKEN_DISPLAY_MODES.HOVER }
+  if (foundry.utils.getProperty(data, 'prototypeToken.width') === undefined) Object.assign(tok, { 'prototypeToken.width': n, 'prototypeToken.height': n })
+  if (data.img && !foundry.utils.getProperty(data, 'prototypeToken.texture.src')) tok['prototypeToken.texture.src'] = data.img
+  actor.updateSource(tok)
   if (actor.type === 'npc') {
     // НІП: ресурси повні, токен ворожий і не прив'язаний (кожен на сцені — окремий екземпляр)
     const fill = {}
@@ -178,6 +184,7 @@ Hooks.on('preCreateActor', (actor, data) => {
       ...fill,
       'prototypeToken.bar1.attribute': 'resources.hp',
       'prototypeToken.bar2.attribute': 'resources.pr',
+      'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER,
       'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.HOSTILE,
     })
     return
@@ -195,6 +202,7 @@ Hooks.on('preCreateActor', (actor, data) => {
     'prototypeToken.actorLink': true,
     'prototypeToken.bar1.attribute': 'resources.hp',
     'prototypeToken.bar2.attribute': 'resources.mp',
+    'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.OWNER,
     'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.FRIENDLY,
   })
 })

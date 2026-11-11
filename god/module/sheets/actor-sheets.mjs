@@ -94,6 +94,13 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     super._onFirstRender(context, options)
     const root = this.element
 
+    // ПКМ по мініатюрі токена — прибрати окрему картинку: токен знову як портрет
+    root.addEventListener('contextmenu', ev => {
+      if (!ev.target.closest?.('.god-token-pick') || !this.isEditable) return
+      ev.preventDefault(); ev.stopPropagation()
+      this.document.resetTokenImage?.()
+    })
+
     root.addEventListener('focusin', ev => {
       // поля з дельтою веде глобальний обробник у god.mjs (курсор у кінець, щоб дописати «-100»)
       if (ev.target.matches('.god-select-on-focus')) ev.target.select?.()
@@ -479,6 +486,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       portraitIcon: !actor.img || actor.img.startsWith("systems/god/assets/icons") || actor.img.startsWith("icons/svg"),
       portraitStyle: cropStyle(portraitCrop(actor)),
       tokenImg: (actor.isToken ? actor.token?.texture?.src : actor.prototypeToken?.texture?.src) || actor.img,
+      tokenFollows: actor.tokenFollowsPortrait?.() ?? true,
     })
 
     // Усі ефекти, що можуть діяти на актора: власні + з предметів

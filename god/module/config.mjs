@@ -121,6 +121,8 @@ export const CREATURE_SIZES = {
   tiny: 'Крихітне (ШУ ×1.6)', small: 'Маленьке (ШУ ×1.3)', medium: 'Середнє', large: 'Велике (ШУ ×0.5)',
   huge: 'Величезне (ШУ ×0.2)', gargantuan: 'Гігантське (ШУ ×0.1)',
 }
+/** Розмір істоти → сторона токена в клітинках (як у стандартних системах Foundry) */
+export const TOKEN_SIZES = { tiny: 0.5, small: 1, medium: 1, large: 2, huge: 3, gargantuan: 4 }
 export const CREATURE_RANKS = { weak: 'Слабкий', junior: 'Молодший', regular: 'Рядовий', senior: 'Старший', elite: 'Елітний', legendary: 'Легендарний' }
 
 export const INVENTORY_LOCATIONS = {
@@ -240,7 +242,7 @@ export const MONEY = {
 
 export const GOD = {
   BALANCE, SKILL_COST_TABLE, SKILL_CATEGORIES, SHIELD_SIZES, SKILL_INDEX, STATS, RESOURCES, ARMOR_SLOTS, ARMOR_CLASSES,
-  INVENTORY_LOCATIONS, CREATURE_SIZES, CREATURE_RANKS, GEAR_GROUPS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_SKILLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
+  INVENTORY_LOCATIONS, CREATURE_SIZES, TOKEN_SIZES, CREATURE_RANKS, GEAR_GROUPS, GEAR_CATEGORIES, LOCATION_CATEGORY, REPUTATION, WEAPON_CATEGORIES, WEAPON_SKILLS, SPELL_SCHOOLS, SCHOOL_SKILLS, SCHOOL_DIE, ATTACK_TYPES, STANCES, MONEY,
 }
 
 // ── Іконки системи (assets/icons) ────────────────────────────────────────────

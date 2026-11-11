@@ -1,5 +1,6 @@
 import * as R from '../rules.mjs'
-import { GOD } from '../config.mjs'
+import { GOD, ACTOR_ICONS } from '../config.mjs'
+const DEFAULT_ACTOR_IMG = 'icons/svg/mystery-man.svg'
 import * as Dice from '../dice/rolls.mjs'
 import { addChange } from '../compat.mjs'
 
@@ -9,6 +10,8 @@ export class GodActor extends Actor {
   async _preUpdate(changes, options, user) {
     if ((await super._preUpdate(changes, options, user)) === false) return false
     if (options.godMigration) return
+    this.#followImage(changes, options)
+    this.#followSize(changes)
     if (this.type !== 'character') return
     const newXp = foundry.utils.getProperty(changes, 'system.progress.xp')
     if (newXp === undefined) return
@@ -22,8 +25,39 @@ export class GodActor extends Actor {
     options.godLevelUp = gained
   }
 
+  /**
+   * Одна картинка на все, як у стандартних системах Foundry: поки токену не задано окрему,
+   * він іде за портретом. Окремий токен (свій файл) портрет уже не чіпає.
+   */
+  static DEFAULT_IMAGES = new Set(['', DEFAULT_ACTOR_IMG, ...Object.values(ACTOR_ICONS)])
+  tokenFollowsPortrait(src = this.isToken ? this.token?.texture?.src : this.prototypeToken?.texture?.src) {
+    return !src || src === this.img || GodActor.DEFAULT_IMAGES.has(src)
+  }
+  #followImage(changes, options) {
+    const img = changes.img
+    if (!img || img === this.img) return
+    if (foundry.utils.getProperty(changes, 'prototypeToken.texture.src') !== undefined) return
+    options.godOldImg = this.img
+    if (!this.isToken && this.tokenFollowsPortrait()) foundry.utils.setProperty(changes, 'prototypeToken.texture.src', img)
+  }
+
+  /** Розмір істоти НІП → розмір токена в клітинках (прототип; уже розставлені — у _onUpdate) */
+  #followSize(changes) {
+    const size = foundry.utils.getProperty(changes, 'system.size')
+    if (this.type !== 'npc' || !size || size === this.system.size || this.isToken) return
+    const n = GOD.TOKEN_SIZES[size] ?? 1
+    foundry.utils.setProperty(changes, 'prototypeToken.width', n)
+    foundry.utils.setProperty(changes, 'prototypeToken.height', n)
+  }
+
   _onUpdate(changes, options, userId) {
     super._onUpdate(changes, options, userId)
+    if (userId === game.user.id && !options.godMigration) {
+      // токени на сценах, що показували старий портрет (або типову картинку), беруть новий
+      if (options.godOldImg !== undefined && changes.img) this.#syncPlacedTokens({ from: options.godOldImg, to: changes.img })
+      const size = foundry.utils.getProperty(changes, 'system.size')
+      if (this.type === 'npc' && size) this.#resizePlacedTokens(GOD.TOKEN_SIZES[size] ?? 1)
+    }
     if (options.godLevelUp && userId === game.user.id) {
       ui.notifications.info(`${this.name}: новий рівень! +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_SKILL_PTS} очок вмінь, +${options.godLevelUp * GOD.BALANCE.LEVEL_UP_STAT_PTS} очок характеристик`)
     }
@@ -43,13 +77,30 @@ export class GodActor extends Actor {
    * Майстер оновлює на всіх сценах, гравець — лише свої токени поточної сцени.
    */
   async #syncPlacedTokens({ from, to, force = false }) {
-    const same = t => t.actorId === (this.isToken ? this.token?.actorId : this.id) && (force || !t.texture?.src || t.texture.src === from)
-    if (this.isToken) { if (this.token?.isOwner) await this.token.update({ 'texture.src': to }); return }
+    const follows = src => force || !src || src === from || GodActor.DEFAULT_IMAGES.has(src)
+    const same = t => t.actorId === (this.isToken ? this.token?.actorId : this.id) && follows(t.texture?.src)
+    if (this.isToken) { if (this.token?.isOwner && follows(this.token.texture?.src)) await this.token.update({ 'texture.src': to }); return }
     const scenes = game.user.isGM ? game.scenes.contents : (canvas?.scene ? [canvas.scene] : [])
     for (const scene of scenes) {
       const ups = scene.tokens.filter(t => same(t) && (t.actorLink || game.user.isGM) && t.isOwner).map(t => ({ _id: t.id, 'texture.src': to }))
       if (ups.length) await scene.updateEmbeddedDocuments('Token', ups).catch(e => console.warn('G.O.D. | токен не оновлено', e))
     }
+  }
+
+  async #resizePlacedTokens(n) {
+    if (this.isToken) { if (this.token?.isOwner) await this.token.update({ width: n, height: n }); return }
+    if (!game.user.isGM) return
+    for (const scene of game.scenes) {
+      const ups = scene.tokens.filter(t => t.actorId === this.id && (t.width !== n || t.height !== n)).map(t => ({ _id: t.id, width: n, height: n }))
+      if (ups.length) await scene.updateEmbeddedDocuments('Token', ups).catch(e => console.warn('G.O.D. | розмір токена', e))
+    }
+  }
+
+  /** Токен знову як портрет: прибрати окрему картинку */
+  async resetTokenImage() {
+    if (!this.isToken) await this.update({ 'prototypeToken.texture.src': this.img })
+    await this.#syncPlacedTokens({ to: this.img, force: true })
+    ui.notifications.info(`${this.name}: токен знову як портрет`)
   }
 
   /**
