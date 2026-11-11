@@ -130,7 +130,7 @@ async function sendCard(actor, html, rolls, replay = null, luck = false, extra =
 
 // ── Діалог параметрів ────────────────────────────────────────────────────────
 async function rollDialog({ title, fields, info }) {
-  const rows = fields.map(fd => {
+  const renderField = fd => {
     if (fd.type === 'mode') { const v = fd.value ?? 'norm'; return `
       <div class="god-mode" role="radiogroup">
         <label><input type="radio" name="mode" value="dis" ${v === 'dis' ? 'checked' : ''}><span>Недолік</span></label>
@@ -163,8 +163,14 @@ async function rollDialog({ title, fields, info }) {
     }
     return `
       <label class="god-dlg-field"><span>${esc(fd.label)}</span>
-        <input type="number" name="${fd.name}" value="${fd.value ?? 0}" autofocus></label>`
-  }).join('')
+        <input type="number" name="${fd.name}" value="${fd.value ?? 0}"></label>`
+  }
+  // Поля «more» ховаються під «Додатково»: зазвичай їх не чіпають, а вікно лишається коротким.
+  // Якщо там уже щось виставлено (недолік за замовчуванням тощо) — блок одразу відкритий.
+  const main = fields.filter(fd => !fd.more), more = fields.filter(fd => fd.more)
+  const rows = main.filter(fd => fd.type !== 'mode').map(renderField).join('')
+    + (more.length ? `<details class="god-dlg-more"><summary>Додатково <small>${esc(more.map(fd => fd.short ?? fd.label).join(' · '))}</small></summary>${more.map(renderField).join('')}</details>` : '')
+    + main.filter(fd => fd.type === 'mode').map(renderField).join('')
   const hasTarget = fields.some(fd => fd.type === 'target')
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title, icon: 'fa-solid fa-dice-d20' },
@@ -365,10 +371,10 @@ export async function weaponAttack(actor, item, opts = {}) {
       { type: 'target', name: 'target', choices },
       { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
       ...(abilities.length ? [{ type: 'select', name: 'ability', label: 'Здібність зброї', options: abilityOpts, value: '' }] : []),
-      { name: 'hitMod', label: 'Модифікатор попадання', value: isChar ? R.capMod(hitDefault) : hitDefault },
-      { name: 'dmgMod', label: 'Модифікатор урону', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
-      { name: 'aim', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
       ...critField(actor, 'critHit', 'Крити на попадання'),
+      { name: 'aim', more: true, short: melee ? 'оцінка' : 'прицілювання', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
+      { name: 'hitMod', more: true, short: 'мод. попадання', label: 'Модифікатор попадання (уже пораховано)', value: isChar ? R.capMod(hitDefault) : hitDefault },
+      { name: 'dmgMod', more: true, short: 'мод. урону', label: 'Модифікатор урону (уже пораховано)', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
       ...(pair ? [{ type: 'check', name: 'both', label: `Обома руками: потім «${pair.name}» (${pair.system.hand === 'off' ? 'ліва' : 'права'})`, value: true }] : []),
       { type: 'mode', value: hm.dis.length ? 'dis' : 'norm' },
     ],
@@ -678,11 +684,11 @@ export async function castSpell(actor, spell, opts = {}) {
     fields: [
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },
-        { name: 'hitMod', label: 'Маг. прицільність', value: actor.type === 'character' ? R.capMod(shm.total) : shm.total },
         ...critField(actor, 'critHit', 'Крити на попадання'),
+        { name: 'hitMod', more: true, short: 'мод. попадання', label: 'Маг. прицільність (уже пораховано)', value: actor.type === 'character' ? R.capMod(shm.total) : shm.total },
       ] : []),
-      { name: 'threshold', label: 'Поріг (ПППС)', value: s.threshold },
-      { name: 'statMult', type: 'check', label: 'Множник +МОДІНТ +МОДМУД (Кодекс)', value: sys.derived.spellStatMult },
+      { name: 'threshold', more: true, short: 'поріг', label: 'Поріг (ПППС)', value: s.threshold },
+      { name: 'statMult', more: true, short: 'Кодекс', type: 'check', label: 'Множник +МОДІНТ +МОДМУД (Кодекс)', value: sys.derived.spellStatMult },
       { name: 'pay', type: 'check', label: `Списати ${s.manaCost} OM${s.staminaCost ? ` і ${s.staminaCost} ВС` : ''}`, value: true },
     ],
   })

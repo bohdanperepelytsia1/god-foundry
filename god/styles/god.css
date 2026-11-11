@@ -1375,7 +1375,7 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god .god-tabs { container-type: inline-size; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; min-width: 0; }
 .god .god-tabs::-webkit-scrollbar { display: none; }
 .god .god-tab-link { flex: 0 0 auto; padding: 13px 8px 11px; white-space: nowrap; gap: 6px; }
-@container (max-width: 700px) {
+@container (max-width: 650px) {
   .god .god-tab-link:not(.active) span { display: none; }
   .god .god-tab-link { padding-left: 10px; padding-right: 10px; }
 }
@@ -1712,3 +1712,22 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god-nc-dialog .god-nc-f input, .god-nc-dialog .god-nc-f select { width: 100%; min-width: 0; }
 .god-nc-dialog .god-nc-f:has(select) { flex-basis: 170px; }
 .god-nc-dialog .god-nc-nav a { padding: 6px 10px; }
+
+/* ── Діалог кидка: рідко вживані поля під «Додатково» ─────────────────────── */
+.god-dialog .god-dlg-more { margin: 2px 0 10px; border: 1px solid var(--g-line2); border-radius: 8px; background: var(--g-card); }
+.god-dialog .god-dlg-more > summary { display: flex; align-items: baseline; gap: 8px; padding: 7px 10px; cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--g-gold); list-style: none; }
+.god-dialog .god-dlg-more > summary::-webkit-details-marker { display: none; }
+.god-dialog .god-dlg-more > summary::before { content: '\f054'; font-family: 'Font Awesome 6 Pro', 'Font Awesome 6 Free'; font-weight: 900; font-size: 9px; transition: transform .15s; }
+.god-dialog .god-dlg-more[open] > summary::before { transform: rotate(90deg); }
+.god-dialog .god-dlg-more > summary small { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--g-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.god-dialog .god-dlg-more[open] > summary small { display: none; }
+.god-dialog .god-dlg-more > :not(summary) { margin-left: 10px; margin-right: 10px; }
+.god-dialog .god-dlg-more > :last-child { margin-bottom: 10px; }
+
+/* ── Довідка й дрібні підписи ─────────────────────────────────────────────── */
+.god .god-tabs .god-tab-help { margin-left: auto; position: sticky; right: 0; align-self: center; flex: none; padding: 4px 6px; color: var(--g-faint); font-size: 15px; cursor: pointer; }
+.god .god-tabs .god-tab-help:hover { color: var(--g-gold); text-shadow: none; }
+.god-card .god-welcome { padding-left: 16px; }
+.god-card .god-welcome li { margin-bottom: 5px; line-height: 1.35; }
+.god-card .god-welcome code { padding: 0 4px; border-radius: 3px; background: rgba(255, 255, 255, .08); }
+.god .god-inv-row .god-inv-w:not(:empty)::after { content: ' кг'; font-size: 10px; color: var(--g-faint); }

@@ -1,7 +1,8 @@
 <nav class="god-tabs">
   {{#each tabs}}
-  <a class="god-tab-link {{#if active}}active{{/if}}" data-action="tabSwitch" data-tab="{{id}}">
+  <a class="god-tab-link {{#if active}}active{{/if}}" data-action="tabSwitch" data-tab="{{id}}" data-tooltip="{{label}}">
     <i class="{{icon}}"></i><span>{{label}}</span>
   </a>
   {{/each}}
+  <a class="god-tab-help" data-action="openGuide" data-tooltip="Довідник G.O.D.: як користуватись листом і правила коротко"><i class="fa-solid fa-circle-question"></i></a>
 </nav>

@@ -12,6 +12,7 @@
  */
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
+import * as M from '../roll-mods.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
@@ -42,6 +43,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     window: { resizable: true },
     actions: {
       toggleEdit: GodActorSheetBase.#toggleEdit,
+      openGuide: () => game.god?.guide?.(),
       editImage: GodActorSheetBase.#editImage,
       showPortrait: GodActorSheetBase.#showPortrait,
       tokenImage: GodActorSheetBase.#tokenImage,
@@ -93,7 +95,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const root = this.element
 
     root.addEventListener('focusin', ev => {
-      if (ev.target.matches('[data-delta], .god-select-on-focus')) ev.target.select?.()
+      // поля з дельтою веде глобальний обробник у god.mjs (курсор у кінець, щоб дописати «-100»)
+      if (ev.target.matches('.god-select-on-focus')) ev.target.select?.()
     })
 
     root.addEventListener('change', ev => {
@@ -322,13 +325,17 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const ws = GOD.WEAPON_SKILLS[i.system.category] ?? {}
     const base = R.actorWeaponDamage(this.document, i)
     const prof = sys.skill(ws.prof), acc = sys.skill(ws.acc)
-    const dmgMod = (isChar ? R.proficiencyDamageMod(prof) : (sys.attack?.damageMod ?? 0)) + (sys.combat.damageMod || 0)
+    // Ті самі числа, що підставить вікно атаки (прицільність 0 → −5, ефекти, «усі дії», стеля +12)
+    const cap = n => isChar ? R.capMod(n) : n
+    const hm = M.hitMods(this.document, isChar ? R.accuracyMod(acc) : acc, isChar ? `прицільність ${acc}` : 'влучність')
+    const dm = M.damageMods(this.document, isChar ? R.proficiencyDamageMod(prof) : (sys.attack?.damageMod ?? 0), isChar ? `володіння ${prof}` : 'мод урону')
+    const sg = n => `${n >= 0 ? '+' : ''}${n}`
     return GodActorSheetBase.itemRow(i, {
       base, prof, acc, category: GOD.WEAPON_CATEGORIES[i.system.category],
       table: R.damageTable(base),
       dmgTip: `100% урону. Фіз: ${i.system.hand === 'off' ? '' : `СИЛ ${st.str.value}×5 + `}${i.system.phys}` +
         (base.mag ? ` · Маг: ІНТ ${st.int.value}×5 + ${i.system.mag}` : '') + (base.notes?.length ? ` · ${base.notes.join(', ')}` : ''),
-      rollTip: `Попадання d20+${acc + (sys.combat.hitMod || 0)} · урон d20${dmgMod >= 0 ? '+' : ''}${dmgMod} · володіння ${prof}`,
+      rollTip: `Попадання d20${sg(cap(hm.total))} (${hm.text}). Урон d20${sg(cap(dm.total))} (${dm.text})`,
     })
   }
 
@@ -530,9 +537,9 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
 const TABS = [
   { id: 'overview',  label: 'Огляд',      icon: 'fa-solid fa-chess-knight' },
   { id: 'skills',    label: 'Вміння',     icon: 'fa-solid fa-star' },
-  { id: 'gear',      label: 'Спорядження',icon: 'fa-solid fa-sack' },
+  { id: 'gear',      label: 'Інвентар',   icon: 'fa-solid fa-sack' },
   { id: 'magic',     label: 'Магія',      icon: 'fa-solid fa-wand-sparkles' },
-  { id: 'traits',    label: 'Риси та знання', icon: 'fa-solid fa-feather' },
+  { id: 'traits',    label: 'Риси',       icon: 'fa-solid fa-feather' },
   { id: 'effects',   label: 'Ефекти',     icon: 'fa-solid fa-bolt' },
   { id: 'bio',       label: 'Біографія',  icon: 'fa-solid fa-book' },
 ]
@@ -540,7 +547,7 @@ const TABS = [
 export class GodCharacterSheet extends GodActorSheetBase {
   static DEFAULT_OPTIONS = {
     classes: ['god', 'sheet', 'actor', 'character'],
-    position: { width: 920, height: 780 },
+    position: { width: 940, height: 780 },
     actions: {
       rollStat: GodCharacterSheet.#rollStat,
       rollStats: GodCharacterSheet.#rollStats,
@@ -680,7 +687,6 @@ export class GodCharacterSheet extends GodActorSheetBase {
 
     // ── Риси та знання
     const traitItems = items.filter(i => i.type === 'trait')
-    context.traits = traitItems.filter(i => i.system.kind !== 'quirk').map(i => GodActorSheetBase.itemRow(i))
     context.traits = traitItems.filter(i => i.system.kind === 'trait').map(i => GodActorSheetBase.itemRow(i))
     context.quirks = traitItems.filter(i => i.system.kind === 'quirk').map(i => GodActorSheetBase.itemRow(i))
     const debuffs = traitItems.filter(i => i.system.kind === 'debuff')
@@ -707,7 +713,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
 // ═════════════════════════════════════════════════════════════════════════════
 const NPC_TABS = [
   { id: 'overview', label: 'Бій',         icon: 'fa-solid fa-swords' },
-  { id: 'gear',     label: 'Спорядження', icon: 'fa-solid fa-sack' },
+  { id: 'gear',     label: 'Інвентар',    icon: 'fa-solid fa-sack' },
   { id: 'magic',    label: 'Магія',       icon: 'fa-solid fa-wand-sparkles' },
   { id: 'effects',  label: 'Ефекти',      icon: 'fa-solid fa-bolt' },
   { id: 'notes',    label: 'Нотатки',     icon: 'fa-solid fa-feather' },

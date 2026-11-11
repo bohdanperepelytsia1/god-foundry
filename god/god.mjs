@@ -96,6 +96,7 @@ Hooks.once('init', () => {
     diceTray: actor => GodDiceTray.open(actor),
     hud: actor => GodHud.open(actor ?? defaultActor()),
     quickbar: () => GodQuickbar.refresh(),
+    guide: openGuide,
   }
 
   // Shift+Q — показати/сховати швидку панель
@@ -266,12 +267,27 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
     if (!actor?.isOwner) { ui.notifications.warn('Кидати може власник персонажа або майстер'); return null }
     return actor
   }
+  html.querySelector('[data-god-guide]')?.addEventListener('click', ev => { ev.preventDefault(); openGuide() })
+  // Кнопки перевірок одноразові для всіх: після кидка гаснуть (прапорець на повідомленні),
+  // майстер може повторити Shift+кліком.
+  const onceButtons = [...html.querySelectorAll('[data-god-check], [data-god-death]')]
+  const usedOnce = (btn, ev) => btn.classList.contains('applied') && !(game.user.isGM && ev.shiftKey)
+  const dimUsed = btn => {
+    btn.classList.add('applied')
+    if (!game.user.isGM) btn.disabled = true
+    btn.dataset.tooltip = game.user.isGM ? 'Уже кинуто. Shift+клік — кинути ще раз' : 'Уже кинуто'
+  }
+  const markUsed = btn => { dimUsed(btn); markFlag(message, 'used', { ...(message.getFlag('god', 'used') ?? {}), [onceButtons.indexOf(btn)]: true }) }
+  const used = message.getFlag('god', 'used') ?? {}
+  onceButtons.forEach((btn, i) => { if (used[i]) dimUsed(btn) })
   for (const btn of html.querySelectorAll('[data-god-check]')) {
     btn.addEventListener('click', async ev => {
       ev.preventDefault()
       const [uuid, stat, dc] = btn.dataset.godCheck.split('|')
       const actor = await ownedActor(uuid)
-      if (actor) Dice.thresholdCheck(actor, stat, Number(dc), btn.dataset.tooltip ?? '')
+      if (!actor || usedOnce(btn, ev)) return
+      const why = btn.textContent.trim()
+      if (await Dice.thresholdCheck(actor, stat, Number(dc), why)) markUsed(btn)
     })
   }
   for (const btn of html.querySelectorAll('[data-god-death]')) {
@@ -279,9 +295,8 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       ev.preventDefault()
       const [uuid, kind] = btn.dataset.godDeath.split('|')
       const actor = await ownedActor(uuid)
-      if (!actor) return
-      btn.disabled = true
-      kind === 'coin' ? Dice.deathCoin(actor) : Dice.deathSave(actor)
+      if (!actor || usedOnce(btn, ev)) return
+      if (await (kind === 'coin' ? Dice.deathCoin(actor) : Dice.deathSave(actor))) markUsed(btn)
     })
   }
 
@@ -382,6 +397,34 @@ document.addEventListener('focusout', ev => {
   delete el.dataset.godZero
   if (el.dataset.godPh) { el.placeholder = ''; delete el.dataset.godPh }
 })
+
+/** Довідник із компендіуму системи: як користуватись листом і правила коротко */
+async function openGuide(pageName) {
+  const pack = game.packs.get('god.rules')
+  const entry = (await pack?.getDocuments())?.[0]
+  if (!entry) return ui.notifications.warn('Довідник G.O.D. не знайдено в компендіумах')
+  const page = pageName ? entry.pages.getName(pageName) : null
+  return entry.sheet.render(true, page ? { pageId: page.id } : {})
+}
+
+/** Перший вхід у світ: коротке вітання лише цьому користувачу (один раз) */
+async function welcome() {
+  if (game.user.getFlag('god', 'welcomed')) return
+  await game.user.setFlag('god', 'welcomed', true)
+  const gm = game.user.isGM ? '<li><b>Майстру:</b> предмети й вороги-зразки — у компендіумі «Арсенал G.O.D.»; макроси (видати досвід, завдати урону) — у «Макроси G.O.D.».</li>' : ''
+  ChatMessage.create({
+    whisper: [game.user.id], speaker: { alias: 'G.O.D.' },
+    content: `<div class="god-card"><header class="god-card-head"><div><h3>Вітаємо в G.O.D.</h3><span>п'ять речей, щоб почати</span></div></header>
+      <ul class="god-list-plain god-welcome">
+        <li><b>Замок</b> у кутку портрета вмикає редагування листа. Без нього лист показує значення й кнопки кидків.</li>
+        <li><b>Клік по характеристиці, вмінню чи кнопці «Атака»</b> — кидок. Усі бонуси й штрафи підставляються самі й підписані у вікні кидка.</li>
+        <li><b>Атака:</b> обери ціль → кидок попадання → якщо влучив, на картці з'явиться «Кинути урон» → «Урон» застосовує його до цілі.</li>
+        <li><b>Числа можна рахувати:</b> у HP, грошах, досвіді допиши <code>-25</code> чи <code>+10</code> і натисни Enter.</li>
+        <li><b>Shift+R</b> — панель кидків, <b>Shift+Q</b> — швидка панель унизу екрана.</li>${gm}
+      </ul>
+      <div class="god-apply god-apply-one"><button type="button" data-god-guide><i class="fa-solid fa-circle-question"></i> Відкрити довідник</button></div></div>`,
+  })
+}
 
 function defaultActor() {
   return canvas.tokens?.controlled[0]?.actor ?? game.user.character ?? game.actors.find(a => a.type === 'character' && a.isOwner)
@@ -528,7 +571,7 @@ function unlockApplyButton(btn) {
 }
 /** Позначити кнопку на повідомленні як застосовану — для всіх клієнтів і після перезавантаження */
 /** Позначка на картці (перекинуто вдачею / урон уже кинуто) — сам або через майстра */
-const MESSAGE_FLAGS = new Set(['lucky', 'damageRolled'])
+const MESSAGE_FLAGS = new Set(['lucky', 'damageRolled', 'used'])
 async function markFlag(message, key, value = true) {
   if (!MESSAGE_FLAGS.has(key)) return
   if (message.isOwner) return message.setFlag('god', key, value)
@@ -558,6 +601,7 @@ Hooks.once('ready', async () => {
     }
   })
   await migrateWorld()
+  welcome().catch(err => console.warn('G.O.D. | вітання', err))
   GodQuickbar.refresh()
   for (const [id, pin] of Object.entries(Pins.all())) {
     const position = pin.position
