@@ -5,6 +5,7 @@
  * тож токени на сценах лишаються прив'язаними) або пропускає їх.
  */
 import { characterFromSite, npcFromSite, itemFromSite, summarizeExport } from '../site-import.mjs'
+import { isSqlite, exportFromSqliteBytes } from '../site-db.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
 const esc = s => foundry.utils.escapeHTML?.(String(s ?? '')) ?? String(s ?? '')
@@ -47,11 +48,22 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
       const file = input.files?.[0]
       if (!file) return
       try {
-        const json = JSON.parse(await file.text())
-        if (json?.format !== 'god-site-export') throw new Error('це не файл експорту сайту G.O.D.')
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        let json
+        if (isSqlite(bytes)) {
+          // сама база сайту — читаємо її тут же, у браузері
+          this.progress = 'Читаю базу сайту…'
+          json = await exportFromSqliteBytes(bytes)
+          json.exportedAt = new Date(file.lastModified || Date.now()).toISOString()
+        } else {
+          json = JSON.parse(new TextDecoder().decode(bytes))
+          if (json?.format !== 'god-site-export') throw new Error('це не база сайту і не файл експорту')
+        }
+        this.progress = ''
         this.data = json
         this.render()
       } catch (err) {
+        this.progress = ''
         ui.notifications.error(`Не вдалося прочитати файл: ${err.message}`)
       }
     })

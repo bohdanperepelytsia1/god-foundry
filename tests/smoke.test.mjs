@@ -233,7 +233,7 @@ console.log('✓ панель бою')
 
 // ── вікно імпорту з сайту ──
 const impT = Handlebars.compile(readFileSync('god/templates/apps/site-importer.hbs', 'utf8'))
-assert.ok(impT({ step: 'file' }).includes('type="file"'), 'імпорт: вибір файлу')
+assert.ok(impT({ step: 'file' }).includes('type="file"') && impT({ step: 'file' }).includes('.db'), 'імпорт: вибір бази або json')
 const impHtml = impT({ step: 'pick', users: [{ id: 'u1', name: 'Оля' }], exportedAt: 'сьогодні', anyExists: true,
   chars: [{ id: 1, name: 'Ейла', level: 19, party: 'Кіт', checked: true, owner: 'u1' }, { id: 2, name: 'Тест', level: 0, test: true }],
   enemies: [{ id: '2:e', name: 'Орк', hp: 600, checked: true }], groups: [{ key: 'gmItems', label: 'Предмети майстра', count: 38, checked: true }] })

@@ -2,10 +2,10 @@
   {{#if (god-eq step "file")}}
   <div class="god-imp-file">
     <i class="fa-solid fa-file-import"></i>
-    <p>Обери файл експорту сайту <code>god-site-export.json</code>.</p>
-    <label class="god-btn god-imp-pick"><i class="fa-solid fa-folder-open"></i> Обрати файл<input type="file" accept=".json,application/json" hidden></label>
-    <p class="god-hint">Файл робить скрипт <code>tools/site-export.py</code> з бази сайту <code>charsheet.db</code>:<br>
-      <code>python3 tools/site-export.py charsheet.db</code>. Акаунти, паролі й логи сайту туди не потрапляють.</p>
+    <p>Обери базу сайту <code>charsheet.db</code> — або файл експорту <code>god-site-export.json</code>.</p>
+    <label class="god-btn god-imp-pick"><i class="fa-solid fa-folder-open"></i> Обрати файл<input type="file" accept=".db,.sqlite,.sqlite3,.json,application/json,application/x-sqlite3" hidden></label>
+    <p class="god-hint">База читається тут, у браузері, лише на читання: на сервер Foundry вона не завантажується.
+      Беруться персонажі, вороги, предмети, склади й торговці; акаунти, паролі й логи — ні.</p>
   </div>
   {{else}}
   <p class="god-hint god-imp-head">Експорт від {{exportedAt}}. Познач, що перенести. Активних персонажів і живих ворогів уже позначено.</p>

@@ -4,7 +4,7 @@
  * Без звертань до Foundry API, тож модуль тестується в Node (tests/site-import.test.mjs).
  * Створення документів, аватари й доплату до максимумів ресурсів робить apps/site-importer.mjs.
  */
-import { GOD, skillKey } from './config.mjs'
+import { GOD, skillKey, defaultIcon } from './config.mjs'
 import * as R from './rules.mjs'
 
 // ── дрібні помічники ───────────────────────────────────────────────────────
@@ -40,6 +40,41 @@ export const SITE_SECTIONS = {
 const GEAR_BY_TYPE = {
   scroll: 'scroll', misc: 'item', other: 'item', food: 'food', instrument: 'tool', book: 'book', potion: 'potion',
   jewellery: 'jewelry', ingredient: 'ingredient', container: 'container', quest: 'quest',
+}
+
+/** Категорія спорядження за назвою (на сайті більшість речей — «misc/other») */
+const GEAR_RULES = [
+  [/свідчен|паспорт|перепустк|папір|паперу|чорнил|перо(?![а-яіїєґ'’])/, 'document'], [/змійовик|екстрактор|спирт/, 'alchemy'],
+  [/з водою|бочк\S* вод/, 'water'], [/курят|сушен\S* м|сол[іь](?![а-яіїєґ'’])/, 'food'], [/спальн|спальік|подушк/, 'camp'],
+  [/шкір\S* (кабан|олен|вовк|ведмед)|оленяча шкір|шкура/, 'hide'], [/цвях/, 'material'], [/кувалд|баліст/, 'tool'], [/бочк/, 'container'],
+  [/стріл|болт|набо[їй]|кул[яі](?![а-яіїєґ'’])/, 'ammo'], [/відмичк/, 'lockpick'], [/ключ/, 'key'],
+  [/хірург/, 'surgery'], [/перш\S* допомог|аптечк/, 'medkit'], [/бинт|мазь|ліки|пігулк|настоянк/, 'medicine'],
+  [/отрут|яд(?![а-яіїєґ'’])/, 'poison'], [/зілл|еліксир|відвар/, 'potion'],
+  [/ступ|пестик|колб|реторт|алхім|казанок/, 'alchemy'],
+  [/вин[оа]|пиво|ель(?![а-яіїєґ'’])|горілк|самогон|ром(?![а-яіїєґ'’])|медовух|настій/, 'drink'], [/фляг|бурдюк|вод[аи](?![а-яіїєґ'’])/, 'water'],
+  [/хліб|м['’]?ясо|сир(?![а-яіїєґ'’])|сухар|ковбас|риб[аи](?![а-яіїєґ'’])|яблук|їж[аі]|сало|юшк|пайок|раціон|бульйон|солонин|галет/, 'food'],
+  [/смолоскип|факел|свічк|свічі/, 'light'], [/ліхтар|лампа/, 'lantern'],
+  [/намет|спальн|ковдр|казан|кресал|огнив|трут/, 'camp'], [/мотуз|канат|ланцюг|кошк/, 'rope'],
+  [/компас|підзорн|секстант/, 'navigation'], [/голк|нитк|латк/, 'sewing'],
+  [/кост[іи] гральн|гральн|карти(?![а-яіїєґ'’])|колод[аи] карт|кубик/, 'game'],
+  [/пастк|капкан/, 'trap'], [/вудк|гачк|сітк|наживк/, 'fishing'],
+  [/лютн|флейт|барабан|арф|скрипк|сопілк|ліра|бандур|губн/, 'instrument'],
+  [/книг|том(?![а-яіїєґ'’])|фоліант|щоденник|журнал/, 'book'], [/мап[аи]|карта(?![а-яіїєґ'’])/, 'map'], [/сувій|лист(?![а-яіїєґ'’])|записк|пергамент/, 'scroll'],
+  [/документ|грамот|печатк|дозвіл|контракт|розписк/, 'document'],
+  [/самоцвіт|рубін|смарагд|сапфір|алмаз|діамант|аметист|перлин/, 'gem'], [/злит|золот\S* монет|скарб/, 'valuable'],
+  [/кільц|перстен|намист|кулон|браслет|сережк|брошк|прикрас|амулет/, 'jewelry'],
+  [/руд[аи]|залізо(?![а-яіїєґ'’])|метал|сталь(?![а-яіїєґ'’])|ірид|мідь(?![а-яіїєґ'’])/, 'ore'], [/шкур|шкір[аи](?![а-яіїєґ'’])/, 'hide'],
+  [/кіготь|кігті|зуб|ікл|ріг(?![а-яіїєґ'’])|роги|кістк|череп|луск|пір['’]?я|трофей/, 'trophy'],
+  [/трав|корін|корен|лист[яь]|квіт|гриб|брунь|ягід|насінн|пелюст|мох/, 'ingredient'],
+  [/дошк|дерев|тканин|полотн|нитки|мішковин/, 'material'],
+  [/скрин|ящик|коробк|шкатулк|мішок|торб/, 'container'],
+  [/кайл|лопат|сокирк|пилк|молоток|ніж для|долото|клещ|кліщ|набір|інструмент/, 'tool'],
+  [/свят|оберіг|ікон|чотки|реліквія/, 'holy'], [/артефакт/, 'artifact'],
+]
+export function guessGearCategory(name, siteType = '') {
+  const n = low(name)
+  for (const [re, cat] of GEAR_RULES) if (re.test(n)) return cat
+  return GEAR_BY_TYPE[siteType] ?? 'item'
 }
 
 /** Категорія зброї за назвою. Повертає [категорія, певність] */
@@ -107,6 +142,11 @@ function itemDescription(raw) {
  * Повертає { item, notes[] } — нотатки для звіту («категорію вгадано»).
  */
 export function itemFromSite(raw, opts = {}) {
+  const r = itemFromSiteRaw(raw, opts)
+  r.item.img = defaultIcon(r.item.type, r.item.system)
+  return r
+}
+function itemFromSiteRaw(raw, opts = {}) {
   const notes = []
   const name = str(raw?.name) || 'Предмет'
   const type = str(raw?.type) || 'misc'
@@ -148,11 +188,12 @@ export function itemFromSite(raw, opts = {}) {
     return { notes, item: { name, type: 'armor', flags, system } }
   }
 
-  let category = GEAR_BY_TYPE[type] ?? 'item'
+  // Тип сайту точний для зілль, їжі, книг, інгредієнтів; для «misc/other/instrument» — вгадуємо за назвою
+  const exact = ['potion', 'food', 'book', 'ingredient', 'scroll', 'jewellery'].includes(type)
+  let category = exact ? GEAR_BY_TYPE[type] : guessGearCategory(name, type)
   if (isAmmo(name)) category = 'ammo'
-  else if (category === 'item' && opts.location && GOD.LOCATION_CATEGORY[opts.location]) category = GOD.LOCATION_CATEGORY[opts.location]
-  if (category === 'item' && has(name, /ключ/)) category = 'key'
-  const consumable = ['potion', 'food'].includes(type)
+  if (category === 'item' && opts.location && GOD.LOCATION_CATEGORY[opts.location]) category = GOD.LOCATION_CATEGORY[opts.location]
+  const consumable = ['potion', 'food', 'drink', 'medicine'].includes(category)
   return { notes, item: { name, type: 'gear', flags, system: { ...base, category, consumable } } }
 }
 
@@ -210,7 +251,7 @@ function abilitiesFromSite(list = []) {
     ].filter(([, v]) => str(v)).map(([k, v]) => `<b>${k}:</b> ${esc(v)}`)
     const description = (facts.length ? `<p>${facts.join(' · ')}</p>` : '') + textToHtml(s.description)
       + (str(s.upgrades) ? `<h4>Покращення</h4>${textToHtml(s.upgrades)}` : '')
-    return { name: str(s.name), type: 'ability', system: {
+    return { name: str(s.name), type: 'ability', img: defaultIcon('ability'), system: {
       description, manaCost: pos(s.manaCost), staminaCost: pos(s.enduranceCost), cooldown: str(s.coolDown),
     } }
   })
@@ -221,24 +262,33 @@ function traitsFromSite(sd) {
   const out = []
   for (const t of sd._traits_v2 ?? []) {
     const name = str(t?.name); if (!name) continue
-    out.push({ name, type: 'trait', system: {
+    out.push({ name, type: 'trait', img: defaultIcon('trait', { kind: 'debuff' }), system: {
       kind: 'debuff', cost: str(t.cost), points: Math.min(GOD.BALANCE.DEBUFF_MAX_EACH, pos(t.cost)),
       controlled: /\((к|k)\)/i.test(name), description: textToHtml(t.desc),
     } })
   }
   for (const t of sd._quirks ?? []) {
     const name = str(t?.name); if (!name) continue
-    out.push({ name, type: 'trait', system: { kind: 'quirk', cost: str(t.cost), description: textToHtml(t.desc) } })
+    out.push({ name, type: 'trait', img: defaultIcon('trait', { kind: 'quirk' }), system: { kind: 'quirk', cost: str(t.cost), description: textToHtml(t.desc) } })
   }
   return out
 }
 
-/** Текстові ефекти сайту → активні ефекти без змін (видно на листі, знімаються хрестиком) */
-const effectsFromSite = list => (list ?? []).map(e => (typeof e === 'string' ? e : e?.name)).map(str).filter(Boolean).map(text => {
-  const plain = text.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim()
-  const name = plain.length > 60 ? `${plain.slice(0, 57).trimEnd()}…` : plain
-  return { name, img: 'icons/svg/aura.svg', description: textToHtml(text.replace(/\*\*/g, '')), transfer: false, flags: { god: { fromSite: true } } }
-})
+/**
+ * Текстові «ефекти» сайту — це позначки й нотатки (слава в місті, правила обладунку, старі дебафи),
+ * а не механіка. Тому вони йдуть розділом у біографію / нотатки, а не в активні ефекти.
+ */
+const siteEffectTexts = list => (list ?? []).map(e => (typeof e === 'string' ? e : e?.name)).map(str).filter(Boolean)
+export const SITE_EFFECTS_TITLE = 'Ефекти й позначки з сайту'
+export function siteEffectsHtml(list) {
+  const texts = siteEffectTexts(list)
+  if (!texts.length) return ''
+  const li = t => {
+    const m = /^\*\*(.+?)\*\*\s*(.*)$/s.exec(t)
+    return m ? `<li><b>${esc(m[1].replace(/:$/, ''))}</b>${m[2] ? ` — ${esc(m[2]).replace(/\n/g, '<br>')}` : ''}</li>` : `<li>${esc(t.replace(/\*\*/g, '')).replace(/\n/g, '<br>')}</li>`
+  }
+  return `<h3>${SITE_EFFECTS_TITLE}</h3><ul>${texts.map(li).join('')}</ul>`
+}
 
 /** Вміння: _skillLevels / _skillFloor ("cat-table::Назва") → skills, floors, особливі вміння */
 function skillsFromSite(sd, notes) {
@@ -279,6 +329,7 @@ function biographyFromSite(sd) {
   return [
     sec("Повне ім'я", textToHtml(sd.name_full)), sec('Зовнішність', textToHtml(sd.appearance)),
     sec('Мотивація', textToHtml(sd.motivation)), sec('Передісторія', textToHtml(sd.backstory)), sec('Нотатки', textToHtml(sd._notes)),
+    siteEffectsHtml(sd._effects),
   ].join('')
 }
 
@@ -342,7 +393,7 @@ export function characterFromSite(entry) {
       biography: biographyFromSite(sd),
       knowledge: { languages: [], recipes, tech: [] },
     },
-    items, effects: effectsFromSite(sd._effects),
+    items, effects: [],
     flags: { god: { siteId: `char:${entry?.id}`, siteParty: str(entry?.party) } },
   }
   const avatar = typeof sd.avatar === 'string' && sd.avatar.startsWith('data:image/') ? sd.avatar : null
@@ -361,8 +412,9 @@ export function npcFromSite(e) {
       },
       dodge: pos(e?.dc), initiative: int(e?.in),
       attack: { name: 'Атака', phys: pos(e?.pd), mag: pos(e?.md) },
+      notes: siteEffectsHtml(e?.effects),
     },
-    items: [], effects: effectsFromSite(e?.effects),
+    items: [], effects: [],
     flags: { god: { siteId: `enemy:${e?.party ?? ''}:${e?.id}`, siteParty: str(e?.partyName) } },
   }
   return { actor, notes: hp <= 0 ? [`${actor.name}: HP ${hp} — на сайті вже переможений`] : [] }

@@ -10,7 +10,11 @@ const mkActor = (id, type, items, extra = {}) => ({ id, name: id, type, img: 'x.
   update: async u => calls.push(['actor.update', id, u]),
   updateEmbeddedDocuments: async (cls, ups, o) => calls.push(['embedded', id, cls, ups, o]), ...extra })
 const gearGeneric = 'systems/god/assets/icons/gear/item.svg'
-const hero = mkActor('hero', 'character', [mkItem('i1', 'gear', gearGeneric, { category: 'potion' })])
+const siteRope = Object.assign(mkItem('i9', 'gear', 'icons/svg/item-bag.svg', { category: 'item', location: 'main' }), { name: 'Мотузка', flags: { god: { site: { type: 'misc' } } } })
+const siteFx = { id: 'fx1', name: 'добра слава', description: '<p>добра слава в Леберті</p>', flags: { god: { fromSite: true } } }
+const hero = mkActor('hero', 'character', [mkItem('i1', 'gear', gearGeneric, { category: 'potion' }), siteRope], {
+  system: { biography: '<p>Біо</p>' }, deleteEmbeddedDocuments: async (cls, ids, o) => calls.push(['delete', 'hero', cls, ids, o]) })
+hero.effects = coll([siteFx])
 const orcItems = [mkItem('i2', 'gear', gearGeneric, { category: 'ammo' })]
 const orcToken = { id: 't1', name: 'Орк', actorLink: false, bar1: {}, bar2: {}, actor: mkActor('orc-token', 'npc', orcItems) }
 const scene = { name: 'Ліс', tokens: coll([orcToken]), updateEmbeddedDocuments: async (cls, ups) => calls.push(['scene', cls, ups]) }
@@ -22,7 +26,7 @@ globalThis.game = {
 }
 globalThis.CONST = { TOKEN_DISPLAY_MODES: { NONE: 0, OWNER_HOVER: 20, OWNER: 30 } }
 globalThis.ui = { notifications: { info: () => {}, warn: () => {}, error: m => { throw new Error(m) } } }
-globalThis.foundry = { utils: { isNewerVersion: (a, b) => a.localeCompare(b, undefined, { numeric: true }) > 0, deepClone: x => structuredClone(x) },
+globalThis.foundry = { utils: { isNewerVersion: (a, b) => a.localeCompare(b, undefined, { numeric: true }) > 0, deepClone: x => structuredClone(x), getProperty: (o, p) => p.split('.').reduce((x, k) => x?.[k], o) },
   applications: { instances: new Map() } }
 globalThis.CONFIG = { Actor: { documentClass: { updateDocuments: async (u, o) => calls.push(['Actor.updateDocuments', u, o]) } },
   Item: { documentClass: { updateDocuments: async () => {} } } }
@@ -39,4 +43,7 @@ assert.ok(calls.some(c => c[0] === 'Actor.updateDocuments' && c[2].godMigration 
 assert.ok(emb.some(c => c[1] === 'orc-token' && c[4]?.godMigration), 'предмети токена на карті записано')
 assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'смуги HP/OM над героєм прибрано')
 assert.ok(!calls.some(c => c[0] === 'actor.update' && c[1] !== 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'у ворогів смуги лишились')
+assert.ok(emb.some(c => c[1] === 'hero' && c[3].some(u => u._id === 'i9' && u['system.category'] === 'rope' && u.img.endsWith('gear/rope.svg'))), 'перенесений предмет: категорія й іконка')
+assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'hero' && String(c[2]['system.biography']).includes('добра слава в Леберті')), 'ефект сайту — у біографію')
+assert.ok(calls.some(c => c[0] === 'delete' && c[2] === 'ActiveEffect' && c[3][0] === 'fx1'), 'і знятий з активних')
 console.log('✓ міграція: світ + токени на картах, іконки, смуги, запис даних')

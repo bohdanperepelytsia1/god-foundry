@@ -4,6 +4,7 @@
  */
 import { GOD, defaultIcon, ACTOR_ICONS, STANCE_ICONS } from './config.mjs'
 import { isV14 } from './compat.mjs'
+import { guessGearCategory, siteEffectsHtml, SITE_EFFECTS_TITLE } from './site-import.mjs'
 
 const LEGACY_ITEM_ICONS = new Set(['icons/svg/sword.svg', 'icons/svg/shield.svg', 'icons/svg/item-bag.svg', 'icons/svg/fire.svg', 'icons/svg/lightning.svg'])
 const LEGACY_STANCE = { 'icons/svg/sword.svg': 'attack', 'icons/svg/shield.svg': 'defense', 'icons/svg/daze.svg': 'nonlethal' }
@@ -118,6 +119,51 @@ async function migrateTokenBars() {
   return n
 }
 
+/**
+ * 0.14.1: те, що перенесла з сайту 0.14.0.
+ * — Предмети: категорія спорядження за назвою й іконка за категорією (вкладені предмети лишились з торбинкою).
+ *   Чіпаємо лише перенесені предмети зі стандартною іконкою — свої картинки майстра не змінюються.
+ * — Текстові «ефекти» сайту: з активних ефектів у розділ біографії (у ворога — у нотатки).
+ */
+async function migrateSiteImportFix() {
+  const BAG = 'icons/svg/item-bag.svg', EXACT = ['potion', 'food', 'book', 'ingredient', 'scroll', 'jewellery']
+  const opts = { godMigration: true }
+  let n = 0
+  const fixItems = async (items, parent) => {
+    const ups = []
+    for (const it of items) {
+      const site = it.getFlag?.('god', 'site') ?? it.flags?.god?.site
+      if (!site || (it.img && it.img !== BAG && it.img !== defaultIcon(it.type, it.system))) continue
+      const upd = { _id: it.id }
+      let sys = it.system
+      if (it.type === 'gear' && !EXACT.includes(site.type) && it.system.category === (GOD.LOCATION_CATEGORY[it.system.location] ?? 'item')) {
+        const cat = guessGearCategory(it.name, site.type)
+        if (cat !== 'item' && cat !== it.system.category) { upd['system.category'] = cat; sys = { ...it.system, category: cat } }
+      }
+      const img = defaultIcon(it.type, sys)
+      if (img !== it.img) upd.img = img
+      if (Object.keys(upd).length > 1) ups.push(upd)
+    }
+    if (!ups.length) return
+    n += ups.length
+    parent ? await parent.updateEmbeddedDocuments('Item', ups, opts) : await Item.updateDocuments(ups, opts)
+  }
+  await fixItems(game.items.contents)
+  for (const { actor } of allActors()) {
+    await fixItems(actor.items.contents, actor)
+    const site = actor.effects.filter(e => e.getFlag?.('god', 'fromSite') ?? e.flags?.god?.fromSite)
+    if (!site.length) continue
+    const field = actor.type === 'npc' ? 'system.notes' : 'system.biography'
+    const cur = foundry.utils.getProperty(actor, field) ?? ''
+    const texts = site.map(e => { const d = String(e.description ?? '').replace(/<[^>]+>/g, '\n').replace(/\n{2,}/g, '\n').trim(); return d || e.name })
+    const upd = cur.includes(SITE_EFFECTS_TITLE) ? {} : { [field]: cur + siteEffectsHtml(texts) }
+    if (Object.keys(upd).length) await actor.update(upd, opts)
+    await actor.deleteEmbeddedDocuments('ActiveEffect', site.map(e => e.id), opts)
+    n += site.length
+  }
+  return n
+}
+
 /** 0.14.0: смуги HP/OM над токенами героїв прибрано (ресурси видно в панелі героя) */
 async function migrateHideHeroBars() {
   const NONE = CONST.TOKEN_DISPLAY_MODES.NONE, OWNER = CONST.TOKEN_DISPLAY_MODES.OWNER
@@ -201,7 +247,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 
