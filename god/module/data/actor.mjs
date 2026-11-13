@@ -261,6 +261,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         skillLvl: int(1, { min: 0, max: 10 }),
         phys: int(0),
         mag: int(0),
+        // одягнена зброя ворога: 'anim' — лише вигляд (урон = PD/MD), 'add' — урон зброї додається до PD/MD
+        weaponMode: new f.StringField({ initial: 'anim', choices: ['anim', 'add'] }),
       }),
       combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0), allMod: int(0) }),
       money: moneyField(),

@@ -20,6 +20,18 @@
     <header><h3><i class="fa-solid fa-swords"></i> Атака</h3>
       {{#if editable}}<button type="button" class="god-btn" data-action="npcAttack" data-tooltip="Ціль → d20 {{god-signed hitTotal}} проти її ШУ → якщо влучив, урон кидком за сіткою з цієї таблиці"><i class="fa-solid fa-dice-d20"></i> Атакувати</button>{{/if}}
     </header>
+    {{#if foeWeapons.length}}
+    <div class="god-foe-weapons">
+      <span class="god-dim">Зброєю:</span>
+      {{#each foeWeapons}}
+      <button type="button" class="god-spell-chip" data-action="npcAttack" data-item-id="{{id}}" {{#unless @root.editable}}disabled{{/unless}}
+        data-tooltip="{{cat}}{{#if (god-eq @root.system.attack.weaponMode 'add')}} · +{{phys}} фіз{{#if mag}} +{{mag}} маг{{/if}} до PD/MD{{else}} · урон = PD/MD, зброя — для анімації{{/if}}"><img src="{{img}}" alt="">{{name}}</button>
+      {{/each}}
+      {{#if @root.editMode}}<select name="system.attack.weaponMode" class="god-foe-wmode">{{selectOptions @root.weaponModes selected=@root.system.attack.weaponMode}}</select>{{/if}}
+    </div>
+    {{else if editMode}}
+    <p class="god-hint">Одягни ворогу зброю з інвентаря — тут з'являться атаки нею з анімацією цієї зброї.</p>
+    {{/if}}
     <table class="god-foe-table">
       <thead><tr><th></th>{{#each dmgCols}}<th data-tooltip="{{tip}}">{{pct}}%</th>{{/each}}</tr></thead>
       <tbody>

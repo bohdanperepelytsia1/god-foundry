@@ -1964,3 +1964,21 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god.character .god-tabs { padding: 0 6px; gap: 0; }
 .god.character .god-tab-link { padding-left: 6px; padding-right: 6px; gap: 5px; letter-spacing: .02em; }
 .god.character .god-tabs .god-tab-help { padding: 4px 2px; }
+.god .god-foe-weapons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 2px; }
+.god .god-foe-weapons .god-dim { font-size: 11px; }
+.god .god-foe-wmode { margin-left: auto; height: 26px; font-size: 12px; max-width: 260px; }
+
+/* ── Нагорода за партію ───────────────────────────────────────────────────── */
+.god-rw-dialog table.god-rw { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+.god-rw-dialog .god-rw th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--g-dim); padding: 2px 4px; text-align: center; }
+.god-rw-dialog .god-rw td { padding: 3px 4px; border-bottom: 1px dotted var(--g-line); }
+.god-rw-dialog .god-rw td:not(:first-child) { width: 74px; }
+.god-rw-dialog .god-rw td input[type=number] { width: 100%; height: 28px; text-align: center; }
+.god-rw-dialog .god-rw-all td { background: color-mix(in srgb, var(--g-accent) 10%, transparent); }
+.god-rw-dialog .god-rw-who { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.god-rw-dialog .god-rw-who img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid var(--g-line2); }
+.god-rw-dialog .god-rw-who span { display: flex; flex-direction: column; font-weight: 600; font-size: 13px; }
+.god-rw-dialog .god-rw-who small { font-weight: 400; font-size: 10px; color: var(--g-faint); }
+.god-card.god-rw-card ul { margin: 6px 0 2px; padding-left: 18px; }
+.god-card .god-rw-up { color: var(--g-accent2); font-weight: 700; }
+.god-reward-btn { margin-top: 4px; }

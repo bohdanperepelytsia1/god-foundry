@@ -37,9 +37,10 @@ export function targetChoices(actor) {
     .map(t => {
       const hp = t.actor.system?.resources?.hp
       const seeHp = game.user.isGM || t.actor.isOwner
+      const seeDodge = seeHp || t.actor.type !== 'npc' || game.settings.get('god', 'showFoeDodge')
       return {
         uuid: t.document.uuid, tokenId: t.id, name: t.name, img: t.document.texture?.src ?? t.actor.img,
-        dodge: t.actor.system?.derived?.dodge ?? 0, dist: dist(t), marked: marked.has(t.id),
+        dodge: t.actor.system?.derived?.dodge ?? 0, showDodge: seeDodge, dist: dist(t), marked: marked.has(t.id),
         disp: t.document.disposition ?? 0,
         hpPct: seeHp && hp?.max ? Math.max(0, Math.min(100, Math.round(hp.value / hp.max * 100))) : null,
       }
@@ -128,6 +129,12 @@ async function sendCard(actor, html, rolls, replay = null, luck = false, extra =
   return ChatMessage.create(data)
 }
 
+/** ШУ цілі в тексті картки: у ворога — лише для майстра (якщо не дозволено налаштуванням) */
+const dodgeText = (target, pre = ' · проти ШУ ') => {
+  const secret = target.actor?.type === 'npc'
+  return secret ? `<span class="god-gm-only">${pre}${target.dodge}</span>` : `${pre}${target.dodge}`
+}
+
 // ── Діалог параметрів ────────────────────────────────────────────────────────
 async function rollDialog({ title, fields, info }) {
   const renderField = fd => {
@@ -155,7 +162,7 @@ async function rollDialog({ title, fields, info }) {
             <img src="${esc(t.img)}" alt="">
             <span class="god-target-name">${esc(t.label)}${t.marked ? ' <i class="fa-solid fa-bullseye" data-tooltip="Позначена ціль (T)"></i>' : ''}
               ${t.hpPct !== null ? `<span class="god-target-hp"><i style="width:${t.hpPct}%"></i></span>` : ''}</span>
-            <span class="god-target-meta"><b>${t.dodge}</b> ШУ${t.dist !== null ? `<br>${t.dist} м` : ''}</span>
+            <span class="god-target-meta">${t.showDodge ? `<b>${t.dodge}</b> ШУ` : ''}${t.dist !== null ? `${t.showDodge ? '<br>' : ''}${t.dist} м` : ''}</span>
             <a class="god-target-pan" data-tooltip="Показати на сцені"><i class="fa-solid fa-location-crosshairs"></i></a>
           </label>`).join('')}
         </div>
@@ -428,7 +435,7 @@ export async function weaponAttack(actor, item, opts = {}) {
     hc = R.hitCheck({ total: hitTotal, natural: nat, dodge: target.dodge })
     let hitOk = hc.hit
     html += step('Попадання', hitTotal,
-      `куб ${nat} ${signed(hitMod)}${critNote(cHit, nat)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''} · проти ШУ ${target.dodge}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
+      `куб ${nat} ${signed(hitMod)}${critNote(cHit, nat)}${MODE_LABEL[hitMode] ? ` · ${MODE_LABEL[hitMode]}` : ''}${dodgeText(target)}${notes.length ? ` · ${notes.join(', ')}` : ''}`,
       { ok: hitOk, text: hitOk ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
     html += modsLine({ ...hm, text: hm.text + (hitExtra && !luck ? ` · вручну ${signed(hitExtra)}` : '') + (luck ? ' · вдача: лише додатні' : '') })
     if (hc.reason) html += `<div class="god-note">${esc(hc.reason)}</div>`
@@ -547,8 +554,12 @@ export async function weaponDamage(actor, item, state, opts = {}) {
     if (key !== before) guaranteedNote = `гарантовано попаданням`
   }
   const st = sys.stats
-  const base = natural
-    ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0, notes: [] }
+  // Ворог зі зброєю: урон — його PD/MD; зброя або лише вигляд (анімація), або додається (налаштування на картці)
+  const foeWeapon = actor.type === 'npc' && !natural
+  const add = foeWeapon && sys.attack?.weaponMode === 'add'
+  const base = natural || foeWeapon
+    ? { phys: (sys.attack?.phys || 0) + (add ? Number(item.system.phys) || 0 : 0), mag: (sys.attack?.mag || 0) + (add ? Number(item.system.mag) || 0 : 0),
+      notes: foeWeapon ? [add ? `PD/MD + ${item.name}` : 'PD/MD ворога'] : [] }
     : R.weaponDamage({
       str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off',
       cat, lvl: profLvl, magic: (sys.skill?.('Магічність') ?? 0) > 0, gloves: glovesPr(actor), char: isChar,
@@ -726,7 +737,7 @@ export async function castSpell(actor, spell, opts = {}) {
     const hitTotal = withCrits(hit, cHit)
     const hc = R.hitCheck({ total: hitTotal, natural: naturalOf(hit), dodge: target.dodge })
     let ok = hc.hit
-    html += step('Попадання', hitTotal, `куб ${naturalOf(hit)} ${signed(hitMod)}${critNote(cHit, naturalOf(hit))}${luck ? ' · перевага' : ''} · ${esc(target.name)}, ШУ ${target.dodge}`,
+    html += step('Попадання', hitTotal, `куб ${naturalOf(hit)} ${signed(hitMod)}${critNote(cHit, naturalOf(hit))}${luck ? ' · перевага' : ''} · ${esc(target.name)}${dodgeText(target, ', ШУ ')}`,
       { ok, text: ok ? (hc.auto ? 'Гарантовано' : 'Влучання') : 'Промах' })
     html += modsLine({ ...shm, text: shm.text + (sx && !luck ? ` · вручну ${signed(sx)}` : '') })
     if (hc.reason && !hc.guaranteed) html += `<div class="god-note">${esc(hc.reason)}</div>`
@@ -899,6 +910,26 @@ export async function deathSave(actor, opts = {}) {
   return sendCard(actor, html, [roll], { fn: 'deathSave', args: [], preset: { before, crits, rev, wasDead: s.result === 'dead' } }, luck)
 }
 
+/**
+ * Перевірка нервового зриву (психоз): 1d4, випало 3 — зрив:
+ * новий дебаф (майстер), 5d100 фізичного урону (через PR, як звичайний удар), мана падає в 0.
+ */
+export async function breakdownCheck(actor) {
+  const r = await new Roll('1d4').evaluate()
+  const broke = r.total === 3
+  let html = head(actor.img, 'Нервовий зрив?', actor.name) + step('1d4', r.total, '3 — зрив', { ok: !broke, text: broke ? 'Зрив' : 'Втримався' })
+  const rolls = [r]
+  if (broke) {
+    const dmg = await new Roll('5d100').evaluate()
+    rolls.push(dmg)
+    const out = await import('../api.mjs').then(m => m.dealDamage(actor, { phys: dmg.total, mag: 0 }))
+    await actor.update({ 'system.resources.mp.value': Math.min(0, actor.system.resources.mp.value) })
+    html += step('Урон 5d100', dmg.total, `фізичний${out?.toHp !== undefined ? ` · у HP ${out.toHp}` : ''}`, { ok: false, text: 'Застосовано' })
+    html += '<div class="god-note">Мана впала в 0. <b>Майстре:</b> додай новий дебаф.</div>'
+  }
+  return sendCard(actor, html, rolls)
+}
+
 /** HP між 0 і −½max: 1d2 — 2 = автоматично пройдена перевірка смерті, 1 = спаскидки */
 export async function deathCoin(actor, opts = {}) {
   const luck = !!opts.luck
@@ -968,7 +999,9 @@ export async function mindConsequences(actor, prevMt) {
   const worse = !before || before.key !== st.key
   let html = head(actor.img, worse ? `Новий стан: ${st.label}` : st.label, `${actor.name}: MT ${r.value} / ${r.max}`)
   html += `<div class="god-note">${esc(st.note)}</div>`
-  if (st.key === 'psychosis') html += '<div class="god-note">Шанс нервового зриву: якщо на перевірці випадає 3 — новий дебаф, 5d100 фіз. урону, мана в 0. Більшість дій заявляє майстер.</div>'
+  if (st.key === 'psychosis') html += `<div class="god-note">Більшість дій заявляє майстер; усі дії з МОД −5 (БМП).</div>
+    <div class="god-checks"><div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|breakdown" data-tooltip="1d4: випало 3 — нервовий зрив">
+      <i class="fa-solid fa-dice-d4"></i> Нервовий зрив: 1d4 (3 — зрив)</button></div></div>`
   if (st.checks.length) html += checkButtons(actor, st.checks)
   return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card">${html}</div>` })
 }

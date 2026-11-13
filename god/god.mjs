@@ -21,6 +21,7 @@ import { GodSiteImporter, registerSiteImporter } from './module/apps/site-import
 import { registerImageSocket } from './module/apps/image-drop.mjs'
 import { registerTransfer } from './module/apps/transfer.mjs'
 import { registerWagons, registerWagonSocket } from './module/wagons.mjs'
+import { registerReward, rewardDialog } from './module/apps/reward.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -79,7 +80,12 @@ Hooks.once('init', () => {
   registerRotationHandle()
   registerCombatPanel()
   registerWagons()
+  registerReward()
   registerSiteImporter()
+  game.settings.register('god', 'showFoeDodge', {
+    name: 'Показувати гравцям ШУ ворогів', hint: 'Вимкнено: у вікні атаки й на картках кидків число ШУ ворога бачить лише майстер, гравці — тільки «влучив / промах».',
+    scope: 'world', config: true, type: Boolean, default: false,
+  })
   game.settings.register('god', 'animations', {
     name: 'Анімації ударів і магії',
     hint: 'Програються в момент нанесення урону. Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
@@ -105,6 +111,7 @@ Hooks.once('init', () => {
     hud: actor => GodHud.open(actor ?? defaultActor()),
     quickbar: () => GodQuickbar.refresh(),
     combat: () => GodCombatPanel.toggle(),
+    reward: () => rewardDialog(),
     importSite: () => new GodSiteImporter().render({ force: true }),
     guide: openGuide,
   }
@@ -239,6 +246,8 @@ Hooks.on('hotbarDrop', (bar, data, slot) => {
 
 // ── Чат: кнопки «застосувати урон» на картках атак і заклинань ──────────────
 Hooks.on('renderChatMessageHTML', (message, html) => {
+  // ШУ ворогів бачить лише майстер (налаштування «Показувати гравцям ШУ ворогів»)
+  if (!game.user.isGM && !game.settings.get('god', 'showFoeDodge')) html.querySelectorAll('.god-gm-only').forEach(el => el.remove())
   // Вдача: кидок перекинуто — стара картка більше не діє
   const card = html.querySelector('.god-card')
   if (card && message.getFlag('god', 'lucky')) {
@@ -315,7 +324,8 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
       const [uuid, kind] = btn.dataset.godDeath.split('|')
       const actor = await ownedActor(uuid)
       if (!actor || usedOnce(btn, ev)) return
-      if (await (kind === 'coin' ? Dice.deathCoin(actor) : Dice.deathSave(actor))) markUsed(btn)
+      const run = { coin: Dice.deathCoin, breakdown: Dice.breakdownCheck }[kind] ?? Dice.deathSave
+      if (await run(actor)) markUsed(btn)
     })
   }
 
