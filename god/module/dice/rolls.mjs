@@ -169,13 +169,15 @@ async function rollDialog({ title, fields, info }) {
       </div>`
     }
     return `
-      <label class="god-dlg-field"><span>${esc(fd.label)}</span>
+      <label class="god-dlg-field"${fd.tip ? ` data-tooltip="${esc(fd.tip)}"` : ''}><span>${esc(fd.label)}${fd.hint ? ` <small>${esc(fd.hint)}</small>` : ''}</span>
         <input type="number" name="${fd.name}" value="${fd.value ?? 0}"></label>`
   }
   // Поля «more» ховаються під «Додатково»: зазвичай їх не чіпають, а вікно лишається коротким.
   // Якщо там уже щось виставлено (недолік за замовчуванням тощо) — блок одразу відкритий.
+  // type 'row' — кілька числових полів в один рядок (модифікатори атаки)
+  const renderRow = fd => fd.type === 'row' ? `<div class="god-dlg-row" style="--n:${fd.items.length}">${fd.items.map(renderField).join('')}</div>${fd.note ? `<p class="god-dlg-remember">${fd.note}</p>` : ''}` : renderField(fd)
   const main = fields.filter(fd => !fd.more), more = fields.filter(fd => fd.more)
-  const rows = main.filter(fd => fd.type !== 'mode').map(renderField).join('')
+  const rows = main.filter(fd => fd.type !== 'mode').map(renderRow).join('')
     + (more.length ? `<details class="god-dlg-more"><summary>Додатково <small>${esc(more.map(fd => fd.short ?? fd.label).join(' · '))}</small></summary>${more.map(renderField).join('')}</details>` : '')
     + main.filter(fd => fd.type === 'mode').map(renderField).join('')
   const hasTarget = fields.some(fd => fd.type === 'target')
@@ -190,7 +192,7 @@ async function rollDialog({ title, fields, info }) {
       action: 'roll', label: 'Кинути', icon: 'fa-solid fa-dice-d20', default: true,
       callback: (event, button) => {
         const el = button.form.elements, out = {}
-        for (const fd of fields) {
+        for (const fd of fields.flatMap(x => x.type === 'row' ? x.items : [x])) {
           if (fd.type === 'mode') out.mode = button.form.querySelector('[name="mode"]:checked')?.value ?? fd.value ?? 'norm'
           else if (fd.type === 'check') out[fd.name] = el[fd.name]?.checked ?? !!fd.value
           else if (fd.type === 'target' || fd.type === 'select') out[fd.name] = el[fd.name]?.value ?? fd.value ?? ''
@@ -333,7 +335,7 @@ const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor
   .reduce((a, i) => a + (Number(i.system.phys) || 0), 0)
 
 /** Посилання на зброю для повторного кидка: uuid предмета або (для атаки НІП) сам опис */
-const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, system: { ...item.system } } : item.uuid
+const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, look: item.look ?? '', system: { ...item.system } } : item.uuid
 async function itemFrom(ref) { return typeof ref === 'string' ? fromUuid(ref) : ref }
 
 /** Спільні дані атаки: категорія, рівні, перки, доступні здібності */
@@ -369,6 +371,11 @@ export async function weaponAttack(actor, item, opts = {}) {
   const pair = !natural && R.DUAL_WIELD.has(cat) && item.system.equipped
     ? actor.items.find(o => o.id !== item.id && o.type === 'weapon' && o.system.equipped && R.DUAL_WIELD.has(o.system.category)
       && (o.system.hand === 'off') !== (item.system.hand === 'off')) : null
+  // Ворог запам'ятовує свої поправки (надбавку до порахованого), звідки б'є; оцінку — ні
+  const npc = actor.type === 'npc'
+  const saved = npc ? (actor.getFlag?.('god', 'attackMods') ?? {}) : {}
+  const hitStart = (isChar ? R.capMod(hitDefault) : hitDefault) + (Number(saved.hit) || 0)
+  const dmgStart = (isChar ? R.capMod(dmgDefault) : dmgDefault) + (Number(saved.dmg) || 0)
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
@@ -376,17 +383,23 @@ export async function weaponAttack(actor, item, opts = {}) {
       `<div class="god-mods"><b>Попадання:</b> ${esc(hm.text)}</div><div class="god-mods"><b>Урон:</b> ${esc(dm.text)}</div>`,
     fields: [
       { type: 'target', name: 'target', choices },
-      { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: 'front' },
+      { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: DIRECTIONS[saved.dir] ? saved.dir : 'front' },
       ...(abilities.length ? [{ type: 'select', name: 'ability', label: 'Здібність зброї', options: abilityOpts, value: '' }] : []),
       ...critField(actor, 'critHit', 'Крити на попадання'),
-      { name: 'aim', more: true, short: melee ? 'оцінка' : 'прицілювання', label: melee ? 'Оцінок перед ударом (до 4: +1 попадання, +0.5 урону)' : 'Прицілювань (до 10: +1 попадання)', value: 0 },
-      { name: 'hitMod', more: true, short: 'мод. попадання', label: 'Модифікатор попадання (уже пораховано)', value: isChar ? R.capMod(hitDefault) : hitDefault },
-      { name: 'dmgMod', more: true, short: 'мод. урону', label: 'Модифікатор урону (уже пораховано)', value: isChar ? R.capMod(dmgDefault) : dmgDefault },
+      { type: 'row', note: npc ? 'Поправки до попадання й урону ворог запам\'ятає до наступної атаки' : '', items: [
+        { name: 'hitMod', label: 'Попадання', hint: `пор. ${signed(isChar ? R.capMod(hitDefault) : hitDefault)}`, tip: `Модифікатор попадання. Пораховано: ${hm.text}`, value: hitStart },
+        { name: 'dmgMod', label: 'Урон', hint: `пор. ${signed(isChar ? R.capMod(dmgDefault) : dmgDefault)}`, tip: `Модифікатор урону. Пораховано: ${dm.text}`, value: dmgStart },
+        { name: 'aim', label: melee ? 'Оцінка' : 'Прицілювання', tip: melee ? 'Оцінок перед ударом (до 4): +1 попадання, +0.5 урону за кожну' : 'Прицілювань (до 10): +1 попадання за кожне', value: 0 },
+      ] },
       ...(pair ? [{ type: 'check', name: 'both', label: `Обома руками: потім «${pair.name}» (${pair.system.hand === 'off' ? 'ліва' : 'права'})`, value: true }] : []),
       { type: 'mode', value: hm.dis.length ? 'dis' : 'norm' },
     ],
   })
   if (!p) return
+  if (npc && !opts.preset && actor.isOwner) {
+    const next = { hit: (Number(p.hitMod) || 0) - (isChar ? R.capMod(hitDefault) : hitDefault), dmg: (Number(p.dmgMod) || 0) - (isChar ? R.capMod(dmgDefault) : dmgDefault), dir: p.dir }
+    if (next.hit !== (saved.hit ?? 0) || next.dmg !== (saved.dmg ?? 0) || next.dir !== (saved.dir ?? 'front')) await actor.setFlag('god', 'attackMods', { ...saved, ...next })
+  }
   const target = resolveTarget(p.target)
   if (!target) return ui.notifications.warn('Ціль зникла зі сцени')
 
@@ -420,7 +433,7 @@ export async function weaponAttack(actor, item, opts = {}) {
 
   const rolls = []
   const hand = !natural && pair ? (item.system.hand === 'off' ? ' · ліва рука' : ' · права рука') : ''
-  const sub = `${natural ? esc(actor.name) : (GOD.WEAPON_CATEGORIES[cat] ?? '')}${hand} · володіння ${profLvl} → ${esc(target.name)}`
+  const sub = `${natural ? esc(actor.name) + (item.look ? ` · ${GOD.WEAPON_CATEGORIES[item.look] ?? ''}` : '') : (GOD.WEAPON_CATEGORIES[cat] ?? '')}${hand} · володіння ${profLvl} → ${esc(target.name)}`
   let html = head(item.img ?? actor.img, item.name, sub)
   if (ab) html += `<div class="god-ability"><i class="fa-solid fa-star"></i> ${esc(ab.name)}${ab.level > 1 ? ` · ${ab.level} рівень` : ''} <small>${luck ? 'ВС уже списано' : `−${ab.ed} ВС`}</small></div>`
 
@@ -554,12 +567,10 @@ export async function weaponDamage(actor, item, state, opts = {}) {
     if (key !== before) guaranteedNote = `гарантовано попаданням`
   }
   const st = sys.stats
-  // Ворог зі зброєю: урон — його PD/MD; зброя або лише вигляд (анімація), або додається (налаштування на картці)
-  const foeWeapon = actor.type === 'npc' && !natural
-  const add = foeWeapon && sys.attack?.weaponMode === 'add'
-  const base = natural || foeWeapon
-    ? { phys: (sys.attack?.phys || 0) + (add ? Number(item.system.phys) || 0 : 0), mag: (sys.attack?.mag || 0) + (add ? Number(item.system.mag) || 0 : 0),
-      notes: foeWeapon ? [add ? `PD/MD + ${item.name}` : 'PD/MD ворога'] : [] }
+  // Ворог: урон — завжди його PD/MD; зброя («Чим б'є» чи предмет з інвентаря) — лише вигляд і анімація
+  const foe = actor.type === 'npc'
+  const base = natural || foe
+    ? { phys: sys.attack?.phys || 0, mag: sys.attack?.mag || 0, notes: foe ? ['PD/MD ворога'] : [] }
     : R.weaponDamage({
       str: st.str.value, int: st.int.value, phys: item.system.phys, mag: item.system.mag, offHand: item.system.hand === 'off',
       cat, lvl: profLvl, magic: (sys.skill?.('Магічність') ?? 0) > 0, gloves: glovesPr(actor), char: isChar,
@@ -595,7 +606,7 @@ export async function weaponDamage(actor, item, state, opts = {}) {
   html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
   // анімація удару — коли натиснуть «Урон» (god.mjs → FX.playDamage)
   const attacker = actor.isToken ? actor.token.uuid : (actor.getActiveTokens?.()?.[0]?.document?.uuid ?? actor.uuid)
-  return sendCard(actor, html, rolls, replay, luck, { fx: { attacker, kind: 'weapon', cat, tier: key, natural, magic: natural && !base.phys && base.mag > 0 } })
+  return sendCard(actor, html, rolls, replay, luck, { fx: { attacker, kind: 'weapon', cat, tier: key, natural: natural && !item.look, magic: natural && !item.look && !base.phys && base.mag > 0 } })
 }
 
 /** Кнопка «Кинути урон» на картці попадання: кидає власник нападника або майстер, лише раз */
@@ -687,6 +698,8 @@ export async function castSpell(actor, spell, opts = {}) {
   const n = R.castDiceCount(sys.stats.int.value), die = R.schoolDie(schoolLvl)
   const macc = sys.skill('Маг_прицільність')
   const shm = M.hitMods(actor, actor.type === 'character' ? R.accuracyMod(macc) : macc, `маг. прицільність ${macc}`)
+  const shDefault = actor.type === 'character' ? R.capMod(shm.total) : shm.total
+  const npcSpell = actor.type === 'npc', savedSpell = npcSpell ? (actor.getFlag?.('god', 'attackMods') ?? {}) : {}
 
   const p = opts.preset ?? await rollDialog({
     title: `Сотворення: ${spell.name}`,
@@ -696,7 +709,7 @@ export async function castSpell(actor, spell, opts = {}) {
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },
         ...critField(actor, 'critHit', 'Крити на попадання'),
-        { name: 'hitMod', more: true, short: 'мод. попадання', label: 'Маг. прицільність (уже пораховано)', value: actor.type === 'character' ? R.capMod(shm.total) : shm.total },
+        { name: 'hitMod', label: 'Модифікатор попадання', hint: `пор. ${signed(shDefault)}`, tip: `Пораховано: ${shm.text}${npcSpell ? '. Поправку ворог запам\'ятає' : ''}`, value: shDefault + (Number(savedSpell.spellHit) || 0) },
       ] : []),
       { name: 'threshold', more: true, short: 'поріг', label: 'Поріг (ПППС)', value: s.threshold },
       { name: 'statMult', more: true, short: 'Кодекс', type: 'check', label: 'Множник +МОДІНТ +МОДМУД (Кодекс)', value: sys.derived.spellStatMult },
@@ -704,6 +717,10 @@ export async function castSpell(actor, spell, opts = {}) {
     ],
   })
   if (!p) return
+  if (npcSpell && needsHit && !opts.preset && actor.isOwner) {
+    const extra = (Number(p.hitMod) || 0) - shDefault
+    if (extra !== (savedSpell.spellHit ?? 0)) await actor.setFlag('god', 'attackMods', { ...savedSpell, spellHit: extra })
+  }
   const target = needsHit ? resolveTarget(p.target) : null
   if (needsHit && !target) return ui.notifications.warn('Ціль зникла зі сцени')
 

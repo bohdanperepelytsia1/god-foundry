@@ -148,9 +148,9 @@ for (const editMode of [false, true]) {
     const ctx = { ...base, editMode }
     if (f.startsWith('npc')) { ctx.system = { ...sys, dodge: 5, speed: 3, initiative: 1, attack: { name: 'Укус', hitMod: 2, damageMod: 1, skillLvl: 3, phys: 40, mag: 0 } };
       ctx.isNpc = true
-      ctx.resources = [{ key: 'hp', abbr: 'HP', value: 50, max: 100, pct: 50 }]
-      ctx.armorRes = [{ key: 'pr', abbr: 'PR', value: 30, max: 40, base: 10, pct: 75 }, { key: 'mr', abbr: 'MR', value: 0, max: 0, base: 0, pct: 0 }]
-      ctx.foeStats = [{ label: 'PD', path: 'system.attack.phys', value: 40, min: true, cls: 'phys', tip: 't' }, { label: 'ШУ', path: 'system.dodge', value: 5, shown: 6, shownTip: 't' }]
+      ctx.resources = [{ key: 'hp', abbr: 'HP', value: 50, max: 100, pct: 50 }, { key: 'pr', abbr: 'PR', value: 30, max: 40, pct: 75, armor: true }]
+      ctx.foeStats = [{ label: 'PD', path: 'system.attack.phys', value: 40, min: true, cls: 'phys', tip: 't' }, { label: 'PR', path: 'system.resources.pr.base', value: 10, min: true, cls: 'armor', shown: 40 }, { label: 'ШУ', path: 'system.dodge', value: 5, shown: 6, shownTip: 't' }]
+      ctx.looks = { '': 'Природна атака', onehand: 'Одноручна', bow: 'Лук' }
       ctx.hitTotal = 2
       ctx.dmgCols = [10, 25, 50, 75, 100, 150].map(pct => ({ pct, tip: 't' }))
       ctx.dmgRows = [{ label: 'PD', cls: 'phys', tip: 't', values: [4, 10, 20, 30, 40, 60] }] }
@@ -188,13 +188,16 @@ for (const editMode of [false, true]) {
     if (f === 'overview.hbs') assert.ok(html.includes('god-dmg-table') && html.includes('data-delta="system.reputation.fame"'), 'таблиця урону й репутація')
     if (f === 'overview.hbs') assert.equal(html.includes('data-delta="system.stats.str.value"'), editMode, 'поля стат (з дельтою) лише в редагуванні')
     if (f === 'npc-sidebar.hbs') {
-      assert.ok(html.includes('god-res-pr') && html.includes('god-res-mr'), 'НІП: смуги PR/MR')
-      assert.equal(html.includes('data-delta="system.resources.pr.base"'), editMode, 'НІП: природна броня редагується')
+      assert.ok(html.includes('god-res-pr') && html.includes('data-delta="system.resources.pr.value"'), 'НІП: смуга поточного PR, поле клікабельне')
+      assert.ok(!html.includes('system.resources.pr.max') && !html.includes('system.resources.pr.base'), 'НІП: у смузі броні немає поля максимуму')
       assert.equal(html.includes('name="system.size"'), editMode, 'НІП: розмір — у режимі редагування')
     }
     if (f === 'npc-overview.hbs') {
       assert.ok(html.includes('data-action="npcAttack"'), 'НІП: кнопка атаки')
       assert.ok(html.includes('data-delta="system.attack.phys"'), 'НІП: PD редагується одразу, з формулою')
+      assert.ok(html.includes('data-delta="system.resources.pr.base"'), 'НІП: PR задається в показниках без режиму редагування')
+      assert.ok(html.includes('name="system.attack.look"') && html.includes('Лук'), 'НІП: «Чим б\'є» — вибір вигляду зброї')
+      assert.ok(!html.includes('weaponMode'), 'НІП: без старого режиму зброї')
       assert.ok(html.includes('<td>60</td>') && html.includes('150%'), 'НІП: таблиця уражень 10–150%')
       assert.ok(html.includes('→ 6'), 'НІП: підсумкове ШУ поруч із базою')
       assert.ok(!html.includes('system.stats.str.value'), 'НІП: без характеристик')

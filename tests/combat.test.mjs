@@ -180,3 +180,35 @@ assert.equal(npc.skill('Одноручна'), 4, 'володіння зброє�
 assert.equal(npc.skill('Прицільність_легка_та_одноручна'), 2, 'влучність → hitMod')
 assert.equal(npc.stats.str.mod !== undefined, true, 'модифікатори характеристик')
 console.log('✓ НІП: природна броня + броня з предметів, володіння, міграція')
+
+// ── НІП: атака «Чим б'є» — урон PD/MD, вигляд зброї для анімації; поправки запам'ятовуються (окрім оцінки) ──
+{
+  const flags = {}
+  const foe = { type: 'npc', name: 'Розбійник', img: 'r.png', uuid: 'Actor.foe', isOwner: true, getActiveTokens: () => [],
+    getFlag: (s, k) => flags[k], setFlag: async (s, k, v) => { flags[k] = v },
+    system: { stats: { str: { value: 10 }, int: { value: 10 } }, combat: {}, skill: k => (k?.startsWith('Приц') ? 2 : 0), attack: { phys: 50, mag: 0, hitMod: 2, damageMod: 1, look: 'bow' } } }
+  const strike = { name: 'Лук', img: 'r.png', natural: true, look: 'bow', system: { category: 'bow', phys: 0, mag: 0, hand: 'main' } }
+  goblin.actor.system.resources = { pr: { value: 0 }, mr: { value: 0 } }
+  nextTotals = [15, 15]
+  dialogAnswer = { target: goblin.document.uuid, dir: 'flank', hitMod: 5, dmgMod: 1, aim: 2 }
+  await weaponAttack(foe, strike)
+  assert.ok(!lastDialog.includes('god-dlg-more'), 'модифікатори не сховані під «Додатково»')
+  assert.ok(lastDialog.includes('name="hitMod" value="2"') && lastDialog.includes('name="dmgMod" value="1"'), 'спершу — пораховане')
+  assert.deepEqual(flags.attackMods, { hit: 3, dmg: 0, dir: 'flank' }, 'запам\'ятовано надбавку й напрямок, оцінку — ні')
+  const st = msgs.at(-1).flags.god.attack
+  assert.ok(st, 'влучив')
+  await weaponDamage(foe, strike, st)
+  assert.ok(cards.at(-1).includes('PD/MD ворога') && cards.at(-1).includes('100% = 50 фіз'), 'урон від PD ворога')
+  assert.equal(msgs.at(-1).flags.god.fx.cat, 'bow'); assert.equal(msgs.at(-1).flags.god.fx.natural, false, 'анімація лука, не «кігтів»')
+  // наступна атака — поправки вже стоять
+  dialogAnswer = { target: '' }
+  await weaponAttack(foe, strike)
+  assert.ok(lastDialog.includes('name="hitMod" value="5"') && lastDialog.includes('value="flank" selected'), 'поправки підставлено')
+  // природна атака — загальний удар
+  nextTotals = [15, 15]
+  dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 5, dmgMod: 1 }
+  const claw = { name: 'Атака', img: 'r.png', natural: true, look: '', system: { category: 'onehand', phys: 0, mag: 0, hand: 'main' } }
+  await weaponAttack(foe, claw); await weaponDamage(foe, claw, msgs.at(-1).flags.god.attack)
+  assert.equal(msgs.at(-1).flags.god.fx.natural, true)
+  console.log('✓ НІП: «Чим б\'є», урон PD/MD, запам\'ятовані поправки')
+}

@@ -1982,3 +1982,17 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-card.god-rw-card ul { margin: 6px 0 2px; padding-left: 18px; }
 .god-card .god-rw-up { color: var(--g-accent2); font-weight: 700; }
 .god-reward-btn { margin-top: 4px; }
+
+/* 0.19.1 — ворог: PR/MR у показниках, «Чим б'є», відкриті модифікатори атаки */
+.god .god-foe-pill.armor { border-color: color-mix(in srgb, #9fb3c8 40%, transparent); }
+.god .god-foe-pill.armor > span, .god .god-foe-pill.armor input { color: #c3d0de; }
+.god .god-foe-look { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; font-size: 12px; }
+.god .god-foe-look > span { flex: none; color: var(--g-dim); }
+.god .god-foe-look select { flex: 1; min-width: 0; height: 26px; }
+.god .god-foe-look small { flex: none; color: var(--g-dim); font-style: italic; }
+.god-dialog .god-dlg-row { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 8px; margin: 4px 0 8px; }
+.god-dialog .god-dlg-row .god-dlg-field { flex-direction: column; align-items: stretch; gap: 2px; margin: 0; }
+.god-dialog .god-dlg-row .god-dlg-field > span { font-size: 11px; color: var(--g-dim, #999); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.god-dialog .god-dlg-row .god-dlg-field small { font-size: 10px; opacity: .75; }
+.god-dialog .god-dlg-remember { font-size: 11px; opacity: .7; margin: -4px 0 6px; }
+.god-dialog .god-dlg-row .god-dlg-field input { width: 100%; }

@@ -184,6 +184,18 @@ async function hideBars(type, OWNER) {
   return n
 }
 
+/** 0.19.1: ворог зі зброєю в руках → «Чим б'є» = категорія тієї зброї (урон тепер завжди PD/MD) */
+async function migrateFoeLook() {
+  let n = 0
+  for (const a of game.actors) {
+    if (a.type !== 'npc' || a.system.attack?.look) continue
+    const w = a.items.find(i => i.type === 'weapon' && i.system.equipped)
+    if (!w?.system.category) continue
+    await a.update({ 'system.attack.look': w.system.category }, { godMigration: true }); n++
+  }
+  return n
+}
+
 /**
  * Дані акторів і предметів, перетворені новою версією (нові поля, перейменування, обрізані максимуми),
  * записуємо в базу — тоді все виглядає однаково і на картах, і в списках, без пересоздання світу.
@@ -251,7 +263,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

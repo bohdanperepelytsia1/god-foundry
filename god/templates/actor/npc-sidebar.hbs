@@ -21,16 +21,9 @@
   <div class="god-res-list">
     {{#each resources}}
     {{#> god-res damage=(god-eq key "hp")}}
-      {{#if @root.editMode}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.max" data-min="0" value="{{max}}" data-tooltip="Максимум: число або вираз (+10, -10, 150-20)">{{/if}}
+      {{#if @root.editMode}}{{#unless armor}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.max" data-min="0" value="{{max}}" data-tooltip="Максимум: число або вираз (+10, -10, 150-20)">{{/unless}}{{/if}}
     {{/god-res}}
     {{/each}}
-    <div class="god-res-armor {{#if editMode}}editing{{/if}}">
-      {{#each armorRes}}
-      {{#> god-res}}
-        {{#if @root.editMode}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.base" data-min="0" value="{{base}}" data-tooltip="Природна {{abbr}} (шкура, луска) — без броні. Броня з предметів додається сама">{{/if}}
-      {{/god-res}}
-      {{/each}}
-    </div>
   </div>
 
 
