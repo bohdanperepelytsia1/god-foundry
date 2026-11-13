@@ -754,9 +754,10 @@ export class GodCharacterSheet extends GodActorSheetBase {
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options)
-    const sys = this.document.system
+    const actor = this.document
+    const sys = actor.system
     const d = sys.derived
-    const items = this.document.items.contents.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    const items = actor.items.contents.sort((a, b) => (a.sort || 0) - (b.sort || 0))
     const st = sys.stats
 
     // Візки: ті, що бачать гравці-власники цього персонажа (майстер бачить те саме + керування)
