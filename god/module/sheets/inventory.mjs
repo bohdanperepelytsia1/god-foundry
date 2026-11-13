@@ -70,7 +70,7 @@ export function buildInventory(actor, state) {
       rows: list.map(i => ({
         id: i.id, name: i.name, img: i.img, type: i.type === 'gear' && i.system.consumable ? 'consumable' : i.type, sub: itemSub(i), tags: tagsOf(i.system),
         qty: i.system.quantity ?? 1, showQty: i.type === 'gear' || (i.system.quantity ?? 1) !== 1,
-        weight: i.totalWeight, equipped: !!i.system.equipped, equippable: ['weapon', 'armor'].includes(i.type),
+        weight: i.totalWeight, equipped: !!i.system.equipped, equippable: ['weapon', 'armor'].includes(i.type) && actor.type !== 'storage',
         usable: i.type === 'weapon' || (i.type === 'gear' && i.system.consumable),
         empty: (i.system.quantity ?? 1) === 0, selected: i.id === state.selected,
         search: `${i.name} ${itemSub(i)}`.toLowerCase(),
@@ -93,7 +93,11 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
   const stats = []
   const add = (label, value, cls = '', tip = '') => { if (value !== '' && value !== null && value !== undefined && value !== false) stats.push({ label, value, cls, tip }) }
 
-  if (item.type === 'weapon') {
+  if (item.type === 'weapon' && !st) {
+    add('Зброя', `${s.phys} фіз${s.mag ? ` · ${s.mag} маг` : ''}`, 'big')
+    add('Категорія', GOD.WEAPON_CATEGORIES[s.category])
+    if (s.twoHanded) add('Хват', 'Дворучна')
+  } else if (item.type === 'weapon') {
     const base = R.actorWeaponDamage(actor, item)
     const ws = GOD.WEAPON_SKILLS[s.category] ?? {}
     add('100% урону', [base.phys && `${base.phys} фіз`, base.mag && `${base.mag} маг`].filter(Boolean).join(' + ') || '0', 'big',
@@ -133,7 +137,7 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
     typeLabel: item.type === 'gear' ? `${GOD.GEAR_CATEGORIES[s.category]?.label ?? 'Предмет'}${s.consumable ? ' · розхідне' : ''}` : game.i18n.localize(`TYPES.Item.${item.type}`),
     kicker: itemSub(item), tags: tagsOf(s),
     qty, location: s.location, equipped: !!s.equipped,
-    equippable: ['weapon', 'armor'].includes(item.type),
+    equippable: ['weapon', 'armor'].includes(item.type) && actor.type !== 'storage',
     consumable: item.type === 'gear' && !!s.consumable,
     useLabel: item.type === 'weapon' ? 'Атакувати' : (item.type === 'gear' && s.consumable) ? 'Використати' : 'Показати в чаті',
     useIcon: item.type === 'weapon' ? 'fa-dice-d20' : (item.type === 'gear' && s.consumable) ? 'fa-flask' : 'fa-comment',

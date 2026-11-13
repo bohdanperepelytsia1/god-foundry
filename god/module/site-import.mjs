@@ -420,6 +420,19 @@ export function npcFromSite(e) {
   return { actor, notes: hp <= 0 ? [`${actor.name}: HP ${hp} — на сайті вже переможений`] : [] }
 }
 
+/** Склад / віз пачки з сайту → сховище з вмістом */
+export function storageFromSite(st) {
+  const notes = []
+  const items = (st?.items ?? []).filter(i => str(i?.name)).map(raw => { const r = itemFromSite(raw, { location: 'main' }); notes.push(...r.notes); return r.item })
+  for (const it of items) if ('equipped' in it.system) it.system.equipped = false
+  const actor = {
+    name: str(st?.name) || 'Сховище', type: 'storage', img: 'icons/svg/chest.svg',
+    system: { capacity: Math.max(0, num(st?.maxW)), party: str(st?.partyName), notes: '' },
+    items, flags: { god: { siteId: `storage:${st?.id}`, siteParty: str(st?.partyName) } },
+  }
+  return { actor, notes }
+}
+
 /** Зведення файлу експорту для вікна імпорту: що є і що позначити за замовчуванням */
 export function summarizeExport(data) {
   const chars = (data?.characters ?? []).map(c => {
@@ -431,8 +444,11 @@ export function summarizeExport(data) {
   const enemies = (data?.enemies ?? []).map(e => ({ id: `${e.party}:${e.id}`, name: str(e.name) || 'Ворог', party: str(e.partyName), hp: int(e.hp), checked: int(e.hp) > 0 }))
   const groups = [
     { key: 'gmItems', label: 'Предмети майстра', count: (data?.gmItems ?? []).length },
-    ...(data?.storages ?? []).map(s => ({ key: `storage:${s.id}`, label: `Склад: ${str(s.name)}`, count: (s.items ?? []).length, party: str(s.partyName) })),
     ...(data?.merchants ?? []).map(m => ({ key: `merchant:${m.id}`, label: `Торговець: ${str(m.name)}${str(m.location) ? ` (${str(m.location)})` : ''}`, count: (m.items ?? []).length })),
   ].filter(g => g.count > 0)
-  return { chars, enemies, groups }
+  const storages = (data?.storages ?? []).map(s => {
+    const n = (s.items ?? []).length
+    return { id: s.id, name: str(s.name) || 'Сховище', party: str(s.partyName), count: n, capacity: num(s.maxW), checked: n > 0 && !/test|тест/i.test(str(s.partyName)) }
+  })
+  return { chars, enemies, groups, storages }
 }

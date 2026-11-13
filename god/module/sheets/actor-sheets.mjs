@@ -18,7 +18,7 @@ import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { bindImageDrop, editTokenLook } from '../apps/image-drop.mjs'
 import { quickSpell } from '../apps/spell-creator.mjs'
-import { giveItemDialog, walletDialog } from '../apps/transfer.mjs'
+import { giveItemDialog, walletDialog, takeItemDialog, moveItem } from '../apps/transfer.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { chooseNewItem } from '../apps/item-creator.mjs'
 import { effectRounds, effectRoundsLeft } from '../compat.mjs'
@@ -75,6 +75,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       invSplit: GodActorSheetBase.#invSplit,
       invChat: GodActorSheetBase.#invChat,
       invGive: GodActorSheetBase.#invGive,
+      invTake: GodActorSheetBase.#invTake,
       wallet: GodActorSheetBase.#wallet,
     },
   }
@@ -172,6 +173,24 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     this._createContextMenu()
   }
 
+  /**
+   * Предмет з іншого листа: переносимо (у джерела зникає), а не копіюємо.
+   * Зі сховища можна взяти, навіть якщо його лише видно — тоді переносить майстер.
+   * Alt — копія (для майстра). Предмети зі світу й компендіумів — як звичайно, копією.
+   */
+  async _onDropItem(event, item) {
+    const src = item?.parent
+    const to = this.document
+    if (!(src instanceof Actor) || src.uuid === to.uuid || event?.altKey) return super._onDropItem(event, item)
+    if (!to.isOwner && !(to.type === 'storage' && to.testUserPermission(game.user, 'LIMITED'))) return null
+    if (!src.isOwner && !(src.type === 'storage' && src.testUserPermission(game.user, 'LIMITED'))) {
+      ui.notifications.warn(`«${item.name}» — не твоя річ: попроси власника передати її`)
+      return null
+    }
+    await moveItem(item, to)
+    return item
+  }
+
   _createContextMenu() {
     const CM = foundry.applications.ux?.ContextMenu?.implementation ?? foundry.applications.ux?.ContextMenu
     if (!CM) return
@@ -257,6 +276,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const [copy] = await this.document.createEmbeddedDocuments('Item', [data], { godNoStack: true })
     if (copy) { this._inv.selected = copy.id; this._renderInv() }
   }
+  static #invTake(ev, target) { const it = this._item(target); if (it) takeItemDialog(it) }
   static #invGive(ev, target) { const it = this._item(target); if (it && this.isEditable) giveItemDialog(it) }
   static #wallet(ev, target) { if (this.isEditable) walletDialog(this.document, target.dataset.mode) }
   static #invChat(ev, target) {
@@ -822,6 +842,41 @@ export class GodNpcSheet extends GodActorSheetBase {
     context.abilities = items.filter(i => i.type === 'ability').map(i => GodActorSheetBase.itemRow(i))
     await this._gearContext(context, items)
     this._magicContext(context, items)
+    context.notes = await enrich(sys.notes, actor)
+    return context
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+const STORAGE_TABS = [
+  { id: 'gear',  label: 'Вміст', icon: 'fa-solid fa-box-open' },
+  { id: 'notes', label: 'Опис',  icon: 'fa-solid fa-feather' },
+]
+
+/** Сховище: візок, віз, склад. Вміст, місткість, гроші, опис */
+export class GodStorageSheet extends GodActorSheetBase {
+  static DEFAULT_OPTIONS = {
+    classes: ['god', 'sheet', 'actor', 'npc', 'storage'],
+    position: { width: 760, height: 640 },
+  }
+  static PARTS = {
+    sidebar: { template: `${TPL}/storage-sidebar.hbs` },
+    tabs:    { template: `${TPL}/tabs.hbs` },
+    gear:    { template: `${TPL}/gear.hbs`, scrollable: ['.god-inv-main', '.god-inv-detail'] },
+    notes:   { template: `${TPL}/npc-notes.hbs`, scrollable: [''] },
+  }
+  _tab = 'gear'
+
+  async _prepareContext(options) {
+    const context = await super._prepareContext(options)
+    const actor = this.document, sys = actor.system
+    const items = actor.items.contents.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    context.tabs = STORAGE_TABS.map(t => ({ ...t, active: t.id === this._tab }))
+    context.isStorage = true
+    context.money = Object.entries(GOD.MONEY).map(([key, m]) => ({ key, ...m, value: sys.money[key] }))
+    context.moneyTotal = R.fmtMoney(R.consolidateMoney(sys.money))
+    await this._gearContext(context, items)
+    context.weightPct = sys.capacity > 0 ? Math.min(100, sys.derived.totalWeight / sys.capacity * 100) : 0
     context.notes = await enrich(sys.notes, actor)
     return context
   }

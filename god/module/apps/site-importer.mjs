@@ -4,7 +4,7 @@
  * і кому з гравців віддати персонажа. Повторний імпорт оновлює вже перенесених (той самий id,
  * тож токени на сценах лишаються прив'язаними) або пропускає їх.
  */
-import { characterFromSite, npcFromSite, itemFromSite, summarizeExport } from '../site-import.mjs'
+import { characterFromSite, npcFromSite, itemFromSite, storageFromSite, summarizeExport } from '../site-import.mjs'
 import { isSqlite, exportFromSqliteBytes } from '../site-db.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
@@ -36,6 +36,7 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
       exportedAt: this.data.exportedAt ? new Date(this.data.exportedAt).toLocaleString('uk-UA') : '',
       chars: s.chars.map(c => ({ ...c, owner: guess(c.name), exists: already.has(`char:${c.id}`) })),
       enemies: s.enemies.map(e => ({ ...e, exists: already.has(`enemy:${e.id}`) })),
+      storages: s.storages.map(x => ({ ...x, exists: already.has(`storage:${x.id}`) })),
       groups: s.groups.map(g => ({ ...g, checked: true })),
       anyExists: s.chars.some(c => already.has(`char:${c.id}`)) || s.enemies.some(e => already.has(`enemy:${e.id}`)),
     }
@@ -82,11 +83,11 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
     const root = this.element
     const checked = name => [...root.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value)
     const pick = {
-      chars: new Set(checked('char').map(Number)), enemies: new Set(checked('enemy')), groups: new Set(checked('group')),
+      chars: new Set(checked('char').map(Number)), enemies: new Set(checked('enemy')), groups: new Set(checked('group')), storages: new Set(checked('storage').map(Number)),
       owners: Object.fromEntries([...root.querySelectorAll('select[data-owner]')].map(s => [Number(s.dataset.owner), s.value])),
       overwrite: !!root.querySelector('input[name=overwrite]')?.checked,
     }
-    if (!pick.chars.size && !pick.enemies.size && !pick.groups.size) return ui.notifications.warn('Нічого не обрано')
+    if (!pick.chars.size && !pick.enemies.size && !pick.groups.size && !pick.storages.size) return ui.notifications.warn('Нічого не обрано')
     this.busy = true
     const report = await importSelected(this.data, pick, msg => { this.progress = msg; this.render() }).catch(err => {
       console.error('G.O.D. | імпорт із сайту', err)
@@ -97,7 +98,7 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
     this.progress = ''
     if (report) {
       await postReport(report)
-      ui.notifications.info(`Перенесено: персонажів ${report.chars.length}, ворогів ${report.enemies.length}, предметів ${report.items}`)
+      ui.notifications.info(`Перенесено: персонажів ${report.chars.length}, ворогів ${report.enemies.length}, сховищ ${report.storages.length}, предметів ${report.items}`)
       this.close()
     } else this.render()
   }
@@ -105,7 +106,7 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
 
 // ── Саме перенесення ──────────────────────────────────────────────────────────
 async function importSelected(data, pick, step) {
-  const report = { chars: [], enemies: [], items: 0, groups: [], skipped: [], images: 0 }
+  const report = { chars: [], enemies: [], storages: [], items: 0, groups: [], skipped: [], images: 0 }
   const fChars = await folder('Персонажі з сайту', 'Actor', '#4a6b3a')
   const fFoes = await folder('Вороги з сайту', 'Actor', '#7a2e2e')
 
@@ -138,9 +139,30 @@ async function importSelected(data, pick, step) {
     report.enemies.push({ name: actor.name, uuid: actor.uuid, notes: r.notes, updated: !!existing })
   }
 
+  // Візки й склади: сховища; власники — гравці, яким у цьому ж імпорті віддано персонажів тієї пачки
+  const partyOwners = {}
+  for (const c of data.characters ?? []) {
+    const u = pick.owners[c.id]
+    if (u && pick.chars.has(c.id) && c.party) (partyOwners[c.party] ??= new Set()).add(u)
+  }
+  const fStore = (data.storages ?? []).some(s => pick.storages.has(s.id)) ? await folder('Візки й склади з сайту', 'Actor', '#6b5a2e') : null
+  for (const st of data.storages ?? []) {
+    if (!pick.storages.has(st.id)) continue
+    step(`Сховище: ${st.name}`)
+    const r = storageFromSite(st)
+    const existing = game.actors.find(a => a.getFlag('god', 'siteId') === r.actor.flags.god.siteId)
+    if (existing && !pick.overwrite) { report.skipped.push(r.actor.name); continue }
+    const owners = [...(partyOwners[st.partyName] ?? [])]
+    r.actor.ownership = owners.length ? { default: 0, ...Object.fromEntries(owners.map(u => [u, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER])) }
+      : (existing?.toObject().ownership ?? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER })
+    if (!owners.length && !existing) r.notes.push('Гравців пачки не вказано — сховище відкрите всім гравцям (ПКМ → Права, щоб обмежити)')
+    const actor = await replaceOrCreate(r.actor, existing, fStore)
+    report.storages.push({ name: actor.name, uuid: actor.uuid, notes: r.notes, updated: !!existing })
+    report.items += r.actor.items.length
+  }
+
   const groups = [
     ['gmItems', 'Предмети майстра', data.gmItems ?? []],
-    ...(data.storages ?? []).map(s => [`storage:${s.id}`, `Склад: ${s.name}`, s.items ?? []]),
     ...(data.merchants ?? []).map(m => [`merchant:${m.id}`, `Торговець: ${m.name}`, m.items ?? []]),
   ]
   for (const [key, label, list] of groups) {
@@ -211,6 +233,7 @@ async function postReport(r) {
     <span>персонажів ${r.chars.length} · ворогів ${r.enemies.length} · предметів ${r.items}${r.images ? ` · аватарів ${r.images}` : ''}</span></div></header>
     ${r.chars.length ? `<h4>Персонажі</h4><ul>${list(r.chars)}</ul>` : ''}
     ${r.enemies.length ? `<h4>Вороги</h4><ul>${list(r.enemies)}</ul>` : ''}
+    ${r.storages.length ? `<h4>Візки й склади</h4><ul>${list(r.storages)}</ul>` : ''}
     ${groups ? `<h4>Предмети (теки в «Предметах»)</h4><ul>${groups}</ul>` : ''}
     ${r.skipped.length ? `<p class="god-dim">Пропущено, бо вже є: ${r.skipped.map(esc).join(', ')}</p>` : ''}
     <p class="god-dim">Категорії зброї й класи обладунку вгадано за назвами — перевір позначене вище. Ресурси, вміння, гроші й досвід перенесено як на сайті.</p></div>`

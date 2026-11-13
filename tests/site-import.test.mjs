@@ -141,6 +141,17 @@ const sum = M.summarizeExport({
 })
 assert.deepEqual(sum.chars.map(c => c.checked), [true, false, false], 'активні — так, тестові й архівні — ні')
 assert.deepEqual(sum.enemies.map(e => e.checked), [true, false], 'переможені вороги не позначені')
-assert.deepEqual(sum.groups.map(g => g.key), ['gmItems', 'storage:5'], 'порожні склади не показуються')
+assert.deepEqual(sum.groups.map(g => g.key), ['gmItems'], 'склади — не теки предметів')
+assert.deepEqual(sum.storages.map(x => [x.id, x.checked]), [[5, true], [6, false]], 'склади — сховищами; порожній не позначено')
 console.log('✓ зведення: що позначено за замовчуванням')
+
+// ── віз → сховище ──
+const wagon = M.storageFromSite({ id: 9, name: 'Віз покритий', partyName: 'Банда', maxW: 200, items: [
+  { type: 'ingredient', name: 'Сира шкіра оленя', amount: 8, weightPerOne: 1 }, { type: 'armor', name: 'Поножі', physicalResistance: 40 }, { name: '' }] })
+assert.equal(wagon.actor.type, 'storage'); assert.equal(wagon.actor.flags.god.siteId, 'storage:9')
+assert.equal(wagon.actor.system.capacity, 200); assert.equal(wagon.actor.system.party, 'Банда')
+assert.equal(wagon.actor.items.length, 2, 'порожній рядок пропущено')
+assert.equal(wagon.actor.items[0].system.quantity, 8)
+assert.ok(wagon.actor.items.every(i => !i.system.equipped), 'у сховищі нічого не одягнено')
+console.log('✓ віз із бази → сховище з вмістом і місткістю')
 console.log('Імпорт із сайту OK')

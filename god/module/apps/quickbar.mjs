@@ -62,7 +62,7 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** Чий це бар: обраний токен, яким можна керувати → свій персонаж */
   get actor() {
-    const t = canvas?.tokens?.controlled?.find(t => t.actor?.isOwner)
+    const t = canvas?.tokens?.controlled?.find(t => t.actor?.isOwner && t.actor.type !== 'storage')
     return t?.actor ?? game.user.character ?? null
   }
 

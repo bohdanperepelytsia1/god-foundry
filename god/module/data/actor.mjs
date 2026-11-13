@@ -310,3 +310,26 @@ export class NpcData extends foundry.abstract.TypeDataModel {
 
 const PROF_KEYS = new Set(Object.values(GOD.WEAPON_SKILLS).map(w => w.prof).filter(Boolean))
 const ACC_KEYS = new Set([...Object.values(GOD.WEAPON_SKILLS).map(w => w.acc).filter(Boolean), 'Маг_прицільність'])
+
+/**
+ * Сховище: візок, віз, склад, схованка пачки. Лише вміст, місткість і гаманець.
+ * Предмети з нього беруть перетягуванням на свій лист або кнопкою «Взяти собі».
+ */
+export class StorageData extends foundry.abstract.TypeDataModel {
+  static defineSchema() {
+    return {
+      capacity: flt(0, { min: 0 }),             // кг; 0 — без обмеження
+      party: new f.StringField({ initial: '' }),  // підпис: чия пачка
+      money: moneyField(),
+      notes: new f.HTMLField({ initial: '' }),
+    }
+  }
+  prepareDerivedData() {
+    const t = itemTotals(this.parent)
+    const cap = Number(this.capacity) || 0
+    this.derived = {
+      totalWeight: t.totalWeight, maxWeight: cap, overloaded: cap > 0 && t.totalWeight > cap,
+      belt: { used: 0, slots: 0 }, initiative: 0,
+    }
+  }
+}

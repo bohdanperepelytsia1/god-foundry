@@ -76,6 +76,7 @@ console.log('✓ схеми предметів')
 Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
 Handlebars.registerHelper('god-eq', (a, b) => a === b)
 Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
+Handlebars.registerHelper('god-and', (...a) => a.slice(0, -1).every(Boolean))
 Handlebars.registerHelper('checked', v => v ? 'checked' : '')
 Handlebars.registerHelper('selectOptions', (choices, o) => new Handlebars.SafeString(
   Object.entries(choices || {}).map(([k, v]) => `<option value="${k}" ${k === o.hash.selected ? 'selected' : ''}>${v}</option>`).join('')))
@@ -239,6 +240,8 @@ const impHtml = impT({ step: 'pick', users: [{ id: 'u1', name: 'Оля' }], expo
   enemies: [{ id: '2:e', name: 'Орк', hp: 600, checked: true }], groups: [{ key: 'gmItems', label: 'Предмети майстра', count: 38, checked: true }] })
 assert.ok(impHtml.includes('name="char" value="1" checked') && impHtml.includes('<option value="u1" selected>Оля</option>'), 'імпорт: персонаж і власник')
 assert.ok(impHtml.includes('name="enemy" value="2:e" checked') && impHtml.includes('name="group" value="gmItems" checked') && impHtml.includes('name="overwrite"'), 'імпорт: вороги, предмети, оновлення')
+assert.ok(impT({ step: 'pick', users: [], chars: [], enemies: [], groups: [], storages: [{ id: 3, name: 'Віз', count: 22, capacity: 200, party: 'Банда', checked: true }] })
+  .includes('name="storage" value="3" checked'), 'імпорт: вози сховищами')
 console.log('✓ вікно імпорту з сайту')
 
 // ── панелі: персонаж і швидка панель ──

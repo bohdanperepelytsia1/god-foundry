@@ -1,0 +1,46 @@
+<aside class="god-sidebar god-storage-side">
+  {{#if editable}}
+  <a class="god-edit-toggle {{#if editMode}}on{{/if}}" data-action="toggleEdit"
+     data-tooltip="{{#if editMode}}Завершити редагування{{else}}Режим редагування{{/if}}">
+    <i class="fa-solid {{#if editMode}}fa-lock-open{{else}}fa-lock{{/if}}"></i></a>
+  {{/if}}
+  <div class="god-portrait-wrap">
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="" {{#if editMode}}data-action="editImage" data-tooltip="Змінити картинку або вибрати її шматок. Можна просто перетягнути файл з комп'ютера на портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <span class="god-level-badge god-npc-badge" data-tooltip="Сховище"><i class="fa-solid fa-box-archive"></i></span>
+    {{#if editMode}}<a class="god-token-pick {{#if tokenFollows}}follows{{/if}}" data-action="tokenImage" data-tooltip="{{#if tokenFollows}}Токен на мапі показує портрет і зміниться разом з ним. Клік — задати окремий готовий токен (або перетягни файл на портрет){{else}}Окремий токен. Клік — інший файл, ПКМ — знову як портрет{{/if}}"><img src="{{tokenImg}}" alt=""><span>{{#if tokenFollows}}Токен = портрет{{else}}Окремий токен{{/if}}</span></a>{{/if}}
+    {{#if editMode}}<a class="god-token-look" data-action="tokenLook" data-tooltip="Вигляд токена: масштаб, віддзеркалення, кільце"><i class="fa-solid fa-sliders"></i></a>{{/if}}
+    {{#if editable}}<div class="god-drop-zones" aria-hidden="true">
+      <div class="god-drop-zone" data-drop="portrait"><i class="fa-solid fa-image-portrait"></i><b>Портрет</b><small>{{#if tokenFollows}}+ токен{{else}}лише лист{{/if}}</small></div>
+      <div class="god-drop-zone" data-drop="token"><i class="fa-solid fa-chess-pawn"></i><b>Токен</b><small>окремо для мапи</small></div>
+    </div>{{/if}}
+  </div>
+  {{#if editMode}}<input class="god-name-input" type="text" name="name" value="{{actor.name}}">
+  {{else}}<h1 class="god-name">{{actor.name}}</h1>{{/if}}
+  {{#if editMode}}<input class="god-sub-input" type="text" name="system.party" value="{{system.party}}" placeholder="Чиє: пачка, гравець…">
+  {{else if system.party}}<p class="god-sub">{{system.party}}</p>{{/if}}
+
+  <div class="god-side-block god-storage-cap {{#if system.derived.overloaded}}over{{/if}}">
+    <h4>Вантаж</h4>
+    <div class="god-enc-bar"><div style="width: {{weightPct}}%"></div>
+      <span><b>{{system.derived.totalWeight}}</b>{{#if system.capacity}} / {{system.capacity}}{{/if}} кг</span></div>
+    {{#if system.derived.overloaded}}<p class="god-warn-line"><i class="fa-solid fa-triangle-exclamation"></i> Перевантажено</p>{{/if}}
+    <p class="god-hint">Перетягни річ зі свого листа сюди — і назад. Або «Взяти собі» в рядку.</p>
+  </div>
+
+  <div class="god-side-block god-wallet">
+    <h4>Гроші <small class="god-wallet-total">{{moneyTotal}}</small></h4>
+    <div class="god-purse">
+      {{#each money}}
+      <label class="god-coin god-coin-{{key}}" data-tooltip="{{label}}">
+        <i></i><input type="text" data-delta="system.money.{{key}}" data-min="0" value="{{value}}" {{#unless @root.editable}}disabled{{/unless}}><span>{{abbr}}</span>
+      </label>
+      {{/each}}
+    </div>
+    {{#if editable}}<div class="god-wallet-actions">
+      <button type="button" data-action="wallet" data-mode="give" data-tooltip="Передати гроші персонажу"><i class="fa-solid fa-hand-holding-hand"></i> Видати</button>
+      <button type="button" data-action="wallet" data-mode="receive" data-tooltip="Покласти гроші"><i class="fa-solid fa-plus"></i></button>
+      <button type="button" data-action="wallet" data-mode="exchange" data-tooltip="Обміняти монети (1 : 100)"><i class="fa-solid fa-right-left"></i></button>
+      <button type="button" data-action="wallet" data-mode="consolidate" data-tooltip="Зібрати дрібні монети в більші"><i class="fa-solid fa-layer-group"></i></button>
+    </div>{{/if}}
+  </div>
+</aside>

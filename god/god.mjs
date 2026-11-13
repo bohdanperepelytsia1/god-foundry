@@ -4,11 +4,11 @@
  */
 import { GOD, defaultIcon, ACTOR_ICONS, STATUS_EFFECTS } from './module/config.mjs'
 import { GodActiveEffect } from './module/documents/active-effect.mjs'
-import { CharacterData, NpcData } from './module/data/actor.mjs'
+import { CharacterData, NpcData, StorageData } from './module/data/actor.mjs'
 import { WeaponData, ArmorData, GearData, SpellData, AbilityData, TraitData } from './module/data/item.mjs'
 import { GodActor } from './module/documents/actor.mjs'
 import { GodItem } from './module/documents/item.mjs'
-import { GodCharacterSheet, GodNpcSheet } from './module/sheets/actor-sheets.mjs'
+import { GodCharacterSheet, GodNpcSheet, GodStorageSheet } from './module/sheets/actor-sheets.mjs'
 import { GodItemSheet } from './module/sheets/item-sheet.mjs'
 import * as R from './module/rules.mjs'
 import * as Dice from './module/dice/rolls.mjs'
@@ -42,7 +42,7 @@ Hooks.once('init', () => {
   // Шрифти системи в редакторі журналів і малюнках (файли підключені через CSS)
   CONFIG.fontDefinitions['Montserrat'] = { editor: true, fonts: [] }
   CONFIG.fontDefinitions['Rubik'] = { editor: true, fonts: [] }
-  Object.assign(CONFIG.Actor.dataModels, { character: CharacterData, npc: NpcData })
+  Object.assign(CONFIG.Actor.dataModels, { character: CharacterData, npc: NpcData, storage: StorageData })
   Object.assign(CONFIG.Item.dataModels, { weapon: WeaponData, armor: ArmorData, gear: GearData, spell: SpellData, ability: AbilityData, trait: TraitData })
 
   // Смуги токенів: ресурси з value/max
@@ -60,6 +60,7 @@ Hooks.once('init', () => {
   const Items = foundry.documents.collections?.Items ?? globalThis.Items
   Actors.registerSheet('god', GodCharacterSheet, { types: ['character'], makeDefault: true, label: 'G.O.D. — Персонаж' })
   Actors.registerSheet('god', GodNpcSheet, { types: ['npc'], makeDefault: true, label: 'G.O.D. — НІП' })
+  Actors.registerSheet('god', GodStorageSheet, { types: ['storage'], makeDefault: true, label: 'G.O.D. — Сховище' })
   Items.registerSheet('god', GodItemSheet, { makeDefault: true, label: 'G.O.D. — Предмет' })
 
   // Спільний рядок предмета (partial-block)
@@ -145,6 +146,7 @@ Hooks.once('init', () => {
   Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
   Handlebars.registerHelper('god-eq', (a, b) => a === b)
   Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
+  Handlebars.registerHelper('god-and', (...a) => a.slice(0, -1).every(Boolean))
   if (!Handlebars.helpers.and) Handlebars.registerHelper('and', (...a) => a.slice(0, -1).every(Boolean))
   Handlebars.registerHelper('god-lte', (a, b) => Number(a) <= Number(b))
   Handlebars.registerHelper('god-range', n => Array.from({ length: Number(n) || 0 }, (_, i) => i + 1))
@@ -179,6 +181,14 @@ Hooks.on('preCreateActor', (actor, data) => {
   if (foundry.utils.getProperty(data, 'prototypeToken.width') === undefined) Object.assign(tok, { 'prototypeToken.width': n, 'prototypeToken.height': n })
   if (data.img && !foundry.utils.getProperty(data, 'prototypeToken.texture.src')) tok['prototypeToken.texture.src'] = data.img
   actor.updateSource(tok)
+  if (actor.type === 'storage') {
+    actor.updateSource({
+      ...(data.img ? {} : { img: 'icons/svg/chest.svg', 'prototypeToken.texture.src': 'icons/svg/chest.svg' }),
+      'prototypeToken.actorLink': true, 'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.NONE,
+      'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.NEUTRAL,
+    })
+    return
+  }
   if (actor.type === 'npc') {
     // НІП: ресурси повні, токен ворожий і не прив'язаний (кожен на сцені — окремий екземпляр)
     const fill = {}
