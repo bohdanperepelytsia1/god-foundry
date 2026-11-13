@@ -231,6 +231,16 @@ const cbPl = cbT({ gm: false, started: true, round: 3, rows: cbRows, myTurn: tru
 assert.ok(cbPl.includes('Завершити хід') && !cbPl.includes('data-ini') && !cbPl.includes('nextRound'), 'гравець: лише свій хід')
 console.log('✓ панель бою')
 
+// ── вікно імпорту з сайту ──
+const impT = Handlebars.compile(readFileSync('god/templates/apps/site-importer.hbs', 'utf8'))
+assert.ok(impT({ step: 'file' }).includes('type="file"'), 'імпорт: вибір файлу')
+const impHtml = impT({ step: 'pick', users: [{ id: 'u1', name: 'Оля' }], exportedAt: 'сьогодні', anyExists: true,
+  chars: [{ id: 1, name: 'Ейла', level: 19, party: 'Кіт', checked: true, owner: 'u1' }, { id: 2, name: 'Тест', level: 0, test: true }],
+  enemies: [{ id: '2:e', name: 'Орк', hp: 600, checked: true }], groups: [{ key: 'gmItems', label: 'Предмети майстра', count: 38, checked: true }] })
+assert.ok(impHtml.includes('name="char" value="1" checked') && impHtml.includes('<option value="u1" selected>Оля</option>'), 'імпорт: персонаж і власник')
+assert.ok(impHtml.includes('name="enemy" value="2:e" checked') && impHtml.includes('name="group" value="gmItems" checked') && impHtml.includes('name="overwrite"'), 'імпорт: вороги, предмети, оновлення')
+console.log('✓ вікно імпорту з сайту')
+
 // ── панелі: персонаж і швидка панель ──
 const bar = (key, extra = {}) => ({ key, abbr: key.toUpperCase(), value: 5, max: 10, pct: 50, ...extra })
 const hud = Handlebars.compile(readFileSync('god/templates/apps/hud.hbs', 'utf8'))({ actor: base.actor, bars: [bar('hp'), bar('mp')], armor: [bar('pr')], stances: base.stances, weapons: [], spells: [] })

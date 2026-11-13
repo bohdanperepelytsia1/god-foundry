@@ -1825,3 +1825,29 @@ input.god-cb-ini { background: rgba(0, 0, 0, .25); border: 1px solid var(--g-lin
 b.god-cb-ini { display: grid; place-items: center; }
 /* У ворога 5 коротких вкладок — підписи вміщаються й у вужчому листі */
 @container (min-width: 470px) { .god.npc .god-tab-link:not(.active) span { display: inline; } }
+
+/* ── Імпорт із сайту ───────────────────────────────────────────────────────── */
+.god-importer .window-content { padding: 0; }
+.god-imp { display: flex; flex-direction: column; max-height: 78vh; }
+.god-imp-file { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 20px; text-align: center; }
+.god-imp-file > i { font-size: 30px; color: var(--g-accent); }
+.god-imp-file p { margin: 0; }
+.god-imp-pick { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.god-imp .god-imp-head { margin: 10px 14px 6px; }
+.god-imp-lists { overflow-y: auto; min-height: 0; flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 10px; }
+.god-imp-all { margin-left: auto; font-size: 11px; color: var(--g-dim); cursor: pointer; }
+.god-imp-list { list-style: none; margin: 6px 0 2px; padding: 0; }
+.god-imp-list li { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-bottom: 1px dotted var(--g-line); }
+.god-imp-list li.dim { opacity: .6; }
+.god-imp-list label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.god-imp-name { font-weight: 600; overflow-wrap: anywhere; }
+.god-imp-list small { color: var(--g-faint); white-space: nowrap; }
+.god-imp-list select { flex: none; width: 150px; height: 26px; font-size: 12px; }
+.god-imp-foot { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--g-line); }
+.god-imp-foot .god-dlg-check { margin: 0 auto 0 0; }
+.god-imp-foot > button { flex: none; }
+.god-imp-foot > button.god-btn { margin-left: auto; }
+.god-imp-progress { margin-left: auto; color: var(--g-dim); }
+.god-import-btn { margin-top: 4px; }
+.god-import-report ul { margin: 4px 0 8px; padding-left: 18px; }
+.god-import-report h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--g-dim); }

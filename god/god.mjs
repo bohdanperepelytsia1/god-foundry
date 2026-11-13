@@ -17,6 +17,7 @@ import { GodDiceTray } from './module/apps/dice-tray.mjs'
 import * as API from './module/api.mjs'
 import { GodHud } from './module/apps/hud.mjs'
 import { GodCombatPanel, registerCombatPanel } from './module/apps/combat-panel.mjs'
+import { GodSiteImporter, registerSiteImporter } from './module/apps/site-importer.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -74,6 +75,7 @@ Hooks.once('init', () => {
   registerMigrationMenu()
   registerRotationHandle()
   registerCombatPanel()
+  registerSiteImporter()
   game.settings.register('god', 'animations', {
     name: 'Анімації ударів і магії',
     hint: 'Програються в момент нанесення урону. Потрібні модулі Sequencer і JB2A (безкоштовний). Без них нічого не відбувається.',
@@ -99,6 +101,7 @@ Hooks.once('init', () => {
     hud: actor => GodHud.open(actor ?? defaultActor()),
     quickbar: () => GodQuickbar.refresh(),
     combat: () => GodCombatPanel.toggle(),
+    importSite: () => new GodSiteImporter().render({ force: true }),
     guide: openGuide,
   }
 
@@ -205,7 +208,7 @@ Hooks.on('preCreateActor', (actor, data) => {
     'prototypeToken.actorLink': true,
     'prototypeToken.bar1.attribute': 'resources.hp',
     'prototypeToken.bar2.attribute': 'resources.mp',
-    'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.OWNER,
+    'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.NONE,   // HP/OM видно в панелі героя, не над токеном
     'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.FRIENDLY,
   })
 })

@@ -118,6 +118,22 @@ async function migrateTokenBars() {
   return n
 }
 
+/** 0.14.0: смуги HP/OM над токенами героїв прибрано (ресурси видно в панелі героя) */
+async function migrateHideHeroBars() {
+  const NONE = CONST.TOKEN_DISPLAY_MODES.NONE, OWNER = CONST.TOKEN_DISPLAY_MODES.OWNER
+  const opts = { godMigration: true }
+  let n = 0
+  for (const a of game.actors) {
+    if (a.type !== 'character' || a.prototypeToken.displayBars !== OWNER) continue
+    await a.update({ 'prototypeToken.displayBars': NONE }, opts); n++
+  }
+  for (const scene of game.scenes) {
+    const ups = scene.tokens.filter(t => t.actor?.type === 'character' && t.displayBars === OWNER).map(t => ({ _id: t.id, displayBars: NONE }))
+    if (ups.length) { await scene.updateEmbeddedDocuments('Token', ups, opts); n += ups.length }
+  }
+  return n
+}
+
 /**
  * Дані акторів і предметів, перетворені новою версією (нові поля, перейменування, обрізані максимуми),
  * записуємо в базу — тоді все виглядає однаково і на картах, і в списках, без пересоздання світу.
@@ -185,7 +201,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

@@ -6,7 +6,7 @@ const coll = arr => Object.assign(arr, { contents: arr, get: id => arr.find(x =>
 const mkItem = (id, type, img, system) => ({ id, type, img, system, _source: { system }, effects: coll([]),
   deleteEmbeddedDocuments: async () => {} })
 const mkActor = (id, type, items, extra = {}) => ({ id, name: id, type, img: 'x.png', items: coll(items), effects: coll([]),
-  prototypeToken: { bar1: {}, bar2: { attribute: 'resources.mp' } }, _source: { system: { a: 1 } },
+  prototypeToken: { bar1: {}, bar2: { attribute: 'resources.mp' }, displayBars: 30 }, _source: { system: { a: 1 } },
   update: async u => calls.push(['actor.update', id, u]),
   updateEmbeddedDocuments: async (cls, ups, o) => calls.push(['embedded', id, cls, ups, o]), ...extra })
 const gearGeneric = 'systems/god/assets/icons/gear/item.svg'
@@ -20,6 +20,7 @@ globalThis.game = {
   actors: coll([hero]), items: coll([]), scenes: coll([scene]),
   settings: { get: () => worldVersion, set: async (a, b, v) => { worldVersion = v } },
 }
+globalThis.CONST = { TOKEN_DISPLAY_MODES: { NONE: 0, OWNER_HOVER: 20, OWNER: 30 } }
 globalThis.ui = { notifications: { info: () => {}, warn: () => {}, error: m => { throw new Error(m) } } }
 globalThis.foundry = { utils: { isNewerVersion: (a, b) => a.localeCompare(b, undefined, { numeric: true }) > 0, deepClone: x => structuredClone(x) },
   applications: { instances: new Map() } }
@@ -36,4 +37,6 @@ assert.ok(calls.some(c => c[0] === 'scene' && c[2][0]['bar1.attribute'] === 'res
 assert.ok(calls.some(c => c[0] === 'actor.update' && c[2]['prototypeToken.bar1.attribute'] === 'resources.hp'), 'смуги прототипу')
 assert.ok(calls.some(c => c[0] === 'Actor.updateDocuments' && c[2].godMigration && c[2].diff === false), 'дані акторів записано')
 assert.ok(emb.some(c => c[1] === 'orc-token' && c[4]?.godMigration), 'предмети токена на карті записано')
+assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'смуги HP/OM над героєм прибрано')
+assert.ok(!calls.some(c => c[0] === 'actor.update' && c[1] !== 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'у ворогів смуги лишились')
 console.log('✓ міграція: світ + токени на картах, іконки, смуги, запис даних')

@@ -1,0 +1,65 @@
+<div class="god-imp">
+  {{#if (god-eq step "file")}}
+  <div class="god-imp-file">
+    <i class="fa-solid fa-file-import"></i>
+    <p>Обери файл експорту сайту <code>god-site-export.json</code>.</p>
+    <label class="god-btn god-imp-pick"><i class="fa-solid fa-folder-open"></i> Обрати файл<input type="file" accept=".json,application/json" hidden></label>
+    <p class="god-hint">Файл робить скрипт <code>tools/site-export.py</code> з бази сайту <code>charsheet.db</code>:<br>
+      <code>python3 tools/site-export.py charsheet.db</code>. Акаунти, паролі й логи сайту туди не потрапляють.</p>
+  </div>
+  {{else}}
+  <p class="god-hint god-imp-head">Експорт від {{exportedAt}}. Познач, що перенести. Активних персонажів і живих ворогів уже позначено.</p>
+  <div class="god-imp-lists">
+    <section class="god-panel">
+      <header><h3><i class="fa-solid fa-user"></i> Персонажі</h3><a class="god-imp-all" data-action="toggleAll" data-list="chars">усі / жодного</a></header>
+      <ul class="god-imp-list" data-list="chars">
+        {{#each chars}}
+        <li class="{{#unless checked}}dim{{/unless}}">
+          <label><input type="checkbox" name="char" value="{{id}}" {{#if checked}}checked{{/if}}>
+            <span class="god-imp-name">{{name}}</span>
+            <small>рів. {{level}}{{#if party}} · {{party}}{{/if}}{{#if archived}} · архів{{/if}}{{#if test}} · тест{{/if}}{{#if exists}} · <b>уже є</b>{{/if}}</small></label>
+          <select data-owner="{{id}}" data-tooltip="Гравець, якому віддати персонажа">
+            <option value="">— гравець —</option>
+            {{#each @root.users}}<option value="{{this.id}}" {{#if (god-eq this.id ../owner)}}selected{{/if}}>{{this.name}}</option>{{/each}}
+          </select>
+        </li>
+        {{/each}}
+      </ul>
+    </section>
+
+    {{#if enemies.length}}
+    <section class="god-panel">
+      <header><h3><i class="fa-solid fa-skull-crossbones"></i> Вороги з «Бою майстра»</h3><a class="god-imp-all" data-action="toggleAll" data-list="enemies">усі / жодного</a></header>
+      <ul class="god-imp-list" data-list="enemies">
+        {{#each enemies}}
+        <li class="{{#unless checked}}dim{{/unless}}"><label><input type="checkbox" name="enemy" value="{{id}}" {{#if checked}}checked{{/if}}>
+          <span class="god-imp-name">{{name}}</span><small>HP {{hp}}{{#if party}} · {{party}}{{/if}}{{#if exists}} · <b>уже є</b>{{/if}}</small></label></li>
+        {{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{#if groups.length}}
+    <section class="god-panel">
+      <header><h3><i class="fa-solid fa-sack"></i> Предмети — у теки вкладки «Предмети»</h3><a class="god-imp-all" data-action="toggleAll" data-list="groups">усі / жодного</a></header>
+      <ul class="god-imp-list" data-list="groups">
+        {{#each groups}}
+        <li><label><input type="checkbox" name="group" value="{{key}}" {{#if checked}}checked{{/if}}>
+          <span class="god-imp-name">{{label}}</span><small>{{count}} шт.{{#if party}} · {{party}}{{/if}}</small></label></li>
+        {{/each}}
+      </ul>
+    </section>
+    {{/if}}
+  </div>
+
+  <footer class="god-imp-foot">
+    {{#if anyExists}}<label class="god-dlg-check" data-tooltip="Без позначки вже перенесені пропускаються. З позначкою — замінюються даними з файлу (токени на сценах лишаються прив'язаними)">
+      <input type="checkbox" name="overwrite"><span>Оновити вже перенесених</span></label>{{/if}}
+    {{#if busy}}<span class="god-imp-progress"><i class="fa-solid fa-spinner fa-spin"></i> {{progress}}</span>
+    {{else}}
+    <button type="button" data-action="reset"><i class="fa-solid fa-arrow-left"></i> Інший файл</button>
+    <button type="button" class="god-btn" data-action="run"><i class="fa-solid fa-file-import"></i> Перенести</button>
+    {{/if}}
+  </footer>
+  {{/if}}
+</div>
