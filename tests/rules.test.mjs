@@ -223,4 +223,15 @@ t('володіння заклинанням: герой — школа, вор�
   assert.equal(R.spellMastery({ type: 'npc', schools: { fire: 7 }, school: 'fire', level: 2 }), 7)
   assert.equal(R.spellMastery({ type: 'npc', schools: {}, school: 'dark', level: 0 }), 1)
 })
+t('наслідки втрати ресурсів: мана, свідомість, що впало', () => {
+  assert.deepEqual(R.afterManaLoss(10), [])
+  assert.equal(R.afterManaLoss(0)[0].dc, 12); assert.equal(R.afterManaLoss(-30)[0].stat, 'con')
+  assert.equal(R.afterMindLoss(20), null)
+  assert.deepEqual(R.afterMindLoss(12).checks.map(c => c.dc), [8, 12], 'тривожність')
+  assert.deepEqual(R.afterMindLoss(7).checks.map(c => c.dc), [14, 16], 'паранойя')
+  assert.equal(R.afterMindLoss(3).key, 'psychosis')
+  assert.deepEqual(R.droppedResources({ hp: 250, mp: 10, mt: 12 }, { hp: 200, mp: undefined, mt: 15 }), ['hp'], 'лише те, що зменшилось')
+  // повторний удар у тій самій зоні — знову перевірки, без «пам'яті»
+  assert.equal(R.afterHit(250, 1000).checks.length, 1); assert.equal(R.afterHit(200, 1000).checks.length, 1)
+})
 console.log(`\n${n} тестів пройдено`)

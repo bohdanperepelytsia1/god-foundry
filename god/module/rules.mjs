@@ -220,6 +220,28 @@ export const mentalState = mt => {
   return null
 }
 
+/** Мана ≤ 0 (можна піти в мінус): перевірка 12+ від Тілобудови — не втратити свідомість */
+export const afterManaLoss = mp => num(mp) <= 0 ? [{ stat: 'con', dc: 12, label: 'Тілобудова 12+ — не втратити свідомість' }] : []
+
+/**
+ * Втрата свідомості (MT): у кожному стані — свої перевірки Волі.
+ * Тривожність: галюцинації 8+, страх 12+; паранойя: галюцинації 14+, страх 16+; психоз — шанс нервового зриву.
+ */
+export const afterMindLoss = mt => {
+  const s = mentalState(mt)
+  if (!s) return null
+  const checks = {
+    anxiety: [{ stat: 'will', dc: 8, label: 'Воля 8+ — опанувати галюцинації' }, { stat: 'will', dc: 12, label: 'Воля 12+ — опір страху (при небезпеці)' }],
+    paranoia: [{ stat: 'will', dc: 14, label: 'Воля 14+ — опанувати галюцинації' }, { stat: 'will', dc: 16, label: 'Воля 16+ — опір страху (при небезпеці)' }],
+    psychosis: [],
+  }[s.key]
+  return { ...s, checks }
+}
+
+/** Що впало: попередні й нові значення ресурсів → список ключів, які зменшились */
+export const droppedResources = (prev = {}, next = {}) =>
+  Object.keys(next).filter(k => next[k] !== undefined && prev[k] !== undefined && num(next[k]) < num(prev[k]))
+
 export const applyPct = ({ phys, mag }, pct) => ({
   phys: Math.floor(num(phys) * pct / 100),
   mag:  Math.floor(num(mag) * pct / 100),

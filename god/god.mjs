@@ -476,23 +476,39 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
 }
 
 // ── Старт світу: міграція і відновлення закріплених вікон ───────────────────
-// Витривалість на нулі — герой непритомніє (пише лише той, хто змінив значення)
-Hooks.on('updateActor', (actor, changes, options, userId) => {
-  if (userId !== game.user.id || options.godMigration) return
-  // НІП не непритомніють і не кидають спаскидків: HP ≤ 0 — мертвий (і навпаки, вилікували — живий)
-  if (actor.type === 'npc') {
-    const hp = foundry.utils.getProperty(changes, 'system.resources.hp.value')
-    if (hp === undefined) return
-    const dead = actor.statuses?.has('dead')
-    if (hp <= 0 && !dead) actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
-    if (hp > 0 && dead) actor.toggleStatusEffect?.('dead', { active: false })
-    return
-  }
-  if (actor.type !== 'character') return
-  const ed = foundry.utils.getProperty(changes, 'system.resources.ed.value')
-  if (ed !== undefined && ed <= 0 && (actor.system.resources.ed?.max ?? 0) > 0 && !actor.statuses?.has('unconscious')) {
-    actor.toggleStatusEffect?.('unconscious', { active: true })
-    ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card"><p><b>${foundry.utils.escapeHTML?.(actor.name) ?? actor.name}</b> знесилений: витривалість ${ed} — втрата свідомості.</p></div>` })
+// ── Наслідки втрати ресурсів ────────────────────────────────────────────────
+// Спрацьовують на БУДЬ-ЯКЕ зменшення: урон з картки, ручна правка (−100 у полі HP), макрос, ефект.
+// І щоразу заново: пройшов перевірку калітства, а тебе вдарили ще — нова перевірка.
+// Пише лише той клієнт, що змінив значення; автопідгонка ресурсів під максимум і міграції не рахуються.
+const WATCH = ['hp', 'mp', 'mt', 'ed']
+Hooks.on('preUpdateActor', (actor, changes, options) => {
+  if (!foundry.utils.getProperty(changes, 'system.resources')) return
+  options.godPrev = Object.fromEntries(WATCH.map(k => [k, actor.system.resources?.[k]?.value]))
+})
+Hooks.on('updateActor', async (actor, changes, options, userId) => {
+  if (userId !== game.user.id || options.godMigration || options.godResSync || !options.godPrev) return
+  const next = Object.fromEntries(WATCH.map(k => [k, foundry.utils.getProperty(changes, `system.resources.${k}.value`)]))
+  const dropped = new Set(R.droppedResources(options.godPrev, next))
+  const res = actor.system.resources
+  try {
+    if (actor.type === 'npc') {
+      // НІП не непритомніють і не кидають спаскидків: HP ≤ 0 — мертвий (і навпаки, вилікували — живий)
+      if (next.hp === undefined) return
+      const dead = actor.statuses?.has('dead')
+      if (next.hp <= 0 && !dead) await Dice.hitConsequences(actor)
+      if (next.hp > 0 && dead) await actor.toggleStatusEffect?.('dead', { active: false })
+      return
+    }
+    if (actor.type !== 'character') return
+    if (dropped.has('hp')) await Dice.hitConsequences(actor)
+    if (dropped.has('ed') && res.ed.value <= 0 && (res.ed.max ?? 0) > 0 && !actor.statuses?.has('unconscious')) {
+      await actor.toggleStatusEffect?.('unconscious', { active: true })
+      await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card"><p><b>${foundry.utils.escapeHTML?.(actor.name) ?? actor.name}</b> знесилений: витривалість ${res.ed.value} — втрата свідомості.</p></div>` })
+    }
+    if (dropped.has('mp')) await Dice.manaConsequences(actor)
+    if (dropped.has('mt')) await Dice.mindConsequences(actor, options.godPrev.mt)
+  } catch (err) {
+    console.warn('G.O.D. | наслідки втрати ресурсів', err)
   }
 })
 

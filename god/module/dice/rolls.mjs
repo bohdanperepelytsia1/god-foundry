@@ -710,8 +710,7 @@ export async function castSpell(actor, spell, opts = {}) {
     await actor.update({ 'system.resources.mp.value': cur.mp.value - s.manaCost, 'system.resources.ed.value': cur.ed.value - s.staminaCost })
   }
   const manaWarn = () => p.pay && actor.system.resources.mp.value <= 0
-    ? `<div class="god-note god-warn">Мана ${actor.system.resources.mp.value} OM — перевірка <b>12+ від Тілобудови</b>, щоб не знепритомніти.
-       <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|con|12">Кинути Тілобудову</button></div></div>` : ''
+    ? `<div class="god-note god-warn">Мана ${actor.system.resources.mp.value} OM — перевірка Тілобудови 12+ окремою карткою.</div>` : ''
 
   const rolls = []
   const cHit = !needsHit ? 0 : luck ? (p.critHit ?? 0) : await spendCrits(actor, p.critHit)
@@ -929,6 +928,7 @@ export async function hitConsequences(actor, out) {
   if (a.state === 'ok' && !a.checks.length) return
   let html = head(actor.img, 'Після удару', `${actor.name}: HP ${r.value} / ${r.max}`)
   if (a.state === 'dead') {
+    if (actor.statuses?.has('dead')) return
     html += '<div class="god-tier tier-none">Смерть<small>HP впало до −максимуму</small></div>'
     await actor.toggleStatusEffect?.('dead', { active: true, overlay: true })
   } else if (a.state === 'down') {
@@ -941,10 +941,35 @@ export async function hitConsequences(actor, out) {
       : `<div class="god-note">HP нижче −½ максимуму: спаскидки до трьох успіхів або провалів.</div>
          <div class="god-apply god-apply-one"><button type="button" data-god-death="${actor.uuid}|saves"><i class="fa-solid fa-heart-pulse"></i> Спаскидок</button></div>`
   } else {
-    html += '<div class="god-checks">' + a.checks.map(ch => `
+    html += checkButtons(actor, a.checks)
+  }
+  return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card">${html}</div>` })
+}
+
+const checkButtons = (actor, checks) => '<div class="god-checks">' + checks.map(ch => `
       <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|${ch.stat}|${ch.dc}" data-tooltip="${esc(ch.label)}">
         <i class="fa-solid fa-dice-d20"></i> ${esc(ch.label)}</button></div>`).join('') + '</div>'
-  }
+
+/** Мана впала до 0 чи нижче — кожного разу перевірка Тілобудови */
+export async function manaConsequences(actor) {
+  const r = actor.system.resources.mp
+  const checks = R.afterManaLoss(r.value)
+  if (!checks.length) return
+  const html = head(actor.img, 'Виснаження одхі', `${actor.name}: OM ${r.value} / ${r.max}`) + checkButtons(actor, checks)
+  return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card">${html}</div>` })
+}
+
+/** Свідомість (MT) зменшилась і герой у тривожності, паранойї чи психозі — стан і перевірки Волі */
+export async function mindConsequences(actor, prevMt) {
+  const r = actor.system.resources.mt
+  const st = R.afterMindLoss(r.value)
+  if (!st) return
+  const before = R.mentalState(prevMt)
+  const worse = !before || before.key !== st.key
+  let html = head(actor.img, worse ? `Новий стан: ${st.label}` : st.label, `${actor.name}: MT ${r.value} / ${r.max}`)
+  html += `<div class="god-note">${esc(st.note)}</div>`
+  if (st.key === 'psychosis') html += '<div class="god-note">Шанс нервового зриву: якщо на перевірці випадає 3 — новий дебаф, 5d100 фіз. урону, мана в 0. Більшість дій заявляє майстер.</div>'
+  if (st.checks.length) html += checkButtons(actor, st.checks)
   return ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }), content: `<div class="god-card">${html}</div>` })
 }
 
