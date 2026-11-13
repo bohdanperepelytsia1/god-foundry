@@ -1880,3 +1880,19 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-tok-dialog .god-tok-cell > img, .god-tok-dialog .god-tok-cell > video { width: 100%; height: 100%; object-fit: contain; transition: transform .08s; }
 .god-tok-dialog .god-tok-cell.ring::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 6px solid rgba(243, 194, 103, .75); pointer-events: none; }
 .god-tok-dialog .god-dlg-field b[data-out] { margin-left: 6px; color: var(--g-accent2); font-weight: 700; }
+
+/* ── Лист предмета: кнопка «Зберегти» внизу ───────────────────────────────── */
+.god.item .god-item-save { position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 10px; margin: 12px -12px -12px; padding: 10px 12px;
+  background: var(--g-bg2, #1b1e28); border-top: 1px solid var(--g-line); box-shadow: 0 -6px 14px rgba(0, 0, 0, .35); }
+.god.item .god-item-save .god-hint { flex: 1; margin: 0; font-size: 11px; }
+.god.item .god-item-save .god-btn { flex: none; }
+
+/* ── Коротке вікно нового заклинання / здібності ──────────────────────────── */
+.god-sc-dialog .god-sc { display: flex; flex-direction: column; gap: 8px; }
+.god-sc-dialog .god-sc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; }
+.god-sc-dialog .god-sc-f { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 11px; color: var(--g-dim); }
+.god-sc-dialog .god-sc-f > span { text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.god-sc-dialog .god-sc-f input, .god-sc-dialog .god-sc-f select { width: 100%; height: 30px; font-size: 13px; color: var(--g-text); }
+.god-sc-dialog .god-sc-name input { height: 34px; font-size: 15px; font-weight: 600; }
+.god-sc-dialog .god-sc-f textarea { width: 100%; min-height: 70px; resize: vertical; font: inherit; font-size: 13px; color: var(--g-text); }
+.god .god-npc-magic-hint { display: flex; gap: 6px; align-items: baseline; margin: 0 0 10px; }

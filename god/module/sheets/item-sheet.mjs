@@ -14,6 +14,7 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
     form: { submitOnChange: true },
     actions: {
       editImage: GodItemSheet.#editImage,
+      saveClose: GodItemSheet.#saveClose,
       gearCategory: GodItemSheet.#gearCategory,
       effectCreate: GodItemSheet.#effectCreate, effectEdit: GodItemSheet.#effectEdit,
       effectDelete: GodItemSheet.#effectDelete, effectToggle: GodItemSheet.#effectToggle,
@@ -26,6 +27,28 @@ export class GodItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
   }
 
   static PARTS = { body: { template: 'systems/god/templates/item/item-sheet.hbs', scrollable: [''] } }
+
+  /**
+   * «Зберегти»: поля форми + текст із відкритих редакторів опису (вони інакше зберігаються
+   * лише власною кнопкою або при закритті), потім закрити лист.
+   */
+  static async #saveClose() {
+    if (!this.isEditable) return this.close()
+    const upd = {}
+    for (const pm of this.element.querySelectorAll('prose-mirror[name]')) {
+      const live = pm.querySelector('.ProseMirror')
+      if (live) upd[pm.getAttribute('name')] = live.innerHTML
+    }
+    try {
+      await this.submit()
+      if (Object.keys(upd).length) await this.document.update(upd)
+      ui.notifications.info(`«${this.document.name}» збережено`)
+      await this.close({ submit: false })
+    } catch (err) {
+      console.error('G.O.D. | збереження предмета', err)
+      ui.notifications.error(`Не вдалося зберегти: ${err.message}`)
+    }
+  }
 
   static #editImage() {
     const FP = foundry.applications.apps?.FilePicker?.implementation ?? globalThis.FilePicker

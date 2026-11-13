@@ -191,7 +191,7 @@ Hooks.on('preCreateActor', (actor, data) => {
       ...fill,
       'prototypeToken.bar1.attribute': 'resources.hp',
       'prototypeToken.bar2.attribute': 'resources.pr',
-      'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER,
+      'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.NONE,   // HP/PR ворога — на листі й у панелі бою
       'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.HOSTILE,
     })
     return

@@ -229,6 +229,12 @@ export const applyPct = ({ phys, mag }, pct) => ({
 export const schoolDie = schoolLvl => SCHOOL_DIE[Math.max(0, Math.min(10, Math.trunc(num(schoolLvl))))]
 
 /** Кількість кубів сотворення = МОДІНТ (мінімум 1) */
+/**
+ * Володіння для сотворення: герой — рівень школи (з умінь «Сила …»);
+ * ворог — якщо заклинання в нього є, то він ним володіє: рівень заклинання (або школа, якщо задана вища).
+ */
+export const spellMastery = ({ type, schools = {}, school, level = 1 }) =>
+  type === 'npc' ? Math.max(num(schools[school]), Math.max(1, num(level))) : num(schools[school])
 export const castDiceCount = int => Math.max(1, statMod(int))
 
 /** Успіх, якщо ХОЧ ОДИН куб ≥ порогу. Куби не сумуються. */

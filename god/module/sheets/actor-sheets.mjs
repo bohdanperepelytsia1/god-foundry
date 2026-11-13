@@ -17,6 +17,7 @@ import { skillInfo } from '../skill-info.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { bindImageDrop, editTokenLook } from '../apps/image-drop.mjs'
+import { quickSpell } from '../apps/spell-creator.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { chooseNewItem } from '../apps/item-creator.mjs'
 import { effectRounds, effectRoundsLeft } from '../compat.mjs'
@@ -381,7 +382,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     }))
     context.learnedSchools = context.schools.filter(s => s.lvl > 0)
     context.spells = items.filter(i => i.type === 'spell').map(i => {
-      const lvl = sys.schools[i.system.school] ?? 0
+      const lvl = R.spellMastery({ type: this.document.type, schools: sys.schools, school: i.system.school, level: i.system.level })
       return GodActorSheetBase.itemRow(i, {
         school: GOD.SPELL_SCHOOLS[i.system.school], schoolLvl: lvl, castable: lvl > 0,
         castDice: lvl ? `${context.castDice}d${R.schoolDie(lvl)}` : '—',
@@ -445,6 +446,15 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       if (this._tab !== 'gear' && this.constructor.PARTS?.gear) this._tab = 'gear'
       this.render()
       return ui.notifications.info(`«${item.name}» додано — деталі праворуч, повний лист — «Редагувати»`)
+    }
+    // Заклинання й здібності — коротке вікно з головними полями, без порожнього листа
+    if (type === 'spell' || type === 'ability') {
+      const res = await quickSpell(type, { isNpc: this.document.type === 'npc' })
+      if (!res) return
+      const [item] = await this.document.createEmbeddedDocuments('Item', [res.data], { godNoStack: true })
+      if (!item) return
+      if (res.open) item.sheet.render(true)
+      return ui.notifications.info(`«${item.name}» додано`)
     }
     const system = {}
     if (target.dataset.location) system.location = target.dataset.location
@@ -663,7 +673,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: st[key].value, base: st[key].base ?? st[key].value, bonus: st[key].bonus, mod: st[key].mod }))
     context.equippedWeapons = items.filter(i => i.type === 'weapon' && i.system.equipped).map(i => this._weaponRow(i))
     context.readySpells = items.filter(i => i.type === 'spell').slice(0, 6).map(i => GodActorSheetBase.itemRow(i, {
-      school: GOD.SPELL_SCHOOLS[i.system.school], castable: (sys.schools[i.system.school] ?? 0) > 0,
+      school: GOD.SPELL_SCHOOLS[i.system.school], castable: R.spellMastery({ type: this.document.type, schools: sys.schools, school: i.system.school, level: i.system.level }) > 0,
     }))
 
     // ── Вміння
@@ -801,7 +811,7 @@ export class GodNpcSheet extends GodActorSheetBase {
       pd && md && { label: 'Σ', cls: 'sum', tip: 'Разом: фізичний + магічний', values: MULTS.map(([p]) => r1((pd + md) * p / 100)) },
     ].filter(Boolean)
     context.readySpells = items.filter(i => i.type === 'spell').map(i => GodActorSheetBase.itemRow(i, {
-      school: GOD.SPELL_SCHOOLS[i.system.school], castable: (sys.schools[i.system.school] ?? 0) > 0,
+      school: GOD.SPELL_SCHOOLS[i.system.school], castable: R.spellMastery({ type: actor.type, schools: sys.schools, school: i.system.school, level: i.system.level }) > 0,
     }))
     context.abilities = items.filter(i => i.type === 'ability').map(i => GodActorSheetBase.itemRow(i))
     await this._gearContext(context, items)

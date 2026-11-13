@@ -667,7 +667,7 @@ export async function defend(actor, amount, kind = 'melee') {
 export async function castSpell(actor, spell, opts = {}) {
   const luck = !!opts.luck
   const s = spell.system, sys = actor.system
-  const schoolLvl = sys.schools[s.school] ?? 0
+  const schoolLvl = R.spellMastery({ type: actor.type, schools: sys.schools, school: s.school, level: s.level })
   const school = GOD.SPELL_SCHOOLS[s.school]
   if (!schoolLvl) return ui.notifications.warn(`Немає володіння школою «${school}»${actor.type === 'character' ? ' — потрібне відповідне вміння в гілці «Магія»' : ''}`)
   const needsHit = s.attackType === 'target' || s.attackType === 'touch'

@@ -216,4 +216,11 @@ t('складові модифікатора: ефекти гілки й вмі�
   assert.equal(h.total, 3 + 2 - 1 - 1); assert.deepEqual(h.dis, ['ефект'])
   assert.equal(M.damageMods(actor, 2, 'володіння 2').total, 0)
 })
+t('володіння заклинанням: герой — школа, ворог — є заклинання, є й володіння', () => {
+  assert.equal(R.spellMastery({ type: 'character', schools: { fire: 0 }, school: 'fire', level: 5 }), 0)
+  assert.equal(R.spellMastery({ type: 'character', schools: { fire: 3 }, school: 'fire', level: 5 }), 3)
+  assert.equal(R.spellMastery({ type: 'npc', schools: {}, school: 'fire', level: 4 }), 4)
+  assert.equal(R.spellMastery({ type: 'npc', schools: { fire: 7 }, school: 'fire', level: 2 }), 7)
+  assert.equal(R.spellMastery({ type: 'npc', schools: {}, school: 'dark', level: 0 }), 1)
+})
 console.log(`\n${n} тестів пройдено`)

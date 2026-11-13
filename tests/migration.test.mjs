@@ -15,13 +15,15 @@ const siteFx = { id: 'fx1', name: 'добра слава', description: '<p>до
 const hero = mkActor('hero', 'character', [mkItem('i1', 'gear', gearGeneric, { category: 'potion' }), siteRope], {
   system: { biography: '<p>Біо</p>' }, deleteEmbeddedDocuments: async (cls, ids, o) => calls.push(['delete', 'hero', cls, ids, o]) })
 hero.effects = coll([siteFx])
+const worldOrc = mkActor('orc', 'npc', [], { system: { size: 'medium' } })
+worldOrc.prototypeToken.displayBars = 20
 const orcItems = [mkItem('i2', 'gear', gearGeneric, { category: 'ammo' })]
 const orcToken = { id: 't1', name: 'Орк', actorLink: false, bar1: {}, bar2: {}, actor: mkActor('orc-token', 'npc', orcItems) }
 const scene = { name: 'Ліс', tokens: coll([orcToken]), updateEmbeddedDocuments: async (cls, ups) => calls.push(['scene', cls, ups]) }
 let worldVersion = '0.9.8'
 globalThis.game = {
   user: { isGM: true }, system: { version: '0.9.9' }, release: { generation: 13 },
-  actors: coll([hero]), items: coll([]), scenes: coll([scene]),
+  actors: coll([hero, worldOrc]), items: coll([]), scenes: coll([scene]),
   settings: { get: () => worldVersion, set: async (a, b, v) => { worldVersion = v } },
 }
 globalThis.CONST = { TOKEN_DISPLAY_MODES: { NONE: 0, OWNER_HOVER: 20, OWNER: 30 } }
@@ -42,7 +44,7 @@ assert.ok(calls.some(c => c[0] === 'actor.update' && c[2]['prototypeToken.bar1.a
 assert.ok(calls.some(c => c[0] === 'Actor.updateDocuments' && c[2].godMigration && c[2].diff === false), 'дані акторів записано')
 assert.ok(emb.some(c => c[1] === 'orc-token' && c[4]?.godMigration), 'предмети токена на карті записано')
 assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'смуги HP/OM над героєм прибрано')
-assert.ok(!calls.some(c => c[0] === 'actor.update' && c[1] !== 'hero' && c[2]['prototypeToken.displayBars'] === 0), 'у ворогів смуги лишились')
+assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'orc' && c[2]['prototypeToken.displayBars'] === 0), 'і над ворогами (0.15.1)')
 assert.ok(emb.some(c => c[1] === 'hero' && c[3].some(u => u._id === 'i9' && u['system.category'] === 'rope' && u.img.endsWith('gear/rope.svg'))), 'перенесений предмет: категорія й іконка')
 assert.ok(calls.some(c => c[0] === 'actor.update' && c[1] === 'hero' && String(c[2]['system.biography']).includes('добра слава в Леберті')), 'ефект сайту — у біографію')
 assert.ok(calls.some(c => c[0] === 'delete' && c[2] === 'ActiveEffect' && c[3][0] === 'fx1'), 'і знятий з активних')

@@ -168,4 +168,10 @@
     <prose-mirror name="system.upgrades" value="{{system.upgrades}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{upgrades}}}</prose-mirror>
   </fieldset>
   {{/if}}
+  {{#if editable}}
+  <footer class="god-item-save">
+    <span class="god-hint">Числа зберігаються одразу; опис — цією кнопкою або «Зберегти» в самому редакторі.</span>
+    <button type="button" class="god-btn" data-action="saveClose"><i class="fa-solid fa-floppy-disk"></i> Зберегти</button>
+  </footer>
+  {{/if}}
 </div>

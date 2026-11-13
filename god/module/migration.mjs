@@ -165,16 +165,19 @@ async function migrateSiteImportFix() {
 }
 
 /** 0.14.0: смуги HP/OM над токенами героїв прибрано (ресурси видно в панелі героя) */
-async function migrateHideHeroBars() {
-  const NONE = CONST.TOKEN_DISPLAY_MODES.NONE, OWNER = CONST.TOKEN_DISPLAY_MODES.OWNER
+async function migrateHideHeroBars() { return hideBars('character', CONST.TOKEN_DISPLAY_MODES.OWNER) }
+/** 0.15.1: і над ворогами (HP видно на листі ворога та в панелі бою) */
+async function migrateHideFoeBars() { return hideBars('npc', CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER) }
+async function hideBars(type, OWNER) {
+  const NONE = CONST.TOKEN_DISPLAY_MODES.NONE
   const opts = { godMigration: true }
   let n = 0
   for (const a of game.actors) {
-    if (a.type !== 'character' || a.prototypeToken.displayBars !== OWNER) continue
+    if (a.type !== type || a.prototypeToken.displayBars !== OWNER) continue
     await a.update({ 'prototypeToken.displayBars': NONE }, opts); n++
   }
   for (const scene of game.scenes) {
-    const ups = scene.tokens.filter(t => t.actor?.type === 'character' && t.displayBars === OWNER).map(t => ({ _id: t.id, displayBars: NONE }))
+    const ups = scene.tokens.filter(t => t.actor?.type === type && t.displayBars === OWNER).map(t => ({ _id: t.id, displayBars: NONE }))
     if (ups.length) { await scene.updateEmbeddedDocuments('Token', ups, opts); n += ups.length }
   }
   return n
@@ -247,7 +250,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 
