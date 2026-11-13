@@ -220,6 +220,57 @@ export const mentalState = mt => {
   return null
 }
 
+// ── Гроші ─────────────────────────────────────────────────────────────────────
+// Курс (підтверджено ГМ на сайті): 1 срібна = 100 мідних, 1 золота = 100 срібних, 1 платина = 100 золотих.
+// Номінали в гаманці окремі; розмін — лише коли треба дати решту або гравець сам просить.
+export const COINS = ['copper', 'silver', 'gold', 'platinum']
+export const COIN_RATE = 100
+const coinVal = i => COIN_RATE ** i
+export const moneyTotal = m => COINS.reduce((t, k, i) => t + Math.max(0, Math.trunc(num(m?.[k]))) * coinVal(i), 0)
+/** Мідяки → найменша кількість монет */
+export const moneyFromCopper = total => {
+  let t = Math.max(0, Math.trunc(num(total)))
+  const out = {}
+  for (let i = COINS.length - 1; i >= 0; i--) { out[COINS[i]] = Math.floor(t / coinVal(i)); t -= out[COINS[i]] * coinVal(i) }
+  return out
+}
+const ABBR = { platinum: 'пл', gold: 'з', silver: 'ср', copper: 'м' }
+export const fmtMoney = m => {
+  const parts = [...COINS].reverse().filter(k => num(m?.[k]) > 0).map(k => `${Math.trunc(num(m[k]))}${ABBR[k]}`)
+  return parts.length ? parts.join(' ') : '0м'
+}
+/**
+ * Заплатити суму з гаманця. Спершу кожен номінал своїм; чого бракує — розмін:
+ * більша монета розбивається на 100 менших (решта лишається в гаманці), або менші
+ * збираються в більшу. Повертає новий гаманець або null, якщо грошей не вистачає.
+ */
+export const payMoney = (wallet, price) => {
+  if (moneyTotal(wallet) < moneyTotal(price)) return null
+  const w = COINS.map(k => Math.max(0, Math.trunc(num(wallet?.[k]))) - Math.max(0, Math.trunc(num(price?.[k]))))
+  for (let i = w.length - 1; i > 0; i--) if (w[i] < 0) { w[i - 1] += w[i] * COIN_RATE; w[i] = 0 }      // бракує великих — платимо дрібними
+  for (let i = 0; i < w.length - 1; i++) if (w[i] < 0) { const n = Math.ceil(-w[i] / COIN_RATE); w[i + 1] -= n; w[i] += n * COIN_RATE } // бракує дрібних — розбиваємо більшу
+  if (w.some(v => v < 0)) return null
+  return Object.fromEntries(COINS.map((k, i) => [k, w[i]]))
+}
+export const addMoney = (wallet, amount) => Object.fromEntries(COINS.map(k => [k, Math.max(0, Math.trunc(num(wallet?.[k]))) + Math.max(0, Math.trunc(num(amount?.[k])))]))
+/**
+ * Обмін: віддати n монет номіналу from, отримати номінал to за курсом.
+ * Вгору — лише цілими (залишок лишається в from). Повертає новий гаманець або null.
+ */
+export const exchangeMoney = (wallet, from, to, n) => {
+  const i = COINS.indexOf(from), j = COINS.indexOf(to), cnt = Math.max(0, Math.trunc(num(n)))
+  if (i < 0 || j < 0 || i === j || !cnt) return null
+  const w = Object.fromEntries(COINS.map(k => [k, Math.max(0, Math.trunc(num(wallet?.[k])))]))
+  if (w[from] < cnt) return null
+  const copper = cnt * coinVal(i), got = Math.floor(copper / coinVal(j))
+  if (!got) return null
+  const used = Math.ceil(got * coinVal(j) / coinVal(i))
+  w[from] -= used; w[to] += got
+  return w
+}
+/** Зібрати все в найменшу кількість монет */
+export const consolidateMoney = wallet => moneyFromCopper(moneyTotal(wallet))
+
 /** Мана ≤ 0 (можна піти в мінус): перевірка 12+ від Тілобудови — не втратити свідомість */
 export const afterManaLoss = mp => num(mp) <= 0 ? [{ stat: 'con', dc: 12, label: 'Тілобудова 12+ — не втратити свідомість' }] : []
 

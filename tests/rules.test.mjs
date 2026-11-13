@@ -234,4 +234,18 @@ t('наслідки втрати ресурсів: мана, свідоміст�
   // повторний удар у тій самій зоні — знову перевірки, без «пам'яті»
   assert.equal(R.afterHit(250, 1000).checks.length, 1); assert.equal(R.afterHit(200, 1000).checks.length, 1)
 })
+t('гаманець: оплата з рештою, обмін, сума', () => {
+  const W = (copper = 0, silver = 0, gold = 0, platinum = 0) => ({ copper, silver, gold, platinum })
+  assert.equal(R.moneyTotal(W(5, 2, 1)), 5 + 200 + 10000)
+  assert.deepEqual(R.payMoney(W(10, 5), W(3, 2)), W(7, 3), 'вистачає кожного номіналу')
+  assert.deepEqual(R.payMoney(W(0, 0, 0, 1), W(0, 0, 1)), W(0, 0, 99, 0), 'платина розбивається, решта в золоті')
+  assert.deepEqual(R.payMoney(W(0, 250), W(0, 0, 1)), W(0, 150), 'золото дрібними')
+  assert.deepEqual(R.payMoney(W(5, 0, 1), W(10)), W(95, 99, 0), 'мідь з розміном золота')
+  assert.equal(R.payMoney(W(5), W(0, 1)), null, 'не вистачає')
+  assert.deepEqual(R.exchangeMoney(W(0, 0, 2), 'gold', 'silver', 1), W(0, 100, 1))
+  assert.deepEqual(R.exchangeMoney(W(250), 'copper', 'silver', 250), W(50, 2), 'вгору лише цілими')
+  assert.equal(R.exchangeMoney(W(50), 'copper', 'silver', 50), null)
+  assert.deepEqual(R.consolidateMoney(W(250, 99)), W(50, 101, 0, 0).silver === 101 ? W(50, 1, 1) : null)
+  assert.equal(R.fmtMoney(W(5, 0, 2)), '2з 5м'); assert.equal(R.fmtMoney(W()), '0м')
+})
 console.log(`\n${n} тестів пройдено`)

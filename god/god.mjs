@@ -19,6 +19,7 @@ import { GodHud } from './module/apps/hud.mjs'
 import { GodCombatPanel, registerCombatPanel } from './module/apps/combat-panel.mjs'
 import { GodSiteImporter, registerSiteImporter } from './module/apps/site-importer.mjs'
 import { registerImageSocket } from './module/apps/image-drop.mjs'
+import { registerTransfer } from './module/apps/transfer.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -617,6 +618,7 @@ async function markApplied(message, key, info) {
 
 Hooks.once('ready', async () => {
   registerImageSocket()
+  registerTransfer()
   game.socket.on('system.god', async msg => {
     if (game.user !== game.users.activeGM) return
     const message = msg?.messageId ? game.messages.get(msg.messageId) : null

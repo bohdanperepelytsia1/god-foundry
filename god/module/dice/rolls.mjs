@@ -584,7 +584,7 @@ export async function weaponDamage(actor, item, state, opts = {}) {
   html += damageBlock(out.phys, out.mag, [baseNote, ...after].map(esc).join('<br>'), target, { kind: melee ? 'melee' : 'ranged', pierce })
   // анімація удару — коли натиснуть «Урон» (god.mjs → FX.playDamage)
   const attacker = actor.isToken ? actor.token.uuid : (actor.getActiveTokens?.()?.[0]?.document?.uuid ?? actor.uuid)
-  return sendCard(actor, html, rolls, replay, luck, { fx: { attacker, kind: 'weapon', cat, tier: key, natural } })
+  return sendCard(actor, html, rolls, replay, luck, { fx: { attacker, kind: 'weapon', cat, tier: key, natural, magic: natural && !base.phys && base.mag > 0 } })
 }
 
 /** Кнопка «Кинути урон» на картці попадання: кидає власник нападника або майстер, лише раз */

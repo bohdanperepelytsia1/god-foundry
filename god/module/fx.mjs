@@ -22,7 +22,11 @@ const FX = {
   trident: ['jb2a.spear.melee.01.white', 'jb2a.spear.melee', 'jb2a.melee_generic.piercing'],
   chakram: ['jb2a.chakram', 'jb2a.boomerang', 'jb2a.dagger.throw'],
   amulet: ['jb2a.magic_missile'],
-  creature: ['jb2a.claws.400px.red', 'jb2a.claws', 'jb2a.bite', 'jb2a.melee_generic.creature_attack', 'jb2a.melee_generic.slash'],
+  // атака ворога — загальний удар без зброї в руках (не кігті: ворог може бути ким завгодно)
+  creature: ['jb2a.melee_generic.slash.01.orange', 'jb2a.melee_generic.slashing.one_handed', 'jb2a.melee_generic.slash', 'jb2a.melee_generic.slashing',
+    'jb2a.melee_generic.bludgeoning.one_handed', 'jb2a.melee_generic.bludgeoning', 'jb2a.melee_attack.03.trail', 'jb2a.unarmed_strike.physical'],
+  // ворог із лише магічним уроном — магічний снаряд
+  creatureMag: ['jb2a.magic_missile', 'jb2a.eldritch_blast', 'jb2a.guiding_bolt'],
   // школи: снаряд і вибух на цілі
   fire: ['jb2a.fire_bolt.orange', 'jb2a.fire_bolt', 'jb2a.scorching_ray', 'jb2a.fireball.beam'],
   fireHit: ['jb2a.fireball.explosion.orange', 'jb2a.explosion.01.orange', 'jb2a.fireball.explosion', 'jb2a.explosion'],
@@ -92,7 +96,8 @@ export function playDamage(fx, target, { hpLoss = 1 } = {}) {
   const src = fx.attacker ? tokenOf(fromUuidSync(fx.attacker)) : null
   const power = POWER[fx.tier] ?? 1
   const isSpell = fx.kind === 'spell'
-  const key = isSpell ? (SCHOOL_FX[fx.school] ?? 'spell') : (fx.natural ? 'creature' : (FX[fx.cat] ? fx.cat : 'onehand'))
+  const key = isSpell ? (SCHOOL_FX[fx.school] ?? 'spell') : (fx.natural ? (fx.magic ? 'creatureMag' : 'creature') : (FX[fx.cat] ? fx.cat : 'onehand'))
+  const ranged = RANGED.has(fx.cat) || key === 'creatureMag'
   const strike = resolve(key)
   const boom = resolve(fx.tier === 'deadly' ? 'deadly' : fx.tier === 'crit' ? 'crit' : isSpell ? `${key}Hit` : 'impact') ?? resolve('impact')
   try {
@@ -100,8 +105,8 @@ export function playDamage(fx, target, { hpLoss = 1 } = {}) {
     // 1. удар / снаряд
     if (strike && src && src !== tgt) {
       const e = seq.effect().file(strike).atLocation(src).stretchTo(tgt)
-      if (!isSpell && !RANGED.has(fx.cat)) e.scale(Math.max(1, power * .9))
-      e.waitUntilFinished(isSpell || RANGED.has(fx.cat) ? -350 : -650)
+      if (!isSpell && !ranged) e.scale(Math.max(1, power * .9))
+      e.waitUntilFinished(isSpell || ranged ? -350 : -650)
     }
     // 2. вибух на цілі — тим більший, чим сильніший урон
     if (boom) seq.effect().file(boom).atLocation(tgt).scaleToObject(1.1 + power * .9).randomRotation().fadeOut(350)

@@ -89,8 +89,8 @@
     </div>
   </div>
 
-  <div class="god-side-block">
-    <h4>Гаманець</h4>
+  <div class="god-side-block god-wallet">
+    <h4>Гаманець <small class="god-wallet-total" data-tooltip="Разом, якщо зібрати в найбільші монети">{{moneyTotal}}</small></h4>
     <div class="god-purse">
       {{#each money}}
       <label class="god-coin god-coin-{{key}}" data-tooltip="{{label}}: допиши +5, -3 або порахуй (150-100, 20*3)">
@@ -98,5 +98,12 @@
       </label>
       {{/each}}
     </div>
+    {{#if editable}}<div class="god-wallet-actions">
+      <button type="button" data-action="wallet" data-mode="pay" data-tooltip="Заплатити: решту розміняє саме"><i class="fa-solid fa-hand-holding-dollar"></i> Заплатити</button>
+      <button type="button" data-action="wallet" data-mode="receive" data-tooltip="Отримати гроші"><i class="fa-solid fa-plus"></i></button>
+      <button type="button" data-action="wallet" data-mode="give" data-tooltip="Передати гроші іншому персонажу"><i class="fa-solid fa-hand-holding-hand"></i></button>
+      <button type="button" data-action="wallet" data-mode="exchange" data-tooltip="Обміняти монети (1 : 100)"><i class="fa-solid fa-right-left"></i></button>
+      <button type="button" data-action="wallet" data-mode="consolidate" data-tooltip="Зібрати дрібні монети в більші"><i class="fa-solid fa-layer-group"></i></button>
+    </div>{{/if}}
   </div>
 </aside>

@@ -18,6 +18,7 @@ import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
 import { bindImageDrop, editTokenLook } from '../apps/image-drop.mjs'
 import { quickSpell } from '../apps/spell-creator.mjs'
+import { giveItemDialog, walletDialog } from '../apps/transfer.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { chooseNewItem } from '../apps/item-creator.mjs'
 import { effectRounds, effectRoundsLeft } from '../compat.mjs'
@@ -73,6 +74,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       invQty: GodActorSheetBase.#invQty,
       invSplit: GodActorSheetBase.#invSplit,
       invChat: GodActorSheetBase.#invChat,
+      invGive: GodActorSheetBase.#invGive,
+      wallet: GodActorSheetBase.#wallet,
     },
   }
 
@@ -254,6 +257,8 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     const [copy] = await this.document.createEmbeddedDocuments('Item', [data], { godNoStack: true })
     if (copy) { this._inv.selected = copy.id; this._renderInv() }
   }
+  static #invGive(ev, target) { const it = this._item(target); if (it && this.isEditable) giveItemDialog(it) }
+  static #wallet(ev, target) { if (this.isEditable) walletDialog(this.document, target.dataset.mode) }
   static #invChat(ev, target) {
     const item = this._item(target)
     if (item) import('../dice/rolls.mjs').then(m => m.postItem(this.document, item))
@@ -668,6 +673,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
       return hi > lo ? Math.max(0, Math.min(100, (sys.progress.xp - lo) / (hi - lo) * 100)) : 0
     })()
     context.money = Object.entries(GOD.MONEY).map(([key, m]) => ({ key, ...m, value: sys.money[key] }))
+    context.moneyTotal = R.fmtMoney(R.consolidateMoney(sys.money))
 
     // ── Огляд
     context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: st[key].value, base: st[key].base ?? st[key].value, bonus: st[key].bonus, mod: st[key].mod }))

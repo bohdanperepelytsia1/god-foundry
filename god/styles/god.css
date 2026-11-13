@@ -1896,3 +1896,40 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-sc-dialog .god-sc-name input { height: 34px; font-size: 15px; font-weight: 600; }
 .god-sc-dialog .god-sc-f textarea { width: 100%; min-height: 70px; resize: vertical; font: inherit; font-size: 13px; color: var(--g-text); }
 .god .god-npc-magic-hint { display: flex; gap: 6px; align-items: baseline; margin: 0 0 10px; }
+
+/* ── Гаманець: підсумок і дії ─────────────────────────────────────────────── */
+.god .god-wallet h4 { display: flex; align-items: baseline; gap: 6px; }
+.god .god-wallet-total { margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--g-accent2); }
+.god .god-wallet-actions { display: flex; gap: 4px; margin-top: 6px; }
+.god .god-wallet-actions button { flex: none; width: 30px; height: 28px; padding: 0; display: grid; place-items: center; font-size: 12px; }
+.god .god-wallet-actions button:first-child { flex: 1; width: auto; display: flex; justify-content: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.god-wallet-dlg .god-purse-dlg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 8px 0 4px; }
+.god-wallet-dlg .god-coin input { font-size: 15px; }
+.god-dialog .god-xchg { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.god-dialog .god-xchg > i { align-self: center; color: var(--g-accent); }
+.god-dialog .god-xchg .god-dlg-field { display: flex; gap: 6px; align-items: center; }
+.god-dialog .god-xchg .god-dlg-field input { width: 90px; flex: none; }
+.god-dialog .god-xchg .god-dlg-field select { flex: 1; }
+
+/* ── Передача ─────────────────────────────────────────────────────────────── */
+.god-dialog .god-give-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.god-dialog .god-give-head img { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--g-line2); background: rgba(0,0,0,.3); }
+.god-dialog .god-give-head small { margin-left: auto; color: var(--g-faint); }
+.god-card.god-give-card { padding: 8px 10px; }
+.god-card .god-give-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.god-card .god-give-row i { color: var(--g-accent); font-size: 11px; }
+.god-card .god-give-what { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 600; }
+.god-card .god-give-what img { width: 26px; height: 26px; border-radius: 5px; border: 1px solid var(--g-line2); }
+
+/* монети у вікнах гаманця */
+.god-wallet-dlg .god-coin { display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--g-bg); border: 1px solid var(--g-line); border-radius: 4px; }
+.god-wallet-dlg .god-coin i { width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%; box-shadow: inset 0 -1px 2px rgba(0, 0, 0, .35); }
+.god-wallet-dlg .god-coin input { flex: 1; width: 100%; min-width: 0; height: 22px; border: none; background: transparent; text-align: right; padding: 0; }
+.god-wallet-dlg .god-coin input:focus { box-shadow: none; }
+.god-wallet-dlg .god-coin span { font-size: 11px; color: var(--g-dim); }
+.god-wallet-dlg .god-coin-platinum i { background: radial-gradient(circle at 35% 30%, #d4e4f7, #6d8fbd); }
+.god-wallet-dlg .god-coin-gold i     { background: radial-gradient(circle at 35% 30%, #fbe7a1, #c69a2c); }
+.god-wallet-dlg .god-coin-silver i   { background: radial-gradient(circle at 35% 30%, #f2f2f2, #9a9ea6); }
+.god-wallet-dlg .god-coin-copper i   { background: radial-gradient(circle at 35% 30%, #f3bc8c, #a8612b); }
+.god-wallet-dlg .god-coin { background: linear-gradient(90deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .2)); border: 1px solid rgba(243, 194, 103, .35); border-radius: 6px; }
+.god-wallet-dlg .god-coin input { font-family: 'Rubik', var(--g-font); font-weight: 600; }
