@@ -1851,3 +1851,32 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-import-btn { margin-top: 4px; }
 .god-import-report ul { margin: 4px 0 8px; padding-left: 18px; }
 .god-import-report h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--g-dim); }
+
+/* ── Перетягування картинок з комп'ютера ──────────────────────────────────── */
+.god .god-token-pick img { object-fit: contain; }
+.god .god-drop-zones { position: absolute; inset: 0; z-index: 5; display: none; gap: 6px; padding: 8px; border-radius: inherit;
+  background: rgba(10, 12, 18, .72); backdrop-filter: blur(2px); }
+.god.god-file-drag .god-drop-zones { display: flex; }
+.god .god-drop-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+  border: 2px dashed var(--g-line2); border-radius: 10px; color: var(--g-dim); transition: background .12s, border-color .12s, color .12s; }
+.god .god-drop-zone i { font-size: 22px; pointer-events: none; }
+.god .god-drop-zone b { font-size: 13px; pointer-events: none; }
+.god .god-drop-zone small { font-size: 10px; line-height: 1.2; opacity: .85; pointer-events: none; }
+.god .god-drop-zone.over { border-color: var(--g-accent); border-style: solid; color: var(--g-text);
+  background: color-mix(in srgb, var(--g-accent) 22%, transparent); }
+.god .god-drop-zone.over i { color: var(--g-accent); }
+.god .god-token-look { position: absolute; right: 14px; bottom: 98px; z-index: 2; display: grid; place-items: center; width: 24px; height: 24px;
+  border-radius: 50%; font-size: 11px; color: var(--g-text); background: rgba(20, 24, 34, .85); border: 1px solid var(--g-line2); }
+.god .god-token-look:hover { color: var(--g-accent); border-color: var(--g-accent); text-shadow: none; }
+
+/* Вікно «Вигляд токена»: клітинка сітки з шаховим фоном, щоб було видно прозорість */
+.god-tok-dialog .god-tok-preview { display: grid; place-items: center; padding: 14px 0 10px; }
+.god-tok-dialog .god-tok-cell { position: relative; width: 150px; height: 150px; overflow: visible;
+  background:
+    linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px) 0 0 / 50px 50px,
+    repeating-conic-gradient(#3a3f4c 0 25%, #2c303b 0 50%) 0 0 / 16px 16px;
+  outline: 2px solid var(--g-accent); outline-offset: 0; }
+.god-tok-dialog .god-tok-cell > img, .god-tok-dialog .god-tok-cell > video { width: 100%; height: 100%; object-fit: contain; transition: transform .08s; }
+.god-tok-dialog .god-tok-cell.ring::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 6px solid rgba(243, 194, 103, .75); pointer-events: none; }
+.god-tok-dialog .god-dlg-field b[data-out] { margin-left: 6px; color: var(--g-accent2); font-weight: 700; }

@@ -16,6 +16,7 @@ import * as M from '../roll-mods.mjs'
 import { skillInfo } from '../skill-info.mjs'
 import { weaponAttack } from '../dice/rolls.mjs'
 import { editPortrait, pickTokenImage, portraitCrop, cropStyle } from '../apps/portrait-editor.mjs'
+import { bindImageDrop, editTokenLook } from '../apps/image-drop.mjs'
 import { editEffect, changeChips, changeLabel as effectChangeLabel } from '../apps/effect-builder.mjs'
 import { chooseNewItem } from '../apps/item-creator.mjs'
 import { effectRounds, effectRoundsLeft } from '../compat.mjs'
@@ -48,6 +49,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
       editImage: GodActorSheetBase.#editImage,
       showPortrait: GodActorSheetBase.#showPortrait,
       tokenImage: GodActorSheetBase.#tokenImage,
+      tokenLook: GodActorSheetBase.#tokenLook,
       rest: GodActorSheetBase.#rest,
       deathSave: GodActorSheetBase.#deathSave,
       itemUse: GodActorSheetBase.#itemUse,
@@ -94,6 +96,9 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
   _onFirstRender(context, options) {
     super._onFirstRender(context, options)
     const root = this.element
+
+    // Файли з комп'ютера: перетягни на портрет → «Портрет» або «Токен»
+    bindImageDrop(this, root)
 
     // ПКМ по мініатюрі токена — прибрати окрему картинку: токен знову як портрет
     root.addEventListener('contextmenu', ev => {
@@ -405,6 +410,7 @@ class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) {
     if (globalThis.ImagePopout) return new globalThis.ImagePopout(a.img, { title: a.name, uuid: a.uuid }).render(true)
   }
   static #tokenImage() { if (this.isEditable) pickTokenImage(this.document) }
+  static #tokenLook() { if (this.isEditable) editTokenLook(this.document) }
   static #rest() { if (this.isEditable) this.document.restDialog() }
   static #deathSave() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.deathSave(this.document)) }
   static #itemUse(ev, target) { this._item(target)?.use() }

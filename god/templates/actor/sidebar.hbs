@@ -6,9 +6,14 @@
   {{/if}}
 
   <div class="god-portrait-wrap">
-    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити картинку (токен на мапі зміниться разом з нею) або вибрати її шматок"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити картинку або вибрати її шматок. Можна просто перетягнути файл з комп'ютера на портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
     <div class="god-level-badge" data-tooltip="Рівень">{{system.derived.level}}</div>
-    {{#if editMode}}<a class="god-token-pick {{#if tokenFollows}}follows{{/if}}" data-action="tokenImage" data-tooltip="{{#if tokenFollows}}Токен на мапі показує портрет і зміниться разом з ним. Клік — задати окремий готовий токен{{else}}Окремий токен. Клік — інший файл, ПКМ — знову як портрет{{/if}}"><img src="{{tokenImg}}" alt=""><span>{{#if tokenFollows}}Токен = портрет{{else}}Окремий токен{{/if}}</span></a>{{/if}}
+    {{#if editMode}}<a class="god-token-pick {{#if tokenFollows}}follows{{/if}}" data-action="tokenImage" data-tooltip="{{#if tokenFollows}}Токен на мапі показує портрет і зміниться разом з ним. Клік — задати окремий готовий токен (або перетягни файл на портрет){{else}}Окремий токен. Клік — інший файл, ПКМ — знову як портрет{{/if}}"><img src="{{tokenImg}}" alt=""><span>{{#if tokenFollows}}Токен = портрет{{else}}Окремий токен{{/if}}</span></a>{{/if}}
+    {{#if editMode}}<a class="god-token-look" data-action="tokenLook" data-tooltip="Вигляд токена: масштаб, віддзеркалення, кільце"><i class="fa-solid fa-sliders"></i></a>{{/if}}
+    {{#if editable}}<div class="god-drop-zones" aria-hidden="true">
+      <div class="god-drop-zone" data-drop="portrait"><i class="fa-solid fa-image-portrait"></i><b>Портрет</b><small>{{#if tokenFollows}}+ токен{{else}}лише лист{{/if}}</small></div>
+      <div class="god-drop-zone" data-drop="token"><i class="fa-solid fa-chess-pawn"></i><b>Токен</b><small>окремо для мапи</small></div>
+    </div>{{/if}}
   </div>
 
   {{#if editMode}}
