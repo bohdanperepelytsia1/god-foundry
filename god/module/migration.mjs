@@ -5,6 +5,7 @@
 import { GOD, defaultIcon, ACTOR_ICONS, STANCE_ICONS } from './config.mjs'
 import { isV14 } from './compat.mjs'
 import { guessGearCategory, siteEffectsHtml, SITE_EFFECTS_TITLE } from './site-import.mjs'
+import { migrateStorageActors } from './wagons.mjs'
 
 const LEGACY_ITEM_ICONS = new Set(['icons/svg/sword.svg', 'icons/svg/shield.svg', 'icons/svg/item-bag.svg', 'icons/svg/fire.svg', 'icons/svg/lightning.svg'])
 const LEGACY_STANCE = { 'icons/svg/sword.svg': 'attack', 'icons/svg/shield.svg': 'defense', 'icons/svg/daze.svg': 'nonlethal' }
@@ -250,7 +251,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

@@ -16,13 +16,11 @@ function recipients(from) {
   const owners = a => game.users.filter(u => !u.isGM && a.testUserPermission(u, 'OWNER')).map(u => u.name)
   const heroes = game.actors.filter(a => a.type === 'character' && a.id !== from.id && !(from.isToken && a.id === from.token?.actorId))
     .map(a => ({ uuid: a.uuid, name: a.name, img: a.img, who: owners(a).join(', ') }))
-  const storages = game.actors.filter(a => a.type === 'storage' && a.id !== from.id && (game.user.isGM || a.testUserPermission(game.user, 'LIMITED')))
-    .map(a => ({ uuid: a.uuid, name: a.name, img: a.img, who: a.system.party || 'сховище' }))
-  const seen = new Set([...heroes, ...storages].map(h => h.uuid))
+  const seen = new Set(heroes.map(h => h.uuid))
   const onScene = (canvas?.scene?.tokens ?? []).filter(t => t.actor && t.actor.type !== 'character' && t.actor !== from && (!t.hidden || game.user.isGM))
     .map(t => ({ uuid: t.actor.uuid, name: t.name, img: t.texture?.src || t.actor.img, who: 'на сцені' }))
     .filter(t => !seen.has(t.uuid))
-  return { heroes, storages, onScene }
+  return { heroes, onScene }
 }
 
 const coinInputs = (prefix = '', values = {}) => `<div class="god-purse god-purse-dlg">${COIN_ORDER.map(k => `
@@ -31,12 +29,11 @@ const coinInputs = (prefix = '', values = {}) => `<div class="god-purse god-purs
 const readCoins = (form, prefix = '') => Object.fromEntries(COIN_ORDER.map(k => [k, Math.max(0, Math.trunc(Number(form.elements[`${prefix}${k}`]?.value) || 0))]))
 
 function recipientField(from) {
-  const { heroes, storages, onScene } = recipients(from)
-  if (!heroes.length && !storages.length && !onScene.length) return null
+  const { heroes, onScene } = recipients(from)
+  if (!heroes.length && !onScene.length) return null
   const opt = r => `<option value="${esc(r.uuid)}">${esc(r.name)}${r.who ? ` — ${esc(r.who)}` : ''}</option>`
   return `<label class="god-dlg-field"><span>Кому</span><select name="to">
     ${heroes.length ? `<optgroup label="Герої">${heroes.map(opt).join('')}</optgroup>` : ''}
-    ${storages.length ? `<optgroup label="Візки й сховища">${storages.map(opt).join('')}</optgroup>` : ''}
     ${onScene.length ? `<optgroup label="На сцені">${onScene.map(opt).join('')}</optgroup>` : ''}</select></label>`
 }
 
@@ -78,28 +75,8 @@ export async function giveMoneyDialog(actor) {
 /** Перекласти предмет іншому актору (перетягування між листами, «Взяти собі») */
 export const moveItem = (item, to, qty) => send({ kind: 'item', item: item.uuid, to: to.uuid, qty: qty ?? item.system.quantity ?? 1 })
 
-/** «Взяти собі» зі сховища: своєму персонажу (якщо їх кілька — вибір), скільки штук */
-export async function takeItemDialog(item) {
-  const mine = game.user.character ? [game.user.character] : game.actors.filter(a => a.type === 'character' && a.isOwner && !game.user.isGM)
-  const pool = mine.length ? mine : (game.user.isGM ? game.actors.filter(a => a.type === 'character') : [])
-  if (!pool.length) return ui.notifications.warn('У тебе немає персонажа, якому взяти річ')
-  const qty = Math.max(1, item.system.quantity ?? 1)
-  if (pool.length === 1 && qty === 1) return moveItem(item, pool[0], 1)
-  const res = await DialogV2.wait({
-    window: { title: `Взяти: ${item.name}`, icon: 'fa-solid fa-hand-holding' }, classes: ['god-dialog'], position: { width: 360 }, rejectClose: false,
-    content: `<div class="god-give-head"><img src="${esc(item.img)}" alt=""><b>${esc(item.name)}</b>${qty > 1 ? `<small>є ${qty} шт.</small>` : ''}</div>
-      ${pool.length > 1 ? `<label class="god-dlg-field"><span>Кому</span><select name="to">${pool.map(a => `<option value="${esc(a.uuid)}">${esc(a.name)}</option>`).join('')}</select></label>` : ''}
-      ${qty > 1 ? `<label class="god-dlg-field"><span>Скільки</span><input type="number" name="qty" value="${qty}" min="1" max="${qty}"></label>` : ''}`,
-    buttons: [{ action: 'take', label: 'Взяти', icon: 'fa-solid fa-hand-holding', default: true,
-      callback: (ev, btn) => ({ to: btn.form.elements.to?.value ?? pool[0].uuid, qty: Math.min(qty, Math.max(1, Number(btn.form.elements.qty?.value) || qty)) }) }],
-  })
-  if (!res || typeof res !== 'object') return
-  return send({ kind: 'item', item: item.uuid, to: res.to, qty: res.qty })
-}
-
-/** Чи може користувач забрати цей предмет у цього власника: свій — так; зі сховища — якщо бачить сховище */
+/** Віддавати можна лише своє */
 const canTakeFrom = (from, to, user) => from.testUserPermission(user, 'OWNER')
-  || (from.type === 'storage' && from.testUserPermission(user, 'LIMITED') && to.testUserPermission(user, 'OWNER'))
 
 async function send(op) {
   const to = await fromUuid(op.to)

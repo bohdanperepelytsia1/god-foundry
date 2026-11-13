@@ -70,7 +70,7 @@ export function buildInventory(actor, state) {
       rows: list.map(i => ({
         id: i.id, name: i.name, img: i.img, type: i.type === 'gear' && i.system.consumable ? 'consumable' : i.type, sub: itemSub(i), tags: tagsOf(i.system),
         qty: i.system.quantity ?? 1, showQty: i.type === 'gear' || (i.system.quantity ?? 1) !== 1,
-        weight: i.totalWeight, equipped: !!i.system.equipped, equippable: ['weapon', 'armor'].includes(i.type) && actor.type !== 'storage',
+        weight: i.totalWeight, equipped: !!i.system.equipped, equippable: ['weapon', 'armor'].includes(i.type),
         usable: i.type === 'weapon' || (i.type === 'gear' && i.system.consumable),
         empty: (i.system.quantity ?? 1) === 0, selected: i.id === state.selected,
         search: `${i.name} ${itemSub(i)}`.toLowerCase(),
@@ -137,7 +137,7 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
     typeLabel: item.type === 'gear' ? `${GOD.GEAR_CATEGORIES[s.category]?.label ?? 'Предмет'}${s.consumable ? ' · розхідне' : ''}` : game.i18n.localize(`TYPES.Item.${item.type}`),
     kicker: itemSub(item), tags: tagsOf(s),
     qty, location: s.location, equipped: !!s.equipped,
-    equippable: ['weapon', 'armor'].includes(item.type) && actor.type !== 'storage',
+    equippable: ['weapon', 'armor'].includes(item.type),
     consumable: item.type === 'gear' && !!s.consumable,
     useLabel: item.type === 'weapon' ? 'Атакувати' : (item.type === 'gear' && s.consumable) ? 'Використати' : 'Показати в чаті',
     useIcon: item.type === 'weapon' ? 'fa-dice-d20' : (item.type === 'gear' && s.consumable) ? 'fa-flask' : 'fa-comment',

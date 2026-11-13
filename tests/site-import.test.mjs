@@ -145,13 +145,12 @@ assert.deepEqual(sum.groups.map(g => g.key), ['gmItems'], 'склади — не
 assert.deepEqual(sum.storages.map(x => [x.id, x.checked]), [[5, true], [6, false]], 'склади — сховищами; порожній не позначено')
 console.log('✓ зведення: що позначено за замовчуванням')
 
-// ── віз → сховище ──
-const wagon = M.storageFromSite({ id: 9, name: 'Віз покритий', partyName: 'Банда', maxW: 200, items: [
+// ── віз → візок світу ──
+const { wagon } = M.wagonFromSite({ id: 9, name: 'Віз покритий', partyName: 'Банда', maxW: 200, items: [
   { type: 'ingredient', name: 'Сира шкіра оленя', amount: 8, weightPerOne: 1 }, { type: 'armor', name: 'Поножі', physicalResistance: 40 }, { name: '' }] })
-assert.equal(wagon.actor.type, 'storage'); assert.equal(wagon.actor.flags.god.siteId, 'storage:9')
-assert.equal(wagon.actor.system.capacity, 200); assert.equal(wagon.actor.system.party, 'Банда')
-assert.equal(wagon.actor.items.length, 2, 'порожній рядок пропущено')
-assert.equal(wagon.actor.items[0].system.quantity, 8)
-assert.ok(wagon.actor.items.every(i => !i.system.equipped), 'у сховищі нічого не одягнено')
-console.log('✓ віз із бази → сховище з вмістом і місткістю')
+assert.equal(wagon.siteId, 'storage:9'); assert.equal(wagon.capacity, 200); assert.equal(wagon.party, 'Банда')
+assert.equal(wagon.items.length, 2, 'порожній рядок пропущено')
+assert.equal(wagon.items[0].system.quantity, 8)
+assert.ok(wagon.items.every(i => !i.system.equipped && i.img), 'у візку нічого не одягнено, іконки є')
+console.log('✓ віз із бази → візок світу')
 console.log('Імпорт із сайту OK')

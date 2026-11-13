@@ -1933,3 +1933,34 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-wallet-dlg .god-coin-copper i   { background: radial-gradient(circle at 35% 30%, #f3bc8c, #a8612b); }
 .god-wallet-dlg .god-coin { background: linear-gradient(90deg, rgba(232, 138, 71, .1), rgba(243, 194, 103, .2)); border: 1px solid rgba(243, 194, 103, .35); border-radius: 6px; }
 .god-wallet-dlg .god-coin input { font-family: 'Rubik', var(--g-font); font-weight: 600; }
+
+/* ── Візки (вкладка листа персонажа) ──────────────────────────────────────── */
+.god .god-wagon-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.god .god-wagon-pick a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--g-line2, var(--g-line)); color: var(--g-dim); background: var(--g-card, rgba(255,255,255,.03)); }
+.god .god-wagon-pick a.active { color: var(--g-accent-ink, #141822); background: var(--g-accent); border-color: var(--g-accent); }
+.god .god-wagon-pick a:hover:not(.active) { color: var(--g-text); border-color: var(--g-accent); text-shadow: none; }
+.god .god-wagon-pick .god-wagon-new { padding: 5px 9px; }
+.god .god-wagon-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; min-height: 0; }
+.god .god-wagon-col { display: flex; flex-direction: column; min-height: 320px; max-height: 560px; transition: box-shadow .12s, border-color .12s; }
+.god .god-wagon-col > header .god-dim { font-size: 11px; }
+.god .god-wagon-col.drop-hover { border-color: var(--g-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g-accent) 35%, transparent) inset; }
+.god .god-wagon-col > .god-enc-bar { margin: 8px 0 4px; }
+.god .god-wagon-list { list-style: none; margin: 6px 0 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; }
+.god .god-wagon-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 6px; cursor: grab; border-bottom: 1px dotted var(--g-line); }
+.god .god-wagon-row:hover { background: var(--g-hover, rgba(255,255,255,.05)); }
+.god .god-wagon-row img { width: 28px; height: 28px; flex: none; border-radius: 5px; border: 1px solid var(--g-line2, var(--g-line)); background: rgba(0,0,0,.25); }
+.god .god-wagon-name { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.god .god-wagon-name small { font-size: 10px; font-weight: 400; color: var(--g-faint); }
+.god .god-wagon-qty { font-size: 12px; color: var(--g-accent2); }
+.god .god-wagon-w { flex: none; width: 52px; text-align: right; font-size: 11px; color: var(--g-faint); }
+.god .god-wagon-btn { flex: none; width: 28px; height: 26px; padding: 0; display: grid; place-items: center; font-size: 11px; }
+.god .god-wagon-x { flex: none; color: var(--g-faint); font-size: 11px; }
+.god .god-wagon-x:hover { color: var(--g-red); }
+.god .god-wagon-none { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 0; text-align: center; }
+.god .god-wagon-none > i { font-size: 30px; color: var(--g-accent); opacity: .7; }
+.god .god-wagon-col > .god-enc-bar { flex: none; }
+/* У персонажа 8 вкладок: щільніше, щоб усі підписи вміщались у типову ширину листа */
+.god.character .god-tabs { padding: 0 6px; gap: 0; }
+.god.character .god-tab-link { padding-left: 6px; padding-right: 6px; gap: 5px; letter-spacing: .02em; }
+.god.character .god-tabs .god-tab-help { padding: 4px 2px; }

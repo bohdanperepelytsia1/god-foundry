@@ -420,17 +420,12 @@ export function npcFromSite(e) {
   return { actor, notes: hp <= 0 ? [`${actor.name}: HP ${hp} — на сайті вже переможений`] : [] }
 }
 
-/** Склад / віз пачки з сайту → сховище з вмістом */
-export function storageFromSite(st) {
+/** Віз / склад пачки з сайту → візок світу (вкладка «Візки» у гравців) */
+export function wagonFromSite(st) {
   const notes = []
   const items = (st?.items ?? []).filter(i => str(i?.name)).map(raw => { const r = itemFromSite(raw, { location: 'main' }); notes.push(...r.notes); return r.item })
   for (const it of items) if ('equipped' in it.system) it.system.equipped = false
-  const actor = {
-    name: str(st?.name) || 'Сховище', type: 'storage', img: 'icons/svg/chest.svg',
-    system: { capacity: Math.max(0, num(st?.maxW)), party: str(st?.partyName), notes: '' },
-    items, flags: { god: { siteId: `storage:${st?.id}`, siteParty: str(st?.partyName) } },
-  }
-  return { actor, notes }
+  return { wagon: { name: str(st?.name) || 'Візок', party: str(st?.partyName), capacity: Math.max(0, num(st?.maxW)), siteId: `storage:${st?.id}`, items }, notes }
 }
 
 /** Зведення файлу експорту для вікна імпорту: що є і що позначити за замовчуванням */

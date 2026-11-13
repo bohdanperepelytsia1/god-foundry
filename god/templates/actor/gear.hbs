@@ -1,13 +1,7 @@
 <section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="gear">
   <div class="god-inv">
     <div class="god-inv-main">
-      {{#if (god-and isStorage editMode)}}
-      <div class="god-encumbrance">
-        <label class="god-inline-field" data-tooltip="Місткість у кг (0 — без обмеження)">
-          місткість, кг <input type="number" name="system.capacity" value="{{system.capacity}}" min="0"></label>
-      </div>
-      {{/if}}
-      {{#unless (god-or isNpc isStorage)}}
+      {{#unless isNpc}}
       <div class="god-encumbrance {{#if system.derived.overloaded}}over{{/if}}">
         <div class="god-enc-bar" data-tooltip="Вага всього, що несе персонаж"><div style="width: {{weightPct}}%"></div>
           <span><b>{{system.derived.totalWeight}}</b> / {{system.derived.maxWeight}} кг</span></div>
@@ -18,7 +12,6 @@
       </div>
       {{/unless}}
 
-      {{#unless isStorage}}
       <section class="god-panel god-equip {{#unless equipOpen}}collapsed{{/unless}}" data-collapsible>
         <header data-action="invCollapse" data-loc="@equip" class="god-inv-toggle">
           <h3><i class="fa-solid fa-chevron-down god-chev"></i> Одягнене <small class="god-inv-meta">{{equippedCount}} з {{slots.length}}</small></h3>
@@ -35,7 +28,6 @@
           {{#unless equippedCount}}<p class="god-empty">Нічого не одягнено. Одягай кнопкою <i class="fa-solid fa-shirt"></i> у рядку предмета.</p>{{/unless}}
         </div>
       </section>
-      {{/unless}}
 
       <div class="god-toolbar">
         <div class="god-search"><i class="fa-solid fa-magnifying-glass"></i>
@@ -79,7 +71,6 @@
               <span class="god-inv-eq">
                 {{#if equippable}}<a data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти{{else}}Одягнути / взяти в руку{{/if}}">
                   <i class="fa-solid fa-shirt {{#unless equipped}}god-off{{/unless}}"></i></a>{{/if}}
-                {{#if @root.isStorage}}<a class="god-inv-take" data-action="invTake" data-tooltip="Взяти собі"><i class="fa-solid fa-hand-holding"></i></a>{{/if}}
                 {{#if @root.editable}}<a class="god-inv-del" data-action="itemDelete" data-tooltip="Видалити"><i class="fa-solid fa-trash"></i></a>{{/if}}
               </span>
             </li>
@@ -105,8 +96,7 @@
       </header>
 
       <div class="god-insp-actions">
-        {{#if @root.isStorage}}<button type="button" class="god-insp-main" data-action="invTake"><i class="fa-solid fa-hand-holding"></i> Взяти собі</button>
-        {{else}}<button type="button" class="god-insp-main" data-action="itemUse"><i class="fa-solid {{useIcon}}"></i> {{useLabel}}</button>{{/if}}
+        <button type="button" class="god-insp-main" data-action="itemUse"><i class="fa-solid {{useIcon}}"></i> {{useLabel}}</button>
         {{#if equippable}}
         <button type="button" data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти — лишиться в інвентарі{{else}}Одягнути / взяти в руку{{/if}}">
           <i class="fa-solid fa-shirt"></i> {{#if equipped}}Зняти{{else}}Одягнути{{/if}}</button>
@@ -149,7 +139,6 @@
       <footer class="god-insp-foot">
         <a data-action="itemEdit"><i class="fa-solid fa-pen-to-square"></i> Редагувати</a>
         <a data-action="invChat"><i class="fa-solid fa-comment"></i> У чат</a>
-        {{#if @root.isStorage}}<a data-action="invTake" data-tooltip="Перекласти собі (своєму персонажу)"><i class="fa-solid fa-hand-holding"></i> Взяти собі</a>{{/if}}
         {{#if @root.editable}}<a data-action="invGive" data-tooltip="Передати іншому персонажу (або торговцю на сцені)"><i class="fa-solid fa-hand-holding-hand"></i> Передати</a>{{/if}}
         {{#if canSplit}}<a data-action="invSplit"><i class="fa-solid fa-scissors"></i> Розділити</a>{{/if}}
         {{#if @root.editable}}<a class="danger" data-action="itemDelete"><i class="fa-solid fa-trash"></i> Видалити</a>{{/if}}

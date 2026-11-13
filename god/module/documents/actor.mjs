@@ -5,6 +5,12 @@ import * as Dice from '../dice/rolls.mjs'
 import { addChange } from '../compat.mjs'
 
 export class GodActor extends Actor {
+  /** «Створити актора»: старий тип «сховище» (0.17) не пропонуємо — візки тепер у вкладці «Візки» */
+  static async createDialog(data = {}, createOptions = {}, options = {}) {
+    const types = (options.types ?? this.TYPES ?? []).filter(t => t !== 'storage' && t !== 'base')
+    return super.createDialog(data, createOptions, { ...options, types })
+  }
+
 
   /** Підвищення рівня → автоматично нараховуємо очки вмінь і характеристик */
   async _preUpdate(changes, options, user) {

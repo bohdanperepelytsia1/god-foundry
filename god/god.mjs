@@ -8,7 +8,7 @@ import { CharacterData, NpcData, StorageData } from './module/data/actor.mjs'
 import { WeaponData, ArmorData, GearData, SpellData, AbilityData, TraitData } from './module/data/item.mjs'
 import { GodActor } from './module/documents/actor.mjs'
 import { GodItem } from './module/documents/item.mjs'
-import { GodCharacterSheet, GodNpcSheet, GodStorageSheet } from './module/sheets/actor-sheets.mjs'
+import { GodCharacterSheet, GodNpcSheet } from './module/sheets/actor-sheets.mjs'
 import { GodItemSheet } from './module/sheets/item-sheet.mjs'
 import * as R from './module/rules.mjs'
 import * as Dice from './module/dice/rolls.mjs'
@@ -20,6 +20,7 @@ import { GodCombatPanel, registerCombatPanel } from './module/apps/combat-panel.
 import { GodSiteImporter, registerSiteImporter } from './module/apps/site-importer.mjs'
 import { registerImageSocket } from './module/apps/image-drop.mjs'
 import { registerTransfer } from './module/apps/transfer.mjs'
+import { registerWagons, registerWagonSocket } from './module/wagons.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -60,7 +61,6 @@ Hooks.once('init', () => {
   const Items = foundry.documents.collections?.Items ?? globalThis.Items
   Actors.registerSheet('god', GodCharacterSheet, { types: ['character'], makeDefault: true, label: 'G.O.D. — Персонаж' })
   Actors.registerSheet('god', GodNpcSheet, { types: ['npc'], makeDefault: true, label: 'G.O.D. — НІП' })
-  Actors.registerSheet('god', GodStorageSheet, { types: ['storage'], makeDefault: true, label: 'G.O.D. — Сховище' })
   Items.registerSheet('god', GodItemSheet, { makeDefault: true, label: 'G.O.D. — Предмет' })
 
   // Спільний рядок предмета (partial-block)
@@ -78,6 +78,7 @@ Hooks.once('init', () => {
   registerMigrationMenu()
   registerRotationHandle()
   registerCombatPanel()
+  registerWagons()
   registerSiteImporter()
   game.settings.register('god', 'animations', {
     name: 'Анімації ударів і магії',
@@ -181,14 +182,6 @@ Hooks.on('preCreateActor', (actor, data) => {
   if (foundry.utils.getProperty(data, 'prototypeToken.width') === undefined) Object.assign(tok, { 'prototypeToken.width': n, 'prototypeToken.height': n })
   if (data.img && !foundry.utils.getProperty(data, 'prototypeToken.texture.src')) tok['prototypeToken.texture.src'] = data.img
   actor.updateSource(tok)
-  if (actor.type === 'storage') {
-    actor.updateSource({
-      ...(data.img ? {} : { img: 'icons/svg/chest.svg', 'prototypeToken.texture.src': 'icons/svg/chest.svg' }),
-      'prototypeToken.actorLink': true, 'prototypeToken.displayBars': CONST.TOKEN_DISPLAY_MODES.NONE,
-      'prototypeToken.disposition': CONST.TOKEN_DISPOSITIONS.NEUTRAL,
-    })
-    return
-  }
   if (actor.type === 'npc') {
     // НІП: ресурси повні, токен ворожий і не прив'язаний (кожен на сцені — окремий екземпляр)
     const fill = {}
@@ -629,6 +622,7 @@ async function markApplied(message, key, info) {
 Hooks.once('ready', async () => {
   registerImageSocket()
   registerTransfer()
+  registerWagonSocket()
   game.socket.on('system.god', async msg => {
     if (game.user !== game.users.activeGM) return
     const message = msg?.messageId ? game.messages.get(msg.messageId) : null

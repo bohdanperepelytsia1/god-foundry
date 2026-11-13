@@ -1,0 +1,62 @@
+<section class="god-tab {{#if tabActive}}active{{/if}}" data-tab-panel="wagons">
+  {{#if wagons.length}}
+  <nav class="god-wagon-pick">
+    {{#each wagons}}
+    <a class="{{#if active}}active{{/if}}" data-action="wagonPick" data-wagon="{{id}}" data-tooltip="{{#if party}}{{party}} · {{/if}}{{count}} шт."><i class="fa-solid fa-cart-flatbed"></i> {{name}}</a>
+    {{/each}}
+    {{#if isGM}}<a class="god-wagon-new" data-action="wagonNew" data-tooltip="Новий візок"><i class="fa-solid fa-plus"></i></a>{{/if}}
+  </nav>
+
+  {{#with wagon}}
+  <div class="god-wagon-cols">
+    <section class="god-panel god-wagon-col" data-wagon-zone="wagon">
+      <header><h3><i class="fa-solid fa-cart-flatbed"></i> {{name}}</h3>
+        {{#if party}}<span class="god-dim">{{party}}</span>{{/if}}
+        {{#if @root.isGM}}<a class="god-head-add" data-action="wagonEdit" data-tooltip="Назва, місткість, хто бачить"><i class="fa-solid fa-gear"></i></a>
+        <a class="god-head-add" data-action="wagonDelete" data-tooltip="Видалити візок"><i class="fa-solid fa-trash"></i></a>{{/if}}
+      </header>
+      <div class="god-enc-bar {{#if over}}over{{/if}}" data-tooltip="Вантаж візка"><div style="width: {{pct}}%"></div>
+        <span><b>{{weight}}</b>{{#if capacity}} / {{capacity}}{{/if}} кг</span></div>
+      <ol class="god-wagon-list">
+        {{#each items}}
+        <li class="god-wagon-row" draggable="true" data-wagon-item="{{id}}">
+          <img src="{{img}}" alt="">
+          <span class="god-wagon-name">{{name}}<small>{{sub}}</small></span>
+          {{#if multi}}<b class="god-wagon-qty">×{{qty}}</b>{{/if}}
+          <span class="god-wagon-w">{{weight}} кг</span>
+          <button type="button" class="god-wagon-btn" data-action="wagonTake" data-tooltip="Взяти собі{{#if multi}} (спитає скільки){{/if}}"><i class="fa-solid fa-arrow-right"></i></button>
+          {{#if @root.isGM}}<a class="god-wagon-x" data-action="wagonRemove" data-tooltip="Прибрати з візка"><i class="fa-solid fa-xmark"></i></a>{{/if}}
+        </li>
+        {{else}}
+        <li class="god-empty">Порожньо. Перетягни сюди річ зі свого інвентаря праворуч.</li>
+        {{/each}}
+      </ol>
+    </section>
+
+    <section class="god-panel god-wagon-col" data-wagon-zone="mine">
+      <header><h3><i class="fa-solid fa-sack"></i> Мій інвентар</h3><span class="god-dim">одягнене не показується</span></header>
+      <ol class="god-wagon-list">
+        {{#each @root.mine}}
+        <li class="god-wagon-row" draggable="true" data-mine-item="{{id}}">
+          <button type="button" class="god-wagon-btn" data-action="wagonPut" data-tooltip="Покласти у візок{{#if multi}} (спитає скільки){{/if}}" {{#unless @root.canPut}}disabled{{/unless}}><i class="fa-solid fa-arrow-left"></i></button>
+          <img src="{{img}}" alt="">
+          <span class="god-wagon-name">{{name}}<small>{{sub}}</small></span>
+          {{#if multi}}<b class="god-wagon-qty">×{{qty}}</b>{{/if}}
+          <span class="god-wagon-w">{{weight}} кг</span>
+        </li>
+        {{else}}
+        <li class="god-empty">Нічого покласти.</li>
+        {{/each}}
+      </ol>
+    </section>
+  </div>
+  <p class="god-hint">Перетягуй речі між колонками або тисни стрілки. Брати й класти можна, коли майстер онлайн.</p>
+  {{/with}}
+  {{else}}
+  <div class="god-empty god-wagon-none">
+    <i class="fa-solid fa-cart-flatbed"></i>
+    <p>Візків поки немає.{{#if isGM}} Створи новий або перенеси з сайту (Актори → «Імпорт із сайту»).{{/if}}</p>
+    {{#if isGM}}<button type="button" class="god-btn" data-action="wagonNew"><i class="fa-solid fa-plus"></i> Новий візок</button>{{/if}}
+  </div>
+  {{/if}}
+</section>

@@ -4,7 +4,8 @@
  * і кому з гравців віддати персонажа. Повторний імпорт оновлює вже перенесених (той самий id,
  * тож токени на сценах лишаються прив'язаними) або пропускає їх.
  */
-import { characterFromSite, npcFromSite, itemFromSite, storageFromSite, summarizeExport } from '../site-import.mjs'
+import { characterFromSite, npcFromSite, itemFromSite, wagonFromSite, summarizeExport } from '../site-import.mjs'
+import { importWagons, allWagons } from '../wagons.mjs'
 import { isSqlite, exportFromSqliteBytes } from '../site-db.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
@@ -31,12 +32,13 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
     // гравець з ім'ям персонажа (або навпаки) — підставляємо як власника
     const guess = name => users.find(u => name.toLowerCase().includes(u.name.toLowerCase()) || u.name.toLowerCase().includes(name.toLowerCase()))?.id ?? ''
     const already = new Set(game.actors.map(a => a.getFlag('god', 'siteId')).filter(Boolean))
+    const wagonIds = new Set(allWagons().map(w => w.siteId).filter(Boolean))
     return {
       step: 'pick', busy: this.busy, progress: this.progress, users,
       exportedAt: this.data.exportedAt ? new Date(this.data.exportedAt).toLocaleString('uk-UA') : '',
       chars: s.chars.map(c => ({ ...c, owner: guess(c.name), exists: already.has(`char:${c.id}`) })),
       enemies: s.enemies.map(e => ({ ...e, exists: already.has(`enemy:${e.id}`) })),
-      storages: s.storages.map(x => ({ ...x, exists: already.has(`storage:${x.id}`) })),
+      storages: s.storages.map(x => ({ ...x, exists: wagonIds.has(`storage:${x.id}`) })),
       groups: s.groups.map(g => ({ ...g, checked: true })),
       anyExists: s.chars.some(c => already.has(`char:${c.id}`)) || s.enemies.some(e => already.has(`enemy:${e.id}`)),
     }
@@ -98,7 +100,7 @@ export class GodSiteImporter extends HandlebarsApplicationMixin(ApplicationV2) {
     this.progress = ''
     if (report) {
       await postReport(report)
-      ui.notifications.info(`Перенесено: персонажів ${report.chars.length}, ворогів ${report.enemies.length}, сховищ ${report.storages.length}, предметів ${report.items}`)
+      ui.notifications.info(`Перенесено: персонажів ${report.chars.length}, ворогів ${report.enemies.length}, візків ${report.storages.length}, предметів ${report.items}`)
       this.close()
     } else this.render()
   }
@@ -145,20 +147,19 @@ async function importSelected(data, pick, step) {
     const u = pick.owners[c.id]
     if (u && pick.chars.has(c.id) && c.party) (partyOwners[c.party] ??= new Set()).add(u)
   }
-  const fStore = (data.storages ?? []).some(s => pick.storages.has(s.id)) ? await folder('Візки й склади з сайту', 'Actor', '#6b5a2e') : null
-  for (const st of data.storages ?? []) {
-    if (!pick.storages.has(st.id)) continue
-    step(`Сховище: ${st.name}`)
-    const r = storageFromSite(st)
-    const existing = game.actors.find(a => a.getFlag('god', 'siteId') === r.actor.flags.god.siteId)
-    if (existing && !pick.overwrite) { report.skipped.push(r.actor.name); continue }
-    const owners = [...(partyOwners[st.partyName] ?? [])]
-    r.actor.ownership = owners.length ? { default: 0, ...Object.fromEntries(owners.map(u => [u, CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER])) }
-      : (existing?.toObject().ownership ?? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER })
-    if (!owners.length && !existing) r.notes.push('Гравців пачки не вказано — сховище відкрите всім гравцям (ПКМ → Права, щоб обмежити)')
-    const actor = await replaceOrCreate(r.actor, existing, fStore)
-    report.storages.push({ name: actor.name, uuid: actor.uuid, notes: r.notes, updated: !!existing })
-    report.items += r.actor.items.length
+  const chosen = (data.storages ?? []).filter(st => pick.storages.has(st.id))
+  if (chosen.length) {
+    step('Візки')
+    const wagons = chosen.map(st => {
+      const r = wagonFromSite(st)
+      r.wagon.users = [...(partyOwners[st.partyName] ?? [])]
+      report.items += r.wagon.items.length
+      report.storages.push({ name: r.wagon.name, notes: [...r.notes, ...(r.wagon.users.length ? [] : ['Гравців пачки не обрано — візок бачать усі гравці (змінити: вкладка «Візки» → шестерня)'])] })
+      return r.wagon
+    })
+    const res = await importWagons(wagons, { overwrite: pick.overwrite })
+    report.skipped.push(...res.skipped)
+    report.storages = report.storages.filter(x => !res.skipped.includes(x.name))
   }
 
   const groups = [
@@ -233,7 +234,7 @@ async function postReport(r) {
     <span>персонажів ${r.chars.length} · ворогів ${r.enemies.length} · предметів ${r.items}${r.images ? ` · аватарів ${r.images}` : ''}</span></div></header>
     ${r.chars.length ? `<h4>Персонажі</h4><ul>${list(r.chars)}</ul>` : ''}
     ${r.enemies.length ? `<h4>Вороги</h4><ul>${list(r.enemies)}</ul>` : ''}
-    ${r.storages.length ? `<h4>Візки й склади</h4><ul>${list(r.storages)}</ul>` : ''}
+    ${r.storages.length ? `<h4>Візки (вкладка «Візки» в листі персонажа)</h4><ul>${r.storages.map(x => `<li>${esc(x.name)}${x.notes.length ? `<details><summary>${x.notes.length} перевірити</summary><ul>${x.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></details>` : ''}</li>`).join('')}</ul>` : ''}
     ${groups ? `<h4>Предмети (теки в «Предметах»)</h4><ul>${groups}</ul>` : ''}
     ${r.skipped.length ? `<p class="god-dim">Пропущено, бо вже є: ${r.skipped.map(esc).join(', ')}</p>` : ''}
     <p class="god-dim">Категорії зброї й класи обладунку вгадано за назвами — перевір позначене вище. Ресурси, вміння, гроші й досвід перенесено як на сайті.</p></div>`

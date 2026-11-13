@@ -242,6 +242,13 @@ assert.ok(impHtml.includes('name="char" value="1" checked') && impHtml.includes(
 assert.ok(impHtml.includes('name="enemy" value="2:e" checked') && impHtml.includes('name="group" value="gmItems" checked') && impHtml.includes('name="overwrite"'), 'імпорт: вороги, предмети, оновлення')
 assert.ok(impT({ step: 'pick', users: [], chars: [], enemies: [], groups: [], storages: [{ id: 3, name: 'Віз', count: 22, capacity: 200, party: 'Банда', checked: true }] })
   .includes('name="storage" value="3" checked'), 'імпорт: вози сховищами')
+const wgT = Handlebars.compile(readFileSync('god/templates/actor/wagons.hbs', 'utf8'))
+const wgHtml = wgT({ isGM: false, tabActive: true, canPut: true, wagons: [{ id: 'a', name: 'Віз', count: 1, active: true }],
+  wagon: { id: 'a', name: 'Віз', capacity: 200, weight: 10, pct: 5, items: [{ id: 'x', name: 'Мотузка', img: 'r', qty: 2, multi: true, weight: 3 }] },
+  mine: [{ id: 'm', name: 'Зілля', img: 'p', qty: 1, weight: 0.2 }] })
+assert.ok(wgHtml.includes('data-wagon-item="x"') && wgHtml.includes('data-action="wagonTake"') && wgHtml.includes('data-mine-item="m"') && wgHtml.includes('data-action="wagonPut"'), 'візки: дві колонки й стрілки')
+assert.ok(!wgHtml.includes('wagonEdit') && !wgHtml.includes('wagonNew'), 'гравцю — без керування візками')
+assert.ok(wgT({ isGM: true, wagons: [] }).includes('data-action="wagonNew"'), 'майстру без візків — «Новий візок»')
 console.log('✓ вікно імпорту з сайту')
 
 // ── панелі: персонаж і швидка панель ──

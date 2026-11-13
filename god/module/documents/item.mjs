@@ -6,7 +6,6 @@ export class GodItem extends Item {
   async use() {
     const actor = this.actor
     if (!actor) return ui.notifications.warn('Предмет має належати персонажу')
-    if (actor.type === 'storage') return Dice.postItem(actor, this)   // у сховищі — лише показати; використати можна, взявши собі
     if (this.type === 'weapon') return Dice.weaponAttack(actor, this)
     if (this.type === 'spell')  return Dice.castSpell(actor, this)
     if (this.type === 'ability') return Dice.useAbility(actor, this)
