@@ -2018,3 +2018,85 @@ b.god-cb-ini { display: grid; place-items: center; }
   .application.god-dialog .dialog-content { padding-bottom: 4px; }
   .application.god-dialog .form-footer button { min-height: 30px; }
 }
+
+/* ── Вміння як на сайті (0.19.4): вкладки гілок зліва, ключове вміння, сітка коротких назв, опис — у підказці ── */
+.god .god-sk { display: grid; grid-template-columns: 170px minmax(0, 1fr); border: 1px solid var(--g-line); border-radius: 8px; overflow: hidden; background: var(--g-panel, rgba(255,255,255,.02)); }
+.god .god-sk-nav { display: flex; flex-direction: column; padding: 8px 0; border-right: 1px solid var(--g-line); }
+.god .god-sk-cat { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px 9px 14px; border-left: 3px solid transparent; color: var(--g-dim); font-size: 13px; font-weight: 600; cursor: pointer; }
+.god .god-sk-cat:hover { color: var(--g-text); background: var(--g-hover, rgba(255,255,255,.04)); }
+.god .god-sk-cat.active { border-left-color: var(--g-accent); color: var(--g-text); background: linear-gradient(90deg, color-mix(in srgb, var(--g-accent) 14%, transparent), transparent); }
+.god .god-sk-cat b { font-size: 11px; font-weight: 600; color: var(--g-faint); white-space: nowrap; }
+.god .god-sk-cat.active b { color: var(--g-accent2); }
+.god .god-sk-cat.closed span { opacity: .7; }
+.god .god-sk-body { padding: 12px 14px 14px; min-width: 0; }
+.god .god-sk-pane { display: none; }
+.god .god-sk-pane.active { display: block; }
+.god .god-sk-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.god .god-sk-head h3 { margin: 0; font-size: 16px; }
+.god .god-sk-head span { font-size: 12px; font-style: italic; color: var(--g-accent2); }
+.god .god-sk-head span.closed { color: #c98a78; }
+/* Пошук: видно всі гілки зі збігами */
+.god .god-sk.searching .god-sk-pane { display: block; margin-bottom: 12px; }
+.god .god-sk.searching .god-sk-pane.god-hidden { display: none; }
+.god .god-sk-gate { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 10px; border: 1px solid color-mix(in srgb, var(--g-accent) 35%, transparent); border-radius: 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--g-accent) 12%, transparent), transparent); }
+.god .god-sk-gate-icon { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--g-accent) 45%, transparent); border-radius: 5px; color: var(--g-accent); font-size: 12px; }
+.god .god-sk-gate .god-sk-name { flex: 1 1 auto; min-width: 7em; font-weight: 600; color: var(--g-text); }
+.god .god-sk-status { flex: none; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-accent2); }
+.god .god-sk-gate:not(.learned) .god-sk-status { color: var(--g-faint); }
+.god .god-sk-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 2px 14px; }
+.god .god-sk-cell { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 5px; border-bottom: 1px solid var(--g-line); min-width: 0; }
+.god .god-sk-cell:hover { background: var(--g-hover, rgba(255,255,255,.04)); }
+.god .god-sk-cell.custom { box-shadow: inset 2px 0 0 rgba(214, 90, 90, .55); }
+.god .god-sk-badge { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--g-line); border-radius: 5px; font-weight: 700; font-size: 13px; color: var(--g-faint); font-family: 'Rubik', var(--g-font); }
+.god .god-sk-cell.learned .god-sk-badge { color: var(--g-accent2); border-color: color-mix(in srgb, var(--g-accent2) 40%, transparent); background: color-mix(in srgb, var(--g-accent2) 8%, transparent); }
+.god .god-sk-cell.maxed .god-sk-badge { color: #1b1d26; background: var(--g-accent2); }
+.god .god-sk-badge.fixed { text-decoration: underline dotted; text-underline-offset: 3px; }
+.god .god-sk-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--g-faint); cursor: pointer; font-size: 13px; }
+.god .god-sk-cell.learned .god-sk-name { color: var(--g-text); }
+.god .god-sk-name:hover { color: var(--g-accent2) !important; text-decoration: none; }
+.god .god-sk-cell.locked .god-sk-name { opacity: .65; }
+.god .god-sk-cost { flex: none; min-width: 18px; text-align: right; font-size: 11px; font-weight: 600; color: var(--g-accent); }
+.god .god-sk-cost.max { color: var(--g-faint); font-weight: 400; }
+.god .god-sk-btns { flex: none; display: flex; gap: 3px; }
+.god .god-sk-pip { width: 22px; height: 22px; min-height: 0; padding: 0; line-height: 1; display: grid; place-items: center; border: 1px solid var(--g-line); border-radius: 4px; background: transparent; color: var(--g-dim); font-size: 14px; cursor: pointer; }
+.god .god-sk-pip i { font-size: 9px; }
+.god .god-sk-pip:hover:not(:disabled) { color: var(--g-text); border-color: var(--g-dim); }
+.god .god-sk-pip.plus:hover:not(:disabled) { color: var(--g-accent2); border-color: var(--g-accent2); }
+.god .god-sk-pip:disabled { opacity: .35; cursor: not-allowed; }
+.god .god-sk .god-custom-edit { grid-column: 1 / -1; }
+.god .god-sk .god-empty { grid-column: 1 / -1; }
+/* вузький лист: гілки — вкладками зверху */
+.god [data-tab-panel="skills"] { container-type: inline-size; }
+@container (max-width: 560px) {
+  .god .god-sk { grid-template-columns: 1fr; }
+  .god .god-sk-nav { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--g-line); padding: 0; }
+  .god .god-sk-cat { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; padding: 8px 10px; }
+  .god .god-sk-cat.active { border-bottom-color: var(--g-accent); }
+}
+@container (max-width: 420px) { .god .god-sk-status { display: none; } }
+#tooltip.god-tip-pre, .god-tip-pre { white-space: pre-line; max-width: 340px; text-align: left; }
+
+/* ── Швидка панель 0.19.4: вибір через «+», місця з номерами, одягання, меню слота ── */
+.god-quickbar .god-qb-drop { cursor: pointer; }
+.god-quickbar a.god-qb-drop:hover { border-color: var(--g-accent); color: var(--g-accent); }
+.god-quickbar .god-qb-empty { display: flex; align-items: center; justify-content: center; border-style: dashed; background: transparent; color: var(--g-faint); font-size: 11px; opacity: .7; }
+.god-quickbar .god-qb-empty:hover { opacity: 1; color: var(--g-accent); }
+.god-quickbar .god-qb-slots.editing .god-qb-slot:not(.god-qb-empty) { outline: 1px dashed color-mix(in srgb, var(--g-accent) 60%, transparent); outline-offset: 1px; cursor: grab; }
+.god-quickbar .god-qb-x { position: absolute; right: 0; top: 0; z-index: 2; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 0 5px 0 5px; background: rgba(150, 30, 30, .9); color: #fff; font-size: 9px; }
+.god-quickbar .god-qb-x:hover { background: #d33; }
+.god-quickbar .god-qb-worn { position: absolute; right: 2px; top: 2px; font-size: 9px; color: var(--g-accent2); text-shadow: 0 0 3px #000; }
+.god-quickbar .god-qb-slot.worn { border-color: color-mix(in srgb, var(--g-accent2) 55%, transparent); }
+.god-quickbar .god-qb-reset.on { color: var(--g-accent); }
+.god-quickbar .god-qb-menu { position: absolute; z-index: 50; min-width: 170px; padding: 4px; border: 1px solid var(--g-line2); border-radius: 6px; background: var(--g-bg, #1c1f29); box-shadow: 0 8px 22px rgba(0, 0, 0, .6); }
+.god-quickbar .god-qb-menu a { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; font-size: 13px; color: var(--g-text); cursor: pointer; white-space: nowrap; }
+.god-quickbar .god-qb-menu a i { width: 14px; text-align: center; color: var(--g-dim); }
+.god-quickbar .god-qb-menu a:hover { background: var(--g-hover, rgba(255,255,255,.06)); }
+.god-qb-pick-dlg .god-qb-pick-search { width: 100%; margin-bottom: 6px; }
+.god-qb-pick-dlg .god-qb-pick { max-height: 55vh; overflow-y: auto; }
+.god-qb-pick-dlg .god-qb-pick h4 { margin: 8px 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; border: none; }
+.god-qb-pick-dlg .god-qb-pick-row { display: flex; align-items: center; gap: 8px; padding: 3px 4px; border-radius: 4px; cursor: pointer; }
+.god-qb-pick-row:hover { background: rgba(255, 255, 255, .05); }
+.god-qb-pick-row img { width: 26px; height: 26px; border: none; border-radius: 4px; object-fit: cover; }
+.god-qb-pick-row span { flex: 1; min-width: 0; }
+.god-qb-pick-row small { opacity: .6; font-size: 11px; }
+.god-quickbar .god-qb-tools { flex: none; display: flex; align-items: center; gap: 4px; }

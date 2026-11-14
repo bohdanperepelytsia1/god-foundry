@@ -84,12 +84,22 @@ async function perform(op, user) {
     await actor.createEmbeddedDocuments('Item', [data])
     return card(actor, `<div class="god-give-row"><b>${esc(w.name)}</b><i class="fa-solid fa-arrow-right"></i><b>${esc(actor.name)}</b></div><div class="god-give-what"><img src="${esc(data.img)}" alt=""> ${esc(data.name)}${data.system.quantity > 1 ? ` ×${data.system.quantity}` : ''}</div>`)
   }
+  if (op.action === 'removeItem') {
+    // викинути може кожен, хто бачить візок: n штук або все
+    const it = w.items.find(x => x._id === op.itemId)
+    if (!it) return
+    const have = Math.max(1, num(it.system?.quantity) || 1), n = Math.min(have, Math.max(1, Math.trunc(op.qty ?? have) || have))
+    n >= have ? w.items.splice(w.items.indexOf(it), 1) : (it.system.quantity = have - n)
+    await save(list)
+    const actor = op.actor ? await fromUuid(op.actor) : null
+    return ChatMessage.create({ speaker: actor ? ChatMessage.getSpeaker({ actor }) : { alias: user.name },
+      content: `<div class="god-card god-give-card"><div class="god-give-row"><b>${esc(w.name)}</b><i class="fa-solid fa-trash"></i><b>викинуто</b></div><div class="god-give-what"><img src="${esc(it.img)}" alt=""> ${esc(it.name)}${n > 1 ? ` ×${n}` : ''}</div></div>` })
+  }
   if (!user.isGM) return
   // ── керування (лише майстер)
   if (op.action === 'create') list.push({ id: rid(), name: op.name || 'Новий візок', party: op.party ?? '', capacity: num(op.capacity), users: op.users ?? [], items: [] })
   if (op.action === 'update') Object.assign(w, foundry.utils.mergeObject({}, op.data ?? {}), { id: w.id, items: w.items })
   if (op.action === 'delete') list.splice(list.indexOf(w), 1)
-  if (op.action === 'removeItem') { const i = w.items.findIndex(x => x._id === op.itemId); if (i >= 0) w.items.splice(i, 1) }
   return save(list)
 }
 

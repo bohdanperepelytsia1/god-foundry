@@ -511,6 +511,37 @@ export const applyRestore = (resources, restore) => {
   return { changes, applied }
 }
 
+/**
+ * Вгадати відновлення з назви й опису (зілля з сайту: «Відновлює 250 хп», «500хп за 1 пх»,
+ * «відновлює 5 од менталки», «Відновлює 250 одиниць» у «зіллі сил (витривалості)»).
+ * Повертає { hp, mp, ed, mt } лише з тим, що вдалося знайти.
+ */
+export function guessRestore(name = '', text = '') {
+  const plain = String(text ?? '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ')
+  const all = `${name} ${plain}`.toLowerCase()
+  const L = "[а-яіїєґ'’ʼ]"
+  const out = {}
+  const KEYS = [
+    ['hp', `(?:хп|хр|hp|здоров${L}*(?!\\s*глузд))`], ['mp', `(?:ом|om|mp|ман${L}*)`],
+    ['ed', `(?:вс|ed|витрив${L}*|сил${L}*)`], ['mt', `(?:мт|mt|мент${L}*|глузд${L}*)`],
+  ]
+  // «250 хп», «500хп», «5 од менталки», «5 од ментал. здор.»
+  for (const [k, word] of KEYS) {
+    const m = all.match(new RegExp(`(\\d+)\\s*(?:од(?:иниц${L}*|\\.)?\\s*)?${word}(?!${L})`, 'u'))
+    if (m && !out[k]) out[k] = Number(m[1])
+  }
+  if (!Object.keys(out).length) {
+    // «Відновлює 250 одиниць», «500 відновлює», «250 9сек 3пх» — ресурс беремо з назви
+    // числа, що не є часом (ходи, секунди, години, «пх»); беремо найбільше
+    const nums = [...all.matchAll(/(\d{1,4})\s*([а-яіїєґ.]*)/gu)].filter(m => !/^(?:ход|хід|сек|с\.?$|год|хв|пх|раунд|рау|день|дн|тиж)/.test(m[2])).map(m => Number(m[1]))
+    const n = nums.length ? [null, Math.max(...nums)] : null
+    const which = /мана|ман[иі](?![а-яіїєґ])|\bом\b/.test(all) ? 'mp' : /ментал|глузд/.test(all) ? 'mt'
+      : /витрив|сил[иа]?(?![а-яіїєґ])|\bвс\b/.test(all) ? 'ed' : /здоров|\bхп\b|\bhp\b|хп|лікув/.test(all) ? 'hp' : null
+    if (n && which && Number(n[1]) > 0) out[which] = Number(n[1])
+  }
+  return out
+}
+
 /** Ціна в монетах → «1 з 5 ср» */
 export const formatPrice = (price = {}, money = {}) =>
   Object.entries(money).filter(([k]) => num(price[k])).map(([k, m]) => `${num(price[k])} ${m.abbr}`).join(' ') || ''

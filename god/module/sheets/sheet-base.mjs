@@ -191,6 +191,7 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
         { name: 'Використати', icon: '<i class="fa-solid fa-dice-d20"></i>', condition: li => ['weapon', 'spell', 'ability'].includes(it(li)?.type) || it(li)?.system.consumable, callback: li => it(li)?.use() },
         { name: 'Редагувати', icon: '<i class="fa-solid fa-pen"></i>', callback: li => it(li)?.sheet.render(true) },
         { name: 'Одягнути / зняти', icon: '<i class="fa-solid fa-shirt"></i>', condition: li => ['weapon', 'armor'].includes(it(li)?.type), callback: li => this.document.toggleEquip(it(li)) },
+        { name: 'На швидку панель', icon: '<i class="fa-solid fa-table-cells"></i>', condition: () => this.isEditable, callback: li => GodActorSheetBase.#toQuickbar(this.document, it(li)) },
         { name: 'Показати в чаті', icon: '<i class="fa-solid fa-comment"></i>', callback: li => import('../dice/rolls.mjs').then(m => m.postItem(this.document, it(li))) },
         { name: 'Дублювати', icon: '<i class="fa-solid fa-copy"></i>', condition: () => this.isEditable, callback: li => it(li)?.clone({ name: `${it(li).name} (копія)` }, { save: true }) },
         { name: 'Видалити', icon: '<i class="fa-solid fa-trash"></i>', condition: () => this.isEditable, callback: li => GodActorSheetBase.#confirmDelete(it(li)) },
@@ -446,6 +447,15 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
       console.error('G.O.D. | не вдалося видалити предмет', err)
       ui.notifications.error(`Не вдалося видалити «${item.name}»: ${err.message}`)
     }
+  }
+  /** Додати предмет у перше вільне місце швидкої панелі */
+  static async #toQuickbar(actor, item) {
+    if (!item) return
+    const { GodQuickbar, addSlots } = await import('../apps/quickbar.mjs')
+    const { ids } = GodQuickbar.slotIds(actor)
+    if (ids.includes(item.id)) return ui.notifications.info(`«${item.name}» уже на швидкій панелі`)
+    await actor.setFlag('god', 'quickbar', addSlots(ids, [item.id]))
+    ui.notifications.info(`«${item.name}» — на швидкій панелі`)
   }
   static #itemEquip(ev, target) { const it = this._item(target); if (it) this.document.toggleEquip(it) }
   static #invHand(ev, target) { const it = this._item(target); if (it) this.document.setHand(it, target.dataset.hand) }

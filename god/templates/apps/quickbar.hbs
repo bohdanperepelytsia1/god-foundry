@@ -27,14 +27,27 @@
   {{/if}}
 
   {{#unless collapsed}}{{#if (or actor userMode)}}
-  <div class="god-qb-slots" data-tooltip-direction="UP">
+  <div class="god-qb-slots {{#if edit}}editing{{/if}}" data-tooltip-direction="UP">
     {{#each slots}}
     {{#if gap}}<span class="god-qb-gap"></span>{{/if}}
-    <a class="god-qb-slot god-qb-{{group}} {{#if dim}}dim{{/if}}" data-slot data-action="use" data-key="{{key}}"{{#if hotSlot}} data-hot-slot="{{hotSlot}}"{{/if}} draggable="true"
-       data-tooltip="{{tip}} · клік — використати, ПКМ — прибрати">
-      <img src="{{img}}" alt="">{{#if num}}<u>{{num}}</u>{{/if}}{{#if badge}}<em>{{badge}}</em>{{/if}}</a>
+    {{#if empty}}
+    <a class="god-qb-slot god-qb-empty" data-slot data-action="use" data-index="{{index}}" data-key="" data-empty data-tooltip="{{tip}}">{{#if num}}<u>{{num}}</u>{{/if}}<i class="fa-solid fa-plus"></i></a>
+    {{else}}
+    <a class="god-qb-slot god-qb-{{group}} {{#if dim}}dim{{/if}} {{#if (god-eq equip true)}}worn{{/if}}" data-slot data-action="use" data-index="{{index}}" data-key="{{key}}"{{#if hotSlot}} data-hot-slot="{{hotSlot}}"{{/if}} draggable="true"
+       data-tooltip="{{tip}}{{#if @root.edit}} · перетягни на інше місце{{else}} · ПКМ — меню{{/if}}">
+      <img src="{{img}}" alt="">{{#if num}}<u>{{num}}</u>{{/if}}{{#if badge}}<em>{{badge}}</em>{{/if}}
+      {{#if (god-eq equip true)}}<i class="god-qb-worn fa-solid fa-shirt"></i>{{/if}}
+      {{#if @root.edit}}<b class="god-qb-x" data-action="removeSlot" data-tooltip="Прибрати з панелі"><i class="fa-solid fa-xmark"></i></b>{{/if}}</a>
+    {{/if}}
     {{/each}}
-    <span class="god-qb-drop" data-tooltip="{{#if actor}}Перетягни сюди предмет, заклинання, вміння чи макрос{{else}}Перетягни сюди макрос{{/if}}"><i class="fa-solid fa-plus"></i></span>
+  </div>
+  <div class="god-qb-tools">
+    {{#if actor}}
+    <a class="god-qb-drop" data-action="pick" data-tooltip="Додати: обрати зі списку або перетягни сюди предмет, заклинання, вміння чи макрос"><i class="fa-solid fa-plus"></i></a>
+    <a class="god-qb-reset {{#if edit}}on{{/if}}" data-action="editSlots" data-tooltip="{{#if edit}}Готово{{else}}Розкласти по місцях: номери, порожні місця, прибрати{{/if}}"><i class="fa-solid {{#if edit}}fa-check{{else}}fa-pen{{/if}}"></i></a>
+    {{else}}
+    <span class="god-qb-drop" data-tooltip="Перетягни сюди макрос"><i class="fa-solid fa-plus"></i></span>
+    {{/if}}
     {{#if custom}}<a class="god-qb-reset" data-action="resetSlots" data-tooltip="Повернути автоматичний набір"><i class="fa-solid fa-rotate-left"></i></a>{{/if}}
   </div>
   {{#if actor}}<a class="god-qb-tray" data-action="tray" data-tooltip="Панель кидків (Shift+R)"><i class="fa-solid fa-dice-d20"></i></a>{{/if}}

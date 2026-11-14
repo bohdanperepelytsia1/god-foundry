@@ -112,10 +112,10 @@ const base = {
   onlyLearned: false,
   pendingBuild: true, customCats: { magic: 'Магія' },
   skillCats: [
-    { cat: 'combat', label: 'Бойові', open: true, learned: 2, total: 3, invested: 13, collapsed: false, gateName: 'Бойові навички',
+    { cat: 'combat', label: 'Бойові', active: true, possible: 60, open: true, learned: 2, total: 3, invested: 13, collapsed: false, gateName: 'Бойові навички',
       gate: { key: 'Бойові_навички', name: 'Бойові навички', lvl: 1, max: 1, maxed: true, search: 'бой', pips: [{ on: true, fixed: true }], fixed: true, upTip: 'u', downTip: 'd' },
       skills: [
-        { key: 'Спринт', name: 'Спринт', info: 'Кожен рівень — +1 клітинка', lvl: 1, max: 2, next: 10, maxed: false, search: 'спринт', pips: [{ on: true, fixed: false }, { on: false }], upTip: 'u', downTip: 'd' },
+        { key: 'Спринт', name: 'Спринт', info: 'Кожен рівень — +1 клітинка', tip: 'Кожен рівень — +1 клітинка\nКлік — кидок', lvl: 1, max: 2, next: 10, maxed: false, search: 'спринт', pips: [{ on: true, fixed: false }, { on: false }], upTip: 'u', downTip: 'd' },
         { key: 'custom:x1', id: 'x1', custom: true, name: 'Кров', cost: 5, max: 10, lvl: 0, next: 5, search: 'кров', pips: [], upTip: 'u', downTip: '' }] },
     { cat: 'social', label: 'Соціальні', open: false, learned: 0, total: 15, invested: 0, collapsed: false, gateName: 'Говорливість',
       gate: { key: 'Говорливість', name: 'Говорливість', lvl: 0, max: 1, next: 4, search: 'гов', pips: [{ on: false }], upTip: 'u', downTip: '' },
@@ -170,9 +170,11 @@ for (const editMode of [false, true]) {
       assert.equal((html.match(/<option/g) || []).length, 2 + 9, 'сортування + місце в інспекторі')
     }
     if (f === 'skills.hbs') {
-      assert.equal(html.includes('data-action="skillUp"'), editMode, '± лише в режимі редагування')
-      assert.ok(html.includes('fa-key'), 'ключ гілки позначено')
-      assert.ok(html.includes('закрита'), 'закрита гілка позначена')
+      assert.ok(html.includes('data-action="skillUp"'), '± видно одразу, як на сайті')
+      assert.equal((html.match(/data-action="skillCat"/g) || []).length, 2, 'вкладки гілок')
+      assert.ok(html.includes('god-sk-gate') && html.includes('гілка недоступна') && html.includes('fa-lock'), 'ключове вміння й закрита гілка')
+      assert.ok(html.includes('data-tooltip="Кожен рівень'), 'опис — у підказці, не текстом під назвою')
+      assert.ok(!html.includes('god-skill-info'), 'без довгого тексту під назвою')
       assert.ok(html.includes('data-action="commitBuild"'), 'кнопка фіксації')
       assert.equal(html.includes('data-custom-field="name"'), editMode, 'редагування особливих вмінь — майстру в режимі редагування')
     }
@@ -262,7 +264,10 @@ const qbT = Handlebars.compile(readFileSync('god/templates/apps/quickbar.hbs', '
 const slots = [{ key: 'a', num: '1', img: 'x', tip: 't', group: 'atk', gap: false }, { key: 'b', num: '2', img: 'y', tip: 't', group: 'mag', gap: true, badge: '100', dim: true }]
 const qb = qbT({ actor: base.actor, bars: [bar('hp'), bar('mp')], armor: [bar('pr')], dodge: 9, stances: base.stances, slots, custom: true })
 assert.equal((qb.match(/data-slot /g) || []).length, 2, 'слоти швидкої панелі')
-assert.ok(qb.includes('god-qb-gap') && qb.includes('god-qb-reset') && qb.includes('class="god-qb-slot god-qb-mag dim"'), 'роздільник групи, скидання, тьмяний слот')
+assert.ok(qb.includes('god-qb-gap') && qb.includes('data-action="resetSlots"') && /class="god-qb-slot god-qb-mag dim\s/.test(qb), 'роздільник групи, скидання, тьмяний слот')
+assert.ok(qb.includes('data-action="pick"') && qb.includes('data-action="editSlots"'), '«+» відкриває вибір, олівець — розкладка')
+const qbEdit = qbT({ actor: base.actor, bars: [], armor: [], stances: [], edit: true, slots: [{ key: 'a', index: 0, num: '1', img: 'x', tip: 't', group: 'gear', equip: true }, { key: '', index: 1, num: '2', empty: true, tip: 'п' }] })
+assert.ok(qbEdit.includes('data-action="removeSlot"') && qbEdit.includes('data-index="1"') && qbEdit.includes('god-qb-empty') && qbEdit.includes('god-qb-worn'), 'розкладка: хрестик, порожнє місце, позначка «одягнено»')
 assert.ok(qb.includes('data-key="a"') && qb.includes('<u>1</u>'), 'ключі й номери слотів')
 assert.ok(qbT({ missing: true }).includes('Обери токен'), 'порожня панель — підказка')
 const um = qbT({ missing: true, userMode: true, slots: [{ key: 'Macro.x', hotSlot: 3, num: '1', img: 'm', tip: 'Макрос', group: 'macro' }] })

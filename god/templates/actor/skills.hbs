@@ -15,51 +15,62 @@
     {{#if editable}}<button type="button" class="god-btn god-btn-sm" data-action="commitBuild"><i class="fa-solid fa-lock"></i> Зафіксувати</button>{{/if}}
   </div>
   {{/if}}
-  {{#if editMode}}<p class="god-hint">Кожна гілка відкривається ключовим вмінням. Майстер: Shift+клік на ± — без витрат і одразу з фіксацією.</p>{{/if}}
 
-  <p class="god-hint god-skill-hint">Клік по вмінню — кидок d20 + рівень. Наведи — повний опис з правил. Пошук шукає і в описах.</p>
-  <div class="god-skillcats {{#if showInfo}}with-info{{/if}}" data-filter-scope="skills">
-    {{#each skillCats}}
-    <section class="god-skillcat {{#if collapsed}}collapsed{{/if}} {{#unless open}}closed{{/unless}}">
-      <header data-action="toggleCat" data-cat="{{cat}}">
-        <i class="fa-solid fa-chevron-down god-chev"></i>
-        <h3>{{label}}</h3>
-        {{#if open}}<span class="god-dim" data-tooltip="Вивчено вмінь · вкладено очок">{{learned}}/{{total}} · {{invested}} оч.</span>
-        {{else}}<span class="god-cat-lock" data-tooltip="Гілка закрита — вкачай «{{gateName}}»"><i class="fa-solid fa-lock"></i> закрита</span>{{/if}}
-      </header>
-      <ul class="god-skill-list">
+  <div class="god-sk" data-filter-scope="skills">
+    <nav class="god-sk-nav">
+      {{#each skillCats}}
+      <a class="god-sk-cat {{#if active}}active{{/if}} {{#unless open}}closed{{/unless}}" data-action="skillCat" data-cat="{{cat}}"
+         data-tooltip="{{#if open}}Вивчено {{learned}} з {{total}} · вкладено {{invested}} з {{possible}} очок{{else}}Гілка закрита — вкачай «{{gateName}}»{{/if}}">
+        <span>{{label}}</span><b>{{#if open}}{{invested}}/{{possible}}{{else}}—{{/if}}</b></a>
+      {{/each}}
+    </nav>
+
+    <div class="god-sk-body">
+      {{#each skillCats}}
+      <section class="god-sk-pane {{#if active}}active{{/if}}" data-pane="{{cat}}" data-filter-group>
+        <header class="god-sk-head">
+          <h3>{{label}}</h3>
+          <span class="{{#unless open}}closed{{/unless}}">{{#if open}}{{invested}} з {{possible}} очок вкладено{{else}}гілка недоступна{{/if}}</span>
+        </header>
+
         {{#with gate}}
-        <li class="god-skill god-skill-gate {{#if lvl}}learned{{/if}}" data-search="{{search}}">
-          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{info}}"><span><i class="fa-solid fa-key"></i> {{name}}</span>
-            <small class="god-skill-info">Відкриває гілку «{{../label}}»</small></a>
+        <div class="god-sk-gate {{#if lvl}}learned{{/if}}" data-search="{{search}}">
+          <i class="fa-solid {{#if lvl}}fa-lock-open{{else}}fa-lock{{/if}} god-sk-gate-icon"></i>
+          <a class="god-sk-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{tip}}" data-tooltip-class="god-tip-pre" data-tooltip-direction="UP">{{name}}</a>
+          <span class="god-sk-status">{{#if lvl}}рів. {{lvl}} · відкрито{{else}}закрито{{/if}}</span>
           {{> god-skill-controls}}
-        </li>
+        </div>
         {{/with}}
-        {{#each skills}}
-        <li class="god-skill {{#if lvl}}learned{{/if}} {{#if locked}}locked{{/if}} {{#if hidden}}god-hidden-learned{{/if}}" data-search="{{search}}"
-            {{#if custom}}data-custom-id="{{id}}"{{/if}}>
+
+        <ul class="god-sk-grid">
+          {{#each skills}}
+          <li class="god-sk-cell {{#if lvl}}learned{{/if}} {{#if maxed}}maxed{{/if}} {{#if locked}}locked{{/if}} {{#if custom}}custom{{/if}} {{#if hidden}}god-hidden-learned{{/if}}"
+              data-search="{{search}}" {{#if custom}}data-custom-id="{{id}}"{{/if}}>
+            <span class="god-sk-badge {{#if fixed}}fixed{{/if}}" data-tooltip="{{#if fixed}}Зафіксований рівень{{else}}Рівень{{/if}}">{{#if lvl}}{{lvl}}{{else}}—{{/if}}</span>
+            {{#if (and custom @root.editMode @root.isGM)}}
+            <input class="god-custom-name" type="text" data-custom-field="name" value="{{name}}">
+            {{else}}
+            <a class="god-sk-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{tip}}" data-tooltip-class="god-tip-pre" data-tooltip-direction="UP">{{short}}{{#if custom}} <i class="fa-solid fa-gem god-custom-mark"></i>{{/if}}</a>
+            {{/if}}
+            {{> god-skill-controls}}
+          </li>
           {{#if (and custom @root.editMode @root.isGM)}}
-          <input class="god-custom-name" type="text" data-custom-field="name" value="{{name}}">
-          {{else}}
-          <a class="god-skill-name" data-action="rollSkill" data-skill="{{key}}" data-tooltip="{{#if info}}{{info}}{{else}}Кидок: d20 + рівень{{/if}}">
-            <span>{{#if locked}}<i class="fa-solid fa-lock"></i> {{/if}}{{name}}{{#if custom}} <i class="fa-solid fa-gem god-custom-mark" data-tooltip="Особливе вміння від майстра"></i>{{/if}}</span>
-            {{#if info}}<small class="god-skill-info">{{info}}</small>{{/if}}</a>
+          <li class="god-custom-edit" data-custom-id="{{id}}">
+            <label>вартість <input type="number" data-custom-field="cost" value="{{cost}}" min="2" max="10"></label>
+            <label>макс <input type="number" data-custom-field="max" value="{{max}}" min="1" max="10"></label>
+            <a data-action="customRemove" data-tooltip="Видалити особливе вміння"><i class="fa-solid fa-trash"></i></a>
+          </li>
           {{/if}}
-          {{> god-skill-controls}}
-        </li>
-        {{#if (and custom @root.editMode @root.isGM)}}
-        <li class="god-custom-edit" data-custom-id="{{id}}">
-          <label>вартість <input type="number" data-custom-field="cost" value="{{cost}}" min="2" max="10"></label>
-          <label>макс <input type="number" data-custom-field="max" value="{{max}}" min="1" max="10"></label>
-          <a data-action="customRemove" data-tooltip="Видалити особливе вміння"><i class="fa-solid fa-trash"></i></a>
-        </li>
+          {{else}}
+          <li class="god-empty">У цій гілці немає інших умінь.</li>
+          {{/each}}
+        </ul>
+        {{#if (and @root.editMode @root.isGM)}}
+        <a class="god-custom-add" data-action="customAdd" data-cat="{{cat}}"><i class="fa-solid fa-plus"></i> Особливе вміння</a>
         {{/if}}
-        {{/each}}
-      </ul>
-      {{#if (and @root.editMode @root.isGM)}}
-      <a class="god-custom-add" data-action="customAdd" data-cat="{{cat}}"><i class="fa-solid fa-plus"></i> Особливе вміння</a>
-      {{/if}}
-    </section>
-    {{/each}}
+      </section>
+      {{/each}}
+    </div>
   </div>
+  <p class="god-hint god-skill-hint">Наведи на вміння — опис з правил. Клік — кидок d20 + рівень. Золота цифра — вартість наступного рівня.{{#if isGM}} Майстер: Shift+клік на ± — без витрат і одразу з фіксацією.{{/if}}</p>
 </section>

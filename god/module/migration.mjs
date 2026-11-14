@@ -2,6 +2,7 @@
  * Міграція світу між версіями системи. Запускається один раз у майстра на старті,
  * якщо світ створено старішою версією. Кожен крок ідемпотентний.
  */
+import * as R from './rules.mjs'
 import { GOD, defaultIcon, ACTOR_ICONS, STANCE_ICONS } from './config.mjs'
 import { isV14 } from './compat.mjs'
 import { guessGearCategory, siteEffectsHtml, SITE_EFFECTS_TITLE } from './site-import.mjs'
@@ -184,6 +185,28 @@ async function hideBars(type, OWNER) {
   return n
 }
 
+/** 0.19.4: розхідні предмети без відновлення (зілля з сайту) — вгадати з назви й опису */
+async function migrateRestore() {
+  let n = 0
+  const fix = async items => {
+    const ups = []
+    for (const i of items) {
+      if (i.type !== 'gear' || !i.system.consumable || R.restoreList(i.system.restore).length) continue
+      const g = R.guessRestore(i.name, i.system.description)
+      if (Object.keys(g).length) ups.push({ _id: i.id, 'system.restore': { ...i.system.restore, ...g } })
+    }
+    n += ups.length
+    return ups
+  }
+  const world = await fix(game.items)
+  if (world.length) await Item.implementation.updateDocuments(world, { godMigration: true })
+  for (const a of game.actors) {
+    const ups = await fix(a.items)
+    if (ups.length) await a.updateEmbeddedDocuments('Item', ups, { godMigration: true })
+  }
+  return n
+}
+
 /** 0.19.1: ворог зі зброєю в руках → «Чим б'є» = категорія тієї зброї (урон тепер завжди PD/MD) */
 async function migrateFoeLook() {
   let n = 0
@@ -263,7 +286,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook], ['0.19.4', migrateRestore],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

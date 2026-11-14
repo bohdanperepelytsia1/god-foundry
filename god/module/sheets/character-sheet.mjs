@@ -36,6 +36,9 @@ async function wagonDialog(w = {}) {
   return res && typeof res === 'object' ? res : null
 }
 
+/** Коротка назва вміння для сітки (повна — у підказці): «Прицільність луки та метальна» → «Приц. луки / метальна» */
+export const shortSkill = name => String(name ?? '').replace(/^Прицільність\s+/, 'Приц. ').replace(/\s+та\s+/g, ' / ')
+
 // ═════════════════════════════════════════════════════════════════════════════
 const TABS = [
   { id: 'overview',  label: 'Огляд',      icon: 'fa-solid fa-chess-knight' },
@@ -60,7 +63,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
       skillDown: GodCharacterSheet.#skillDown,
       statUp: GodCharacterSheet.#statUp,
       statDown: GodCharacterSheet.#statDown,
-      toggleCat: GodCharacterSheet.#toggleCat,
+      skillCat: GodCharacterSheet.#skillCat,
       toggleLearned: GodCharacterSheet.#toggleLearned,
       commitBuild: GodCharacterSheet.#commitBuild,
       customAdd: GodCharacterSheet.#customAdd,
@@ -114,7 +117,27 @@ export class GodCharacterSheet extends GodActorSheetBase {
     const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: 'Видалити візок' }, content: `<p>Видалити «${foundry.utils.escapeHTML(w.name)}» разом із ${w.items.length} речами всередині?</p>` })
     if (ok) { this._wagon = null; Wagons.request({ action: 'delete', wagon: w.id }) }
   }
-  static #wagonRemove(ev, t) { const id = t.closest('[data-wagon-item]')?.dataset.wagonItem; if (id) Wagons.request({ action: 'removeItem', wagon: this._wagon, itemId: id }) }
+  /** Викинути річ із візка (будь-хто, хто бачить візок): стос — спитає скільки; Shift — без питань */
+  static async #wagonRemove(ev, t) {
+    const id = t.closest('[data-wagon-item]')?.dataset.wagonItem
+    const it = Wagons.allWagons().find(x => x.id === this._wagon)?.items.find(i => i._id === id)
+    if (!it) return
+    const have = Math.max(1, Number(it.system?.quantity) || 1)
+    let qty = have
+    if (!ev.shiftKey) {
+      const esc = foundry.utils.escapeHTML
+      const res = await foundry.applications.api.DialogV2.wait({
+        window: { title: 'Викинути з візка', icon: 'fa-solid fa-trash' }, classes: ['god-dialog'], position: { width: 340 }, rejectClose: false,
+        content: `<div class="god-give-head"><img src="${esc(it.img)}" alt=""><b>${esc(it.name)}</b>${have > 1 ? `<small>є ${have} шт.</small>` : ''}</div>
+          ${have > 1 ? `<label class="god-dlg-field"><span>Скільки викинути</span><input type="number" name="n" value="${have}" min="1" max="${have}" autofocus></label>` : '<p>Річ зникне назавжди.</p>'}`,
+        buttons: [{ action: 'ok', label: 'Викинути', icon: 'fa-solid fa-trash', default: true, callback: (e, b) => Math.min(have, Math.max(1, Number(b.form.elements.n?.value) || have)) },
+          { action: 'no', label: 'Скасувати' }],
+      })
+      if (typeof res !== 'number') return
+      qty = res
+    }
+    Wagons.request({ action: 'removeItem', wagon: this._wagon, itemId: id, qty, actor: this.document.uuid })
+  }
 
   /** Перетягування між колонками візка й інвентаря */
   _bindWagons(root) {
@@ -149,7 +172,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     }, true)
   }
   _onFirstRender(context, options) { super._onFirstRender(context, options); this._bindWagons(this.element) }
-  _collapsed = new Set()
+  _skillCat = null
   _onlyLearned = false
   static #rollStat(ev, target) { this.document.rollStat(target.dataset.stat) }
   static #rollStats() { if (this.isEditable) import('../dice/rolls.mjs').then(m => m.rollStatArray(this.document)) }
@@ -158,10 +181,12 @@ export class GodCharacterSheet extends GodActorSheetBase {
   static #skillDown(ev, target) { this.document.changeSkill(target.dataset.skill, -1, { free: game.user.isGM && ev.shiftKey }) }
   static #statUp(ev, target) { this.document.changeStat(target.dataset.stat, +1, { free: game.user.isGM && ev.shiftKey }) }
   static #statDown(ev, target) { this.document.changeStat(target.dataset.stat, -1, { free: game.user.isGM && ev.shiftKey }) }
-  static #toggleCat(ev, target) {
-    const c = target.dataset.cat
-    this._collapsed.has(c) ? this._collapsed.delete(c) : this._collapsed.add(c)
-    target.closest('.god-skillcat')?.classList.toggle('collapsed', this._collapsed.has(c))
+  /** Вкладка гілки вмінь: перемикаємо без перемальовування */
+  static #skillCat(ev, target) {
+    this._skillCat = target.dataset.cat
+    const root = target.closest('.god-sk')
+    for (const a of root.querySelectorAll('.god-sk-cat')) a.classList.toggle('active', a.dataset.cat === this._skillCat)
+    for (const p of root.querySelectorAll('.god-sk-pane')) p.classList.toggle('active', p.dataset.pane === this._skillCat)
   }
   static #toggleLearned() { this._onlyLearned = !this._onlyLearned; this.render({ parts: ['skills'] }) }
   static async #commitBuild() {
@@ -251,7 +276,8 @@ export class GodCharacterSheet extends GodActorSheetBase {
     const skillRow = (s, lvl, floor, locked, extra = {}) => {
       const next = R.skillNextCost(s.cost, lvl, s.max)
       return {
-        ...s, lvl, floor, locked, next, maxed: next === null, info: skillInfo(s.key),
+        ...s, short: shortSkill(s.name), lvl, floor, locked, next, maxed: next === null, info: skillInfo(s.key),
+        tip: [s.name, skillInfo(s.key) || (extra.custom ? 'Особливе вміння від майстра' : ''), extra.isGate ? 'Ключове вміння: відкриває гілку' : '', 'Клік — кидок d20 + рівень'].filter(Boolean).join('\n'),
         search: `${s.name} ${skillInfo(s.key)}`.toLowerCase(),
         hidden: this._onlyLearned && !lvl,
         fixed: lvl > 0 && lvl <= floor,
@@ -261,7 +287,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
         ...extra,
       }
     }
-    context.skillCats = Object.entries(GOD.SKILL_CATEGORIES).map(([cat, c]) => {
+    const cats = Object.entries(GOD.SKILL_CATEGORIES).map(([cat, c]) => {
       const gateLvl = sys.skills[cat][c.gate] ?? 0
       const open = gateLvl > 0
       const gateMeta = c.skills.find(s => s.key === c.gate)
@@ -271,12 +297,15 @@ export class GodCharacterSheet extends GodActorSheetBase {
         skillRow({ key: `custom:${s.id}`, name: s.name, cost: s.cost, max: s.max }, s.lvl, s.floor, !open, { custom: true, id: s.id }))
       const all = [gate, ...rest, ...customs]
       const invested = all.reduce((sum, s) => sum + R.skillInvested(s.cost, s.lvl), 0)
+      const possible = all.reduce((sum, s) => sum + R.skillInvested(s.cost, s.max), 0)
       return {
         cat, label: c.label, open, gate, skills: [...rest, ...customs], customs,
-        learned: all.filter(s => s.lvl > 0).length, total: all.length, invested,
-        collapsed: this._collapsed.has(cat), gateName: gateMeta.name,
+        learned: all.filter(s => s.lvl > 0).length, total: all.length, invested, possible, gateName: gateMeta.name,
       }
     })
+    // Вкладки гілок, як на сайті: відкрита — остання обрана або перша з вивченими вміннями
+    if (!cats.some(c => c.cat === this._skillCat)) this._skillCat = (cats.find(c => c.learned > 0) ?? cats[0]).cat
+    context.skillCats = cats.map(c => ({ ...c, active: c.cat === this._skillCat }))
     context.customCats = Object.fromEntries(Object.entries(GOD.SKILL_CATEGORIES).map(([k, v]) => [k, v.label]))
 
     // ── Риси та знання

@@ -835,10 +835,19 @@ export async function postItem(actor, item, note = '') {
 export async function consumeItem(actor, item) {
   const s = item.system
   if ((s.quantity ?? 0) < 1) return ui.notifications.warn(`«${item.name}» закінчився`)
-  const { changes, applied } = R.applyRestore(actor.system.resources, s.restore)
+  // Відновлення не вказано: вгадуємо з назви й опису («Відновлює 250 хп»), інакше питаємо — і запам'ятовуємо в предметі
+  let restore = s.restore ?? {}
+  if (!R.restoreList(restore).length) {
+    const guess = R.guessRestore(item.name, s.description)
+    const asked = await askRestore(item, guess)
+    if (asked === null) return
+    restore = asked.restore
+    if (asked.remember && R.restoreList(restore).length) await item.update({ 'system.restore': { hp: 0, mp: 0, ed: 0, mt: 0, pr: 0, mr: 0, ...restore } })
+  }
+  const { changes, applied } = R.applyRestore(actor.system.resources, restore)
   const upd = Object.fromEntries(Object.entries(changes).map(([k, v]) => [`system.resources.${k}.value`, v]))
   if (Object.keys(upd).length) await actor.update(upd)
-  const rs = s.restore ?? {}
+  const rs = restore
   if (rs.hp > 0 || rs.ed > 0 || rs.mt > 0) FX.playOn(actor, 'heal')
   else if (rs.mp > 0) FX.playOn(actor, 'mana')
   else if (rs.pr > 0 || rs.mr > 0) FX.playOn(actor, 'shield')
@@ -854,6 +863,23 @@ export async function consumeItem(actor, item) {
       ${lines ? `<div class="god-restore">${lines}</div>` : ''}
       ${desc ? `<div class="god-desc">${desc}</div>` : ''}</div>`,
   })
+}
+
+/** Вікно «Що дає предмет»: поля ресурсів, підставлено вгадане; null — скасовано */
+async function askRestore(item, guess = {}) {
+  const keys = ['hp', 'mp', 'ed', 'mt', 'pr', 'mr']
+  const found = Object.keys(guess).length > 0
+  const res = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Використати: ${item.name}`, icon: 'fa-solid fa-flask' }, classes: ['god-dialog'], position: { width: 400 }, rejectClose: false,
+    content: `<p class="god-dlg-info">${found ? 'Відновлення взято з назви й опису — перевір.' : 'У предметі не вказано, що він відновлює. Впиши числа (мінус — шкода).'}</p>
+      <div class="god-dlg-row" style="--n:3">${keys.map(k => `<label class="god-dlg-field"><span>${GOD.RESOURCES[k]?.abbr ?? k.toUpperCase()}</span><input type="number" name="${k}" value="${guess[k] ?? 0}"></label>`).join('')}</div>
+      <label class="god-dlg-check"><input type="checkbox" name="remember" checked><span>Запам'ятати в предметі</span></label>`,
+    buttons: [{ action: 'ok', label: 'Використати', icon: 'fa-solid fa-flask', default: true, callback: (e, b) => ({
+      remember: b.form.elements.remember.checked,
+      restore: Object.fromEntries(keys.map(k => [k, Math.trunc(Number(b.form.elements[k].value) || 0)]).filter(([, v]) => v)),
+    }) }],
+  })
+  return res && typeof res === 'object' ? res : null
 }
 
 // ── Перевірки після удару, спаскидки ─────────────────────────────────────────

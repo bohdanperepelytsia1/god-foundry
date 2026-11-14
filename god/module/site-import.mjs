@@ -194,7 +194,8 @@ function itemFromSiteRaw(raw, opts = {}) {
   if (isAmmo(name)) category = 'ammo'
   if (category === 'item' && opts.location && GOD.LOCATION_CATEGORY[opts.location]) category = GOD.LOCATION_CATEGORY[opts.location]
   const consumable = ['potion', 'food', 'drink', 'medicine'].includes(category)
-  return { notes, item: { name, type: 'gear', flags, system: { ...base, category, consumable } } }
+  const restore = consumable ? R.guessRestore(name, `${str(raw.activeEffect)} ${str(raw.description)}`) : {}
+  return { notes, item: { name, type: 'gear', flags, system: { ...base, category, consumable, ...(Object.keys(restore).length ? { restore } : {}) } } }
 }
 
 const BODY_SLOTS = ['Кираса', 'Поножі', 'Шолом', 'Рукавиці', 'Чоботи']
