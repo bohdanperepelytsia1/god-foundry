@@ -1996,3 +1996,12 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-dialog .god-dlg-row .god-dlg-field small { font-size: 10px; opacity: .75; }
 .god-dialog .god-dlg-remember { font-size: 11px; opacity: .7; margin: -4px 0 6px; }
 .god-dialog .god-dlg-row .god-dlg-field input { width: 100%; }
+
+/* 0.19.2 — рука в інспекторі */
+.god .god-insp-hand { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint); }
+.god .god-insp-hand .god-seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--g-line); border-radius: 5px; overflow: hidden; }
+.god .god-insp-hand .god-seg a { height: 26px; display: flex; align-items: center; justify-content: center; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--g-dim); cursor: pointer; }
+.god .god-insp-hand .god-seg a + a { border-left: 1px solid var(--g-line); }
+.god .god-insp-hand .god-seg a.active { background: var(--g-accent, #f2c063); color: #1b1d26; font-weight: 600; }
+.god .god-insp-hand .god-seg a:not(.active):hover { color: var(--g-text, #eee); background: rgba(255,255,255,.05); }
+.god .god-inv-img img { -webkit-user-drag: none; }

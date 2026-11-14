@@ -124,6 +124,14 @@
           </span></label>
         <label><span>Де лежить</span>
           <select data-item-field="system.location">{{selectOptions @root.locationOptions selected=location}}</select></label>
+        {{#if hand}}
+        <div class="god-insp-hand" data-tooltip="Основна рука додає СИЛ×5 до урону. Друга — без Сили; дві легкі зброї б'ють обома руками">
+          <span>Рука</span>
+          <span class="god-seg">
+            <a data-action="invHand" data-hand="main" class="{{#if (god-eq hand "main")}}active{{/if}}">Основна</a>
+            <a data-action="invHand" data-hand="off" class="{{#if (god-eq hand "off")}}active{{/if}}">Друга</a>
+          </span></div>
+        {{/if}}
       </div>
 
       {{#if effects.length}}

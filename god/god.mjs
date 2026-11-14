@@ -495,6 +495,18 @@ for (const ev of ['createItem', 'updateItem', 'deleteItem', 'createActiveEffect'
 // І щоразу заново: пройшов перевірку калітства, а тебе вдарили ще — нова перевірка.
 // Пише лише той клієнт, що змінив значення; автопідгонка ресурсів під максимум і міграції не рахуються.
 const WATCH = ['hp', 'mp', 'mt', 'ed']
+// Рука одягненої зброї змінена в листі предмета — інша зброя з цієї руки переходить у звільнену
+Hooks.on('preUpdateItem', (item, changes, options) => {
+  const hand = foundry.utils.getProperty(changes, 'system.hand')
+  if (options.godHand || item.type !== 'weapon' || hand === undefined || !item.system.equipped) return
+  options.godPrevHand = item.system.hand === 'off' ? 'off' : 'main'
+})
+Hooks.on('updateItem', (item, changes, options, userId) => {
+  if (!options.godPrevHand || userId !== game.user.id || !item.parent?.handConflicts) return
+  const ups = item.parent.handConflicts(item, item.system.hand === 'off' ? 'off' : 'main', options.godPrevHand)
+  if (ups.length) item.parent.updateEmbeddedDocuments('Item', ups, { godHand: true })
+})
+
 Hooks.on('preUpdateActor', (actor, changes, options) => {
   if (!foundry.utils.getProperty(changes, 'system.resources')) return
   options.godPrev = Object.fromEntries(WATCH.map(k => [k, actor.system.resources?.[k]?.value]))

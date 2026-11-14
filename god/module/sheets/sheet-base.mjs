@@ -48,7 +48,7 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
       itemUse: GodActorSheetBase.#itemUse,
       itemEdit: GodActorSheetBase.#itemEdit,
       itemDelete: GodActorSheetBase.#itemDelete,
-      itemEquip: GodActorSheetBase.#itemEquip,
+      itemEquip: GodActorSheetBase.#itemEquip, invHand: GodActorSheetBase.#invHand,
       itemCreate: GodActorSheetBase.#itemCreate,
       itemExpand: GodActorSheetBase.#itemExpand,
       effectToggle: GodActorSheetBase.#effectToggle,
@@ -153,10 +153,11 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
     root.addEventListener('pointerdown', ev => {
       for (const d of root.querySelectorAll('details.god-create-menu[open]')) if (!d.contains(ev.target)) d.removeAttribute('open')
     })
-    // Страховка: рядок предмета завжди несе дані для перетягування (на хотбар, швидку панель, іншому актору)
+    // Рядок предмета (інвентар, списки) завжди несе дані для перетягування: на швидку панель, хотбар, іншому актору.
+    // Рядки інвентаря Foundry сам не обслуговує, тож дані ставимо тут завжди
     root.addEventListener('dragstart', ev => {
-      const row = ev.target.closest?.('.god-row[data-item-id]')
-      if (!row || ev.dataTransfer.types.includes('text/plain')) return
+      const row = ev.target.closest?.('.god-inv-row[data-item-id], .god-row[data-item-id]')
+      if (!row || (!row.classList.contains('god-inv-row') && ev.dataTransfer.types.includes('text/plain'))) return
       const item = this.document.items.get(row.dataset.itemId)
       if (item) ev.dataTransfer.setData('text/plain', JSON.stringify(item.toDragData()))
     })
@@ -446,6 +447,7 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
     }
   }
   static #itemEquip(ev, target) { const it = this._item(target); if (it) this.document.toggleEquip(it) }
+  static #invHand(ev, target) { const it = this._item(target); if (it) this.document.setHand(it, target.dataset.hand) }
   static async #itemCreate(ev, target) {
     const type = target.dataset.type
     // Речі інвентаря — одне вікно вибору; створене одразу видно в інспекторі, без окремого листа

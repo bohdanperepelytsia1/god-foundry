@@ -271,3 +271,14 @@ assert.ok(!qbT({ actor: base.actor, bars: [], armor: [], stances: [], slots, col
 for (const html of [hud, qb]) { const r = html.trim().match(/^<(\w+)/)[1]; assert.ok(html.trim().endsWith(`</${r}>`), 'один корінь') }
 console.log('✓ панель персонажа і швидка панель')
 console.log('\nSmoke OK')
+
+// Інспектор зброї: перемикач руки з дією invHand і позначеною поточною рукою
+{
+  const tpl = Handlebars.compile(readFileSync('god/templates/actor/gear.hbs', 'utf8'), { strict: false })
+  const html = tpl({ ...base, inspect: { ...base.inspect, type: 'weapon', consumable: false, equippable: true, equipped: true, hand: 'off' } })
+  assert.ok(html.includes('data-action="invHand" data-hand="off" class="active"'), 'інспектор: друга рука позначена')
+  assert.ok(/data-item-id="igear"[\s\S]*data-action="invHand"/.test(html), 'перемикач усередині блоку з data-item-id')
+  const rows = tpl(base)
+  assert.ok(/class="god-inv-row[^"]*"[^>]*data-item-id="[^"]+"[^>]*draggable="true"/.test(rows), 'рядок інвентаря перетягується і має data-item-id')
+  console.log('Інспектор руки OK')
+}

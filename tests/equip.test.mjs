@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict'
 globalThis.Actor = class {}
 globalThis.foundry = { utils: { getProperty: () => undefined } }
+const infos = []
+globalThis.ui = { notifications: { info: m => infos.push(m), warn: () => {} } }
 const { GodActor } = await import('../god/module/documents/actor.mjs')
 const R = await import('../god/module/rules.mjs')
 
@@ -27,6 +29,30 @@ assert.deepEqual(on(), ['great:main'], 'дворучна знімає все')
 items[1].system.hand = 'off'
 await actor.toggleEquip(items[2]); await actor.toggleEquip(items[1])
 assert.deepEqual(on(), ['d2:off', 'sword:main'])
+// Обрана гравцем рука не перезаписується, навіть для не легкої зброї (лише підказка)
+for (const i of items) { i.system.equipped = false; i.system.hand = 'main' }
+items[2].system.hand = 'off'
+await actor.toggleEquip(items[0]); await actor.toggleEquip(items[2])
+assert.deepEqual(on(), ['d1:main', 'sword:off'], 'меч у другій руці, як обрано')
+assert.match(infos.at(-1), /не «Легка»/)
+// Зміна руки одягненої зброї: інша зброя переходить у звільнену руку
+for (const i of items) { i.system.equipped = false; i.system.hand = 'main' }
+await actor.toggleEquip(items[0]); await actor.toggleEquip(items[1])
+assert.deepEqual(on(), ['d1:main', 'd2:off'])
+await actor.setHand(items[0], 'off')
+assert.deepEqual(on(), ['d1:off', 'd2:main'], 'кинджали помінялись руками')
+// Неодягнена зброя просто запам'ятовує руку, і одягається в неї
+await actor.toggleEquip(items[1])
+await actor.setHand(items[1], 'off'); assert.equal(items[1].system.equipped, false)
+await actor.setHand(items[0], 'main')
+await actor.toggleEquip(items[1])
+assert.deepEqual(on(), ['d1:main', 'd2:off'])
+// Щит у другій руці знімається, коли туди переходить зброя
+for (const i of items) { i.system.equipped = false; i.system.hand = 'main' }
+await actor.toggleEquip(items[2]); await actor.toggleEquip(items[3])
+await actor.setHand(items[2], 'off')
+assert.deepEqual(on(), ['sword:off'], 'щит знято')
+console.log('✓ рука: вибір гравця, обмін рук, щит')
 // кулаки: зміни сітки з рівнем
 assert.equal(R.fistExtras(6, 17, 15).chanceCrit, true); assert.equal(R.fistExtras(5, 17, 15).chanceCrit, false)
 assert.deepEqual([8, 9, 10].map(l => R.fistExtras(l, 19, 19).shock), [false, true, true])

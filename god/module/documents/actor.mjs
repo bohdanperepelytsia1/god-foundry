@@ -149,8 +149,9 @@ export class GodActor extends Actor {
         const DUAL = R.DUAL_WIELD
         for (const w of weapons) if (w.system.twoHanded) off(w.id)
         const inHand = h => weapons.find(w => !w.system.twoHanded && (w.system.hand === 'off' ? 'off' : 'main') === h)
+        // Руку, яку обрав гравець, не міняємо. Не легка зброя в другій руці — лише підказка (за правилами там легка)
         let hand = s.hand === 'off' ? 'off' : 'main'
-        if (hand === 'off' && !DUAL.has(s.category)) hand = 'main'
+        if (hand === 'off' && !DUAL.has(s.category)) ui?.notifications?.info?.(`«${item.name}» у другій руці, але категорія «${GOD.WEAPON_CATEGORIES[s.category] ?? s.category}», не «Легка»: атаки обома руками не буде. Категорію можна змінити в листі предмета`)
         // основна рука зайнята, а друга вільна — легку зброю кладемо в другу
         if (hand === 'main' && inHand('main') && !inHand('off') && !shield && DUAL.has(s.category)) hand = 'off'
         const busy = inHand(hand)
@@ -160,6 +161,31 @@ export class GodActor extends Actor {
       }
     }
     return this.updateEmbeddedDocuments('Item', updates)
+  }
+
+  /**
+   * Рука одягненої зброї змінилась (інспектор, лист предмета): хто тримав цю руку —
+   * переходить у звільнену, а якщо це неможливо (дворучна, щит) — знімається.
+   * Не одягнена зброя просто запам'ятовує руку.
+   */
+  async setHand(item, hand) {
+    hand = hand === 'off' ? 'off' : 'main'
+    const prev = item.system.hand === 'off' ? 'off' : 'main'
+    if (hand === prev) return
+    const updates = [{ _id: item.id, 'system.hand': hand }]
+    if (item.system.equipped) updates.push(...this.handConflicts(item, hand, prev))
+    return this.updateEmbeddedDocuments('Item', updates, { godHand: true })
+  }
+
+  /** Що зробити з іншими речами, коли одягнена зброя item переходить у руку hand (з руки prev) */
+  handConflicts(item, hand, prev) {
+    const out = []
+    const worn = this.items.filter(o => o.id !== item.id && o.system.equipped)
+    const other = worn.find(o => o.type === 'weapon' && !o.system.twoHanded && (o.system.hand === 'off' ? 'off' : 'main') === hand)
+    if (other) out.push(prev !== hand ? { _id: other.id, 'system.hand': prev } : { _id: other.id, 'system.equipped': false })
+    const shield = worn.find(o => o.type === 'armor' && o.system.slot === 'Щит')
+    if (hand === 'off' && shield) out.push({ _id: shield.id, 'system.equipped': false })
+    return out
   }
 
   /**

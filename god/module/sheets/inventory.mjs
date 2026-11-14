@@ -105,7 +105,6 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
     const abil = actor.type === 'character' ? R.availableAbilities(s.category, actor.system.skill(ws.prof)) : []
     if (abil.length) add('Здібності', abil.map(a => `${a.name}${a.level > 1 ? ` ${a.level}` : ''} (${a.ed} ВС)`).join(', '), '', 'Вибираються у вікні атаки')
     add('Зброя', `${s.phys} фіз${s.mag ? ` · ${s.mag} маг` : ''}`)
-    add('Рука', s.hand === 'off' ? 'Друга' : 'Основна')
     add('Радіус', s.range)
     if (s.twoHanded) add('Хват', 'Дворучна')
     if (ws.prof) add('Володіння', actor.system.skill?.(ws.prof) ?? 0, '', ws.prof.replaceAll('_', ' '))
@@ -138,6 +137,7 @@ export async function inspectItem(actor, item, { enrich, changeLabel }) {
     kicker: itemSub(item), tags: tagsOf(s),
     qty, location: s.location, equipped: !!s.equipped,
     equippable: ['weapon', 'armor'].includes(item.type),
+    hand: item.type === 'weapon' && actor.type === 'character' && !s.twoHanded ? (s.hand === 'off' ? 'off' : 'main') : null,
     consumable: item.type === 'gear' && !!s.consumable,
     useLabel: item.type === 'weapon' ? 'Атакувати' : (item.type === 'gear' && s.consumable) ? 'Використати' : 'Показати в чаті',
     useIcon: item.type === 'weapon' ? 'fa-dice-d20' : (item.type === 'gear' && s.consumable) ? 'fa-flask' : 'fa-comment',
