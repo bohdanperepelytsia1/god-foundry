@@ -55,7 +55,7 @@
     {{#if hasPool}}<button type="button" class="god-die-clear" data-action="clearPool" data-tooltip="Очистити лоток"><i class="fa-solid fa-xmark"></i></button>{{/if}}
   </div>
 
-  <div class="god-seg god-tray-mode {{#if hasPool}}god-disabled{{/if}}">
+  <div class="god-seg god-tray-mode" {{#if hasPool}}data-tooltip="Перевага — кидок двічі, береться кращий; недолік — гірший"{{/if}}>
     {{#each modes}}
     <button type="button" class="{{#if active}}active{{/if}} mode-{{id}}" data-action="setMode" data-mode="{{id}}">{{label}}</button>
     {{/each}}

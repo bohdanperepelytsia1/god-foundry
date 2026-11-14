@@ -2005,3 +2005,16 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god .god-insp-hand .god-seg a.active { background: var(--g-accent, #f2c063); color: #1b1d26; font-weight: 600; }
 .god .god-insp-hand .god-seg a:not(.active):hover { color: var(--g-text, #eee); background: rgba(255,255,255,.05); }
 .god .god-inv-img img { -webkit-user-drag: none; }
+
+/* ── Вікна під екран (0.19.3): вікно не вище екрана, у діалогах прокручується вміст, кнопки внизу видно завжди ── */
+.application.god, .application.god-dialog, .application.dialog { max-height: calc(100dvh - 16px); max-width: calc(100vw - 16px); }
+.application.god-dialog > .window-content, .application.dialog > .window-content { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.application.god-dialog > .window-content > form, .application.dialog > .window-content > form,
+.application.god-dialog > form.window-content, .application.dialog > form.window-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.application.god-dialog .dialog-content, .application.dialog .dialog-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.application.god-dialog .form-footer, .application.dialog .form-footer { flex: none; }
+.application.god > .window-content { min-height: 0; }
+@media (max-height: 700px) {
+  .application.god-dialog .dialog-content { padding-bottom: 4px; }
+  .application.god-dialog .form-footer button { min-height: 30px; }
+}

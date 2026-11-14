@@ -105,8 +105,9 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     const base = this._baseMod(actor)
     const total = base + this._extra
     const poolDice = Object.entries(this._pool).filter(([, n]) => n > 0)
+    const poolF = poolDice.map(([d, n]) => `${n}${d}`).join(' + ')
     const formula = poolDice.length
-      ? poolDice.map(([d, n]) => `${n}${d}`).join(' + ')
+      ? (this._mode === 'norm' ? poolF : `${poolF} ×2 (${this._mode === 'adv' ? 'кращий' : 'гірший'})`)
       : ({ norm: '1d20', adv: '2d20 (краща)', dis: '2d20 (гірша)' })[this._mode]
 
     return {

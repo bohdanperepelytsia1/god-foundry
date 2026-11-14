@@ -24,8 +24,9 @@ export const TPL = 'systems/god/templates/actor'
 export function fitToScreen(pos) {
   if (!pos || typeof window === 'undefined') return pos
   const W = window.innerWidth, H = window.innerHeight
-  if (typeof pos.width === 'number') pos.width = Math.max(360, Math.min(pos.width, W - 340))
-  if (typeof pos.height === 'number') pos.height = Math.max(420, Math.min(pos.height, H - 70))
+  // на широкому екрані лишаємо місце бічній панелі Foundry, на вузькому — беремо весь екран
+  if (typeof pos.width === 'number') pos.width = Math.min(pos.width, W >= 1200 ? W - 340 : W - 16)
+  if (typeof pos.height === 'number') pos.height = Math.min(pos.height, H - 16)
   return pos
 }
 export const enrich = (html, doc) => foundry.applications.ux.TextEditor.implementation.enrichHTML(html ?? '', { relativeTo: doc })

@@ -288,18 +288,24 @@ export async function quickRoll(actor, spec = {}, opts = {}) {
   const mode = luck ? 'adv' : mode0
   const tail = (mod ? ` ${mod >= 0 ? '+' : '-'} ${Math.abs(mod)}` : '') + (crits ? ` + ${crits}` : '')
   const poolF = dice.map(([d, n]) => `${n}${d}`).join(' + ')
+  // Один куб з перевагою/недоліком — як d20: 2dXkh/2dXkl
+  const single = dice.length === 1 && dice[0][1] === 1 && mode !== 'norm'
   const isCheck = !dice.length
-  let roll = await new Roll(isCheck ? `${D20[mode]}${tail}` : `${poolF}${tail}`).evaluate()
+  let roll = await new Roll(isCheck ? `${D20[mode]}${tail}` : single ? `2${dice[0][0]}${mode === 'adv' ? 'kh' : 'kl'}${tail}` : `${poolF}${tail}`).evaluate()
   const rolls = [roll]
-  // Вдача для довільних кубів: кидаємо двічі, краще
-  if (luck && !isCheck) { const r2 = await new Roll(`${poolF}${tail}`).evaluate(); rolls.push(r2); if (r2.total > roll.total) roll = r2 }
+  // Довільні куби з перевагою/недоліком (і вдача): кидаємо двічі, беремо кращий/гірший
+  let other = null
+  if (!isCheck && !single && mode !== 'norm') {
+    const r2 = await new Roll(`${poolF}${tail}`).evaluate(); rolls.push(r2)
+    if (mode === 'adv' ? r2.total > roll.total : r2.total < roll.total) { other = roll; roll = r2 } else other = r2
+  }
   const nat = isCheck ? naturalOf(roll) : null
   const cls = nat === 20 ? 'nat20' : nat === 1 ? 'nat1' : ''
   const faces = dice.length
     ? `<div class="god-faces">${roll.dice.flatMap(d => d.results.map(r => `<span data-tooltip="d${d.faces}">${r.result}</span>`)).join('')}</div>` : ''
   const detail = isCheck
     ? `куб ${nat}${mod ? ` ${signed(mod)}` : ''}${critNote(crits, nat)}${MODE_LABEL[mode] ? ` · ${MODE_LABEL[mode]}` : ''}`
-    : `${esc(roll.formula)}${luck ? ' · кращий з двох' : ''}`
+    : `${esc(roll.formula)}${single ? ` · ${MODE_LABEL[mode] ?? ''}` : ''}${other ? ` · ${luck ? 'вдача, ' : ''}${mode === 'adv' ? 'кращий' : 'гірший'} з двох (другий: ${other.total})` : ''}`
   return sendCard(actor, `
     ${head(actor?.img, label, sub)}
     <div class="god-big ${cls}">${isCheck ? withCrits(roll, crits) : roll.total}</div>

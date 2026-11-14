@@ -22,6 +22,7 @@ import { registerImageSocket } from './module/apps/image-drop.mjs'
 import { registerTransfer } from './module/apps/transfer.mjs'
 import { registerWagons, registerWagonSocket } from './module/wagons.mjs'
 import { registerReward, rewardDialog } from './module/apps/reward.mjs'
+import { registerFit } from './module/fit.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
 import { registerRotationHandle } from './module/rotate-handle.mjs'
@@ -81,6 +82,7 @@ Hooks.once('init', () => {
   registerCombatPanel()
   registerWagons()
   registerReward()
+  registerFit()
   registerSiteImporter()
   game.settings.register('god', 'showFoeDodge', {
     name: 'Показувати гравцям ШУ ворогів', hint: 'Вимкнено: у вікні атаки й на картках кидків число ШУ ворога бачить лише майстер, гравці — тільки «влучив / промах».',
