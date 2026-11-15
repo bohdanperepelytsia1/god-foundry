@@ -5,5 +5,7 @@ assert.deepEqual(fitRect({ left: 100, top: 100, width: 400, height: 300 }, 1920,
 assert.deepEqual(fitRect({ left: 100, top: 400, width: 400, height: 600 }, 1366, 768), { top: 160 }, 'низ за краєм — підсуваємо вгору')
 assert.deepEqual(fitRect({ left: 500, top: 0, width: 600, height: 900 }, 1366, 768), { height: 752, top: 8 }, 'вище за екран — обрізаємо, вміст прокрутиться')
 assert.deepEqual(fitRect({ left: 900, top: 20, width: 940, height: 500 }, 1280, 720), { left: 332 }, 'правий край за екраном')
+assert.equal((await import('../god/module/fit.mjs')).contentMax(600, 110, 0), 474, 'вмісту — екран мінус шапка й кнопки')
+assert.equal((await import('../god/module/fit.mjs')).contentMax(200, 150, 0), 120, 'мінімум 120')
 assert.deepEqual(fitRect({ left: 0, top: 0, width: 940, height: 780 }, 800, 600), { width: 784, height: 584, left: 8, top: 8 }, 'маленький екран')
 console.log('✓ вікна під екран')

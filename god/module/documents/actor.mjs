@@ -192,8 +192,10 @@ export class GodActor extends Actor {
    * Підняти/знизити вміння. Правила: ключ гілки відкриває гілку; ключ не скинути,
    * поки гілка вкачана; гравець не опуститься нижче зафіксованого.
    * free=true — дія майстра: без витрат очок, і новий рівень одразу фіксується.
+   * Майстер може знизити й нижче зафіксованого: очки повертаються, межа опускається.
    */
   async changeSkill(key, delta, { free = false } = {}) {
+    const gm = !!game.user?.isGM
     if (key.startsWith('custom:')) return this.changeCustomSkill(key.slice(7), delta, { free })
     const meta = GOD.SKILL_INDEX[key]
     if (!meta) return
@@ -201,13 +203,13 @@ export class GodActor extends Actor {
     const sys = this.system
     const r = R.canChangeSkill({
       skill: meta, cat, levels: sys.skills[meta.cat], delta, points: sys.progress.skillPoints,
-      floor: sys.floors.skills[key] ?? 0, free, gateName: GOD.SKILL_INDEX[cat.gate]?.name,
+      floor: sys.floors.skills[key] ?? 0, free, gm, gateName: GOD.SKILL_INDEX[cat.gate]?.name,
     })
     if (!r.ok) return ui.notifications.warn(`${meta.name}: ${r.reason}`)
     const lvl = sys.skills[meta.cat][key] + delta
     const update = { [`system.skills.${meta.cat}.${key}`]: lvl }
     if (!free) update['system.progress.skillPoints'] = sys.progress.skillPoints + (delta > 0 ? -r.cost : r.refund)
-    else update[`system.floors.skills.${key}`] = lvl
+    if (free || lvl < (sys.floors.skills[key] ?? 0)) update[`system.floors.skills.${key}`] = lvl
     return this.update(update)
   }
 
@@ -220,11 +222,11 @@ export class GodActor extends Actor {
     const levels = { ...sys.skills[s.cat], [`custom:${id}`]: s.lvl }
     const r = R.canChangeSkill({
       skill: { key: `custom:${id}`, cost: s.cost, max: s.max, isGate: false }, cat, levels, delta,
-      points: sys.progress.skillPoints, floor: s.floor, free, gateName: GOD.SKILL_INDEX[cat.gate]?.name,
+      points: sys.progress.skillPoints, floor: s.floor, free, gm: !!game.user?.isGM, gateName: GOD.SKILL_INDEX[cat.gate]?.name,
     })
     if (!r.ok) return ui.notifications.warn(`${s.name}: ${r.reason}`)
     s.lvl += delta
-    if (free) s.floor = s.lvl
+    if (free || s.lvl < (s.floor ?? 0)) s.floor = s.lvl
     const update = { 'system.customSkills': list }
     if (!free) update['system.progress.skillPoints'] = sys.progress.skillPoints + (delta > 0 ? -r.cost : r.refund)
     return this.update(update)
@@ -237,14 +239,29 @@ export class GodActor extends Actor {
     if (delta > 0 && !free && pts < 1) return ui.notifications.warn('Немає очок характеристик')
     if (delta < 0 && (st.base ?? st.value) <= 0) return
     const floor = this.system.floors.stats[key]
-    if (delta < 0 && !free && floor !== undefined && (st.base ?? st.value) <= floor) {
+    if (delta < 0 && !free && !game.user?.isGM && floor !== undefined && (st.base ?? st.value) <= floor) {
       return ui.notifications.warn(`${GOD.STATS[key].label}: значення зафіксовано — знизити може лише майстер`)
     }
     const v = st.base ?? st.value
     const update = { [`system.stats.${key}.value`]: v + delta }
-    if (!free) update['system.progress.statPoints'] = pts - delta
-    else update[`system.floors.stats.${key}`] = v + delta
+    if (!free) update['system.progress.statPoints'] = pts - delta        // −1 повертає очко
+    if (free || (floor !== undefined && v + delta < floor)) update[`system.floors.stats.${key}`] = v + delta
     return this.update(update)
+  }
+
+  /** Майстер вписує рівень уміння напряму: без витрат очок, рівень одразу фіксується */
+  async setSkillLevel(key, lvl) {
+    if (!game.user?.isGM) return
+    if (key.startsWith('custom:')) {
+      const list = this.system.toObject().customSkills, s = list.find(x => x.id === key.slice(7))
+      if (!s) return
+      s.lvl = s.floor = Math.max(0, Math.min(s.max, Math.trunc(lvl) || 0))
+      return this.update({ 'system.customSkills': list })
+    }
+    const meta = GOD.SKILL_INDEX[key]
+    if (!meta) return
+    const v = Math.max(0, Math.min(meta.max, Math.trunc(lvl) || 0))
+    return this.update({ [`system.skills.${meta.cat}.${key}`]: v, [`system.floors.skills.${key}`]: v })
   }
 
   /** «Зафіксувати розвиток»: поточні рівні стають нижньою межею для гравця */

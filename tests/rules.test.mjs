@@ -101,6 +101,8 @@ t('фіксація: гравець не знижує нижче зафіксо�
   assert.equal(R.canChangeSkill({ skill: sk, cat, levels: lv, delta: -1, floor: 2 }).refund, 4)
   assert.equal(R.canChangeSkill({ skill: sk, cat, levels: lv, delta: -1, floor: 3, free: true }).ok, true)
   assert.equal(R.canChangeSkill({ skill: sk, cat, levels: lv, delta: 1, points: 0, free: true }).ok, true)
+  // майстер без Shift: нижче зафіксованого, і очки повертаються
+  assert.equal(R.canChangeSkill({ skill: sk, cat, levels: lv, delta: -1, floor: 3, gm: true }).refund, 4)
 })
 t('таблиця урону', () => {
   const tab = R.damageTable({ phys: 200, mag: 0 })

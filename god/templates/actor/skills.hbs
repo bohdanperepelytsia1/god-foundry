@@ -4,8 +4,13 @@
       <input type="search" data-filter="skills" placeholder="Знайти вміння…" class="god-select-on-focus"></div>
     <button type="button" class="god-toggle {{#if onlyLearned}}on{{/if}}" data-action="toggleLearned">
       <i class="fa-solid {{#if onlyLearned}}fa-eye-slash{{else}}fa-eye{{/if}}"></i> Лише вивчені</button>
+    {{#if isGM}}
+    <label class="god-points-pill god-points-edit {{#if system.progress.skillPoints}}has{{/if}}" data-tooltip="Очки вмінь (майстер): допиши +10, -5 або =20">
+      <i class="fa-solid fa-star"></i><input type="text" inputmode="numeric" data-delta="system.progress.skillPoints" data-min="0" value="{{system.progress.skillPoints}}"></label>
+    {{else}}
     <span class="god-points-pill {{#if system.progress.skillPoints}}has{{/if}}" data-tooltip="Очки вмінь">
       <i class="fa-solid fa-star"></i> {{system.progress.skillPoints}}</span>
+    {{/if}}
   </div>
 
   {{#if pendingBuild}}
@@ -46,7 +51,11 @@
           {{#each skills}}
           <li class="god-sk-cell {{#if lvl}}learned{{/if}} {{#if maxed}}maxed{{/if}} {{#if locked}}locked{{/if}} {{#if custom}}custom{{/if}} {{#if hidden}}god-hidden-learned{{/if}}"
               data-search="{{search}}" {{#if custom}}data-custom-id="{{id}}"{{/if}}>
+            {{#if (and @root.isGM @root.editMode)}}
+            <input class="god-sk-badge god-sk-level" type="text" inputmode="numeric" data-skill-level="{{key}}" value="{{lvl}}" data-tooltip="Рівень (майстер): вписати напряму, без витрат очок, одразу зафіксовано">
+            {{else}}
             <span class="god-sk-badge {{#if fixed}}fixed{{/if}}" data-tooltip="{{#if fixed}}Зафіксований рівень{{else}}Рівень{{/if}}">{{#if lvl}}{{lvl}}{{else}}—{{/if}}</span>
+            {{/if}}
             {{#if (and custom @root.editMode @root.isGM)}}
             <input class="god-custom-name" type="text" data-custom-field="name" value="{{name}}">
             {{else}}
@@ -72,5 +81,5 @@
       {{/each}}
     </div>
   </div>
-  <p class="god-hint god-skill-hint">Наведи на вміння — опис з правил. Клік — кидок d20 + рівень. Золота цифра — вартість наступного рівня.{{#if isGM}} Майстер: Shift+клік на ± — без витрат і одразу з фіксацією.{{/if}}</p>
+  <p class="god-hint god-skill-hint">Наведи на вміння — опис з правил. Клік — кидок d20 + рівень. Золота цифра — вартість наступного рівня.{{#if isGM}} Майстер: «−» знижує й нижче зафіксованого, очки повертаються персонажу; Shift+клік на ± — без витрат очок; у режимі редагування рівень можна вписати напряму, а очки вмінь — у полі зверху.{{/if}}</p>
 </section>

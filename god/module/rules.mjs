@@ -430,7 +430,7 @@ export const dodgeParts = ({ equippedWeight, enduranceCurrent, dodgeSkill = 0, b
  * @param free    дія майстра — без витрат і фіксації
  * @returns {{ ok: boolean, reason?: string, cost?: number, refund?: number }}
  */
-export const canChangeSkill = ({ skill, cat, levels, delta, points, floor = 0, free = false, gateName = '' }) => {
+export const canChangeSkill = ({ skill, cat, levels, delta, points, floor = 0, free = false, gm = false, gateName = '' }) => {
   const lvl = num(levels[skill.key])
   if (delta > 0) {
     if (lvl >= skill.max) return { ok: false, reason: 'Вже максимальний рівень' }
@@ -440,7 +440,8 @@ export const canChangeSkill = ({ skill, cat, levels, delta, points, floor = 0, f
     return { ok: true, cost: free ? 0 : cost }
   }
   if (lvl <= 0) return { ok: false, reason: 'Рівень уже 0' }
-  if (!free && lvl <= num(floor)) return { ok: false, reason: 'Рівень зафіксовано — знизити може лише майстер' }
+  // майстер може опустити й нижче зафіксованого — очки повертаються персонажу
+  if (!free && !gm && lvl <= num(floor)) return { ok: false, reason: 'Рівень зафіксовано — знизити може лише майстер' }
   if (skill.isGate && lvl === 1) {
     const others = Object.entries(levels).some(([k, v]) => k !== skill.key && num(v) > 0)
     if (others) return { ok: false, reason: 'Спершу скинь інші вміння гілки — ключ тримає всю гілку' }

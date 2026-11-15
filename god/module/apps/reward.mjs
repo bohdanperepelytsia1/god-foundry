@@ -7,7 +7,7 @@ import * as R from '../rules.mjs'
 import { GOD } from '../config.mjs'
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
-const FIELDS = [['xp', 'XP'], ['crits', 'Крити'], ['luck', 'Вдача']]
+const FIELDS = [['xp', 'XP'], ['skillPoints', 'Очки вмінь'], ['statPoints', 'Очки хар.'], ['crits', 'Крити'], ['luck', 'Вдача']]
 
 /** Застосувати нагороду до одного героя: повертає рядок для звіту (чиста логіка — для тестів) */
 export function rewardUpdate(sys, add) {
@@ -16,8 +16,11 @@ export function rewardUpdate(sys, add) {
   const crits = clamp('crits', (Number(sys.reputation?.crits) || 0) + (Number(add.crits) || 0))
   const luck = clamp('luck', (Number(sys.reputation?.luck) || 0) + (Number(add.luck) || 0))
   const before = R.levelFromXp(sys.progress?.xp), after = R.levelFromXp(xp)
+  // окремі очки вмінь і характеристик — понад ті, що дає новий рівень (їх додасть лист сам); у мінус — не нижче нуля
+  const pts = k => Math.max(0, (Number(sys.progress?.[k]) || 0) + (Number(add[k]) || 0))
   return {
-    update: { 'system.progress.xp': xp, 'system.reputation.crits': crits, 'system.reputation.luck': luck },
+    update: { 'system.progress.xp': xp, 'system.progress.skillPoints': pts('skillPoints'), 'system.progress.statPoints': pts('statPoints'),
+      'system.reputation.crits': crits, 'system.reputation.luck': luck },
     levels: after - before, level: after,
     capped: { crits: crits !== (Number(sys.reputation?.crits) || 0) + (Number(add.crits) || 0), luck: luck !== (Number(sys.reputation?.luck) || 0) + (Number(add.luck) || 0) },
   }
@@ -30,11 +33,11 @@ export async function rewardDialog() {
   const withPlayer = a => game.users.some(u => !u.isGM && a.testUserPermission(u, 'OWNER'))
   const rows = heroes.sort((a, b) => (withPlayer(b) - withPlayer(a)) || a.name.localeCompare(b.name, 'uk')).map(a => `
     <tr data-actor="${a.id}">
-      <td><label class="god-rw-who"><input type="checkbox" name="on-${a.id}" ${withPlayer(a) ? 'checked' : ''}><img src="${esc(a.img)}" alt=""><span>${esc(a.name)}<small>рів. ${R.levelFromXp(a.system.progress.xp)} · ${R.xpProgress(a.system.progress.xp).into} / ${R.xpProgress(a.system.progress.xp).need} XP · крити ${a.system.reputation.crits} · вдача ${a.system.reputation.luck}</small></span></label></td>
+      <td><label class="god-rw-who"><input type="checkbox" name="on-${a.id}" ${withPlayer(a) ? 'checked' : ''}><img src="${esc(a.img)}" alt=""><span>${esc(a.name)}<small>рів. ${R.levelFromXp(a.system.progress.xp)} · ${R.xpProgress(a.system.progress.xp).into} / ${R.xpProgress(a.system.progress.xp).need} XP · очки ${a.system.progress.skillPoints} вм. / ${a.system.progress.statPoints} хар. · крити ${a.system.reputation.crits} · вдача ${a.system.reputation.luck}</small></span></label></td>
       ${FIELDS.map(([k]) => `<td><input type="number" name="${k}-${a.id}" value="0" step="1"></td>`).join('')}
     </tr>`).join('')
   const content = `
-    <p class="god-dlg-info">Кожному — своє. Рядок «Усім» підставляє однакове значення відміченим героям; можна і мінус. Крити не більше ${GOD.REPUTATION.crits.max}, вдача не більше ${GOD.REPUTATION.luck.max}.</p>
+    <p class="god-dlg-info">Кожному — своє. Рядок «Усім» підставляє однакове значення відміченим героям; можна і мінус. Очки вмінь і характеристик — окремо, понад ті, що дає новий рівень. Крити не більше ${GOD.REPUTATION.crits.max}, вдача не більше ${GOD.REPUTATION.luck.max}.</p>
     <table class="god-rw">
       <thead><tr><th></th>${FIELDS.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead>
       <tbody>
@@ -44,7 +47,7 @@ export async function rewardDialog() {
     </table>
     <label class="god-dlg-check"><input type="checkbox" name="announce" checked><span>Повідомити в чат</span></label>`
   const res = await foundry.applications.api.DialogV2.wait({
-    window: { title: 'Нагорода за партію', icon: 'fa-solid fa-trophy' }, classes: ['god-dialog', 'god-rw-dialog'], position: { width: 600 }, rejectClose: false, content,
+    window: { title: 'Нагорода за партію', icon: 'fa-solid fa-trophy' }, classes: ['god-dialog', 'god-rw-dialog'], position: { width: 760 }, rejectClose: false, content,
     render: (event, dialog) => {
       const root = dialog?.element ?? event?.target?.element
       root?.querySelectorAll('[data-all]').forEach(inp => inp.addEventListener('input', () => {
@@ -59,7 +62,7 @@ export async function rewardDialog() {
       return {
         announce: el.announce.checked,
         list: heroes.filter(a => el[`on-${a.id}`]?.checked).map(a => ({ actor: a, add: Object.fromEntries(FIELDS.map(([k]) => [k, Math.trunc(Number(el[`${k}-${a.id}`]?.value) || 0)])) }))
-          .filter(x => x.add.xp || x.add.crits || x.add.luck),
+          .filter(x => FIELDS.some(([k]) => x.add[k])),
       }
     } }],
   })
@@ -68,7 +71,9 @@ export async function rewardDialog() {
   for (const { actor, add } of res.list) {
     const r = rewardUpdate(actor.system, add)
     await actor.update(r.update)
-    const parts = [add.xp && `${add.xp > 0 ? '+' : ''}${add.xp} XP`, add.crits && `${add.crits > 0 ? '+' : ''}${add.crits} крит.`, add.luck && `${add.luck > 0 ? '+' : ''}${add.luck} вдачі`].filter(Boolean)
+    const sg = n => `${n > 0 ? '+' : ''}${n}`
+    const parts = [add.xp && `${sg(add.xp)} XP`, add.skillPoints && `${sg(add.skillPoints)} оч. вмінь`, add.statPoints && `${sg(add.statPoints)} оч. характеристик`,
+      add.crits && `${sg(add.crits)} крит.`, add.luck && `${sg(add.luck)} вдачі`].filter(Boolean)
     lines.push(`<li><b>${esc(actor.name)}</b>: ${parts.join(', ')}${r.levels > 0 ? ` — <span class="god-rw-up">рівень ${r.level}!</span>` : ''}${r.capped.crits || r.capped.luck ? ' <small>(обмежено максимумом)</small>' : ''}</li>`)
   }
   if (res.announce) await ChatMessage.create({ speaker: { alias: 'G.O.D.' },

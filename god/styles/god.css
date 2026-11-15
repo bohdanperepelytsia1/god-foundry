@@ -2006,14 +2006,11 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god .god-insp-hand .god-seg a:not(.active):hover { color: var(--g-text, #eee); background: rgba(255,255,255,.05); }
 .god .god-inv-img img { -webkit-user-drag: none; }
 
-/* ── Вікна під екран (0.19.3): вікно не вище екрана, у діалогах прокручується вміст, кнопки внизу видно завжди ── */
-.application.god, .application.god-dialog, .application.dialog { max-height: calc(100dvh - 16px); max-width: calc(100vw - 16px); }
-.application.god-dialog > .window-content, .application.dialog > .window-content { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-.application.god-dialog > .window-content > form, .application.dialog > .window-content > form,
-.application.god-dialog > form.window-content, .application.dialog > form.window-content { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.application.god-dialog .dialog-content, .application.dialog .dialog-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.application.god-dialog .form-footer, .application.dialog .form-footer { flex: none; }
+/* ── Вікна під екран: листи не вищі за екран; діалоги підганяє fit.mjs (max-height вмісту), тут лише прокрутка ── */
+.application.god { max-height: calc(100dvh - 16px); max-width: calc(100vw - 16px); }
 .application.god > .window-content { min-height: 0; }
+.application.god-dialog .dialog-content { overflow-y: auto; overscroll-behavior: contain; }
+.application.god-dialog .form-footer { flex: none; }
 @media (max-height: 700px) {
   .application.god-dialog .dialog-content { padding-bottom: 4px; }
   .application.god-dialog .form-footer button { min-height: 30px; }
@@ -2103,3 +2100,6 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god input.god-level-input { width: 44px; text-align: center; padding: 0; outline: none; -moz-appearance: textfield; }
 .god input.god-level-input::-webkit-inner-spin-button, .god input.god-level-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .god-tray .god-tray-gm { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--g-line2); color: var(--g-accent); }
+.god .god-points-edit { display: inline-flex; align-items: center; gap: 4px; padding-right: 2px; }
+.god .god-points-edit input { width: 46px; height: 22px; padding: 0 4px; border: none; background: rgba(0, 0, 0, .25); color: inherit; font-weight: 700; text-align: center; border-radius: 4px; }
+.god input.god-sk-badge.god-sk-level { padding: 0; text-align: center; background: rgba(0, 0, 0, .25); color: var(--g-text); }

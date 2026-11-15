@@ -132,6 +132,13 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
         this.document.update({ 'system.progress.xp': Math.max(0, base + next) })
         return
       }
+      // Рівень уміння напряму (майстер)
+      if (el.dataset.skillLevel !== undefined) {
+        ev.stopPropagation()
+        const n = R.parseDelta(el.value, 0)
+        if (n !== null) this.document.setSkillLevel(el.dataset.skillLevel, n)
+        return
+      }
       // Рівень вручну (майстер): досвід ставиться на початок рівня, набране на рівні зберігається, очки не нараховуються
       if (el.dataset.setLevel !== undefined) {
         ev.stopPropagation()

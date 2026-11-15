@@ -6,6 +6,10 @@
 
   {{#if editMode}}
   <div class="god-stats-tools">
+    {{#if isGM}}
+    <label class="god-points-pill god-points-edit {{#if system.progress.statPoints}}has{{/if}}" data-tooltip="Очки характеристик (майстер): допиши +3, -1 або =5">
+      <i class="fa-solid fa-dumbbell"></i><input type="text" inputmode="numeric" data-delta="system.progress.statPoints" data-min="0" value="{{system.progress.statPoints}}"></label>
+    {{/if}}
     <button type="button" class="god-toggle" data-action="rollStats" data-tooltip="Створення персонажа: 6 кидків 6d6 без найменшого куба, потім розподіл по характеристиках">
       <i class="fa-solid fa-dice"></i> Кинути характеристики</button>
   </div>
@@ -20,7 +24,7 @@
       </a>
       {{#if @root.editMode}}
       <div class="god-stat-edit">
-        <button type="button" data-action="statDown" data-stat="{{key}}" data-tooltip="−1 (майстер: Shift — без повернення очка)">−</button>
+        <button type="button" data-action="statDown" data-stat="{{key}}" data-tooltip="−1, очко повертається (майстер — і нижче зафіксованого; Shift — без повернення очка)">−</button>
         <input type="text" inputmode="numeric" data-delta="system.stats.{{key}}.value" data-min="0" value="{{base}}" data-tooltip="Можна рахувати: допиши -5, +3, *2 або введи 150-100; =30 — задати{{#if bonus}}. Ще +{{bonus}} від шкіл магії{{/if}}">
         <button type="button" data-action="statUp" data-stat="{{key}}" data-tooltip="+1 за очко характеристик (майстер: Shift — безкоштовно)">+</button>
       </div>
