@@ -14,6 +14,8 @@ export const statMod = v => {
 export const xpForLevel = lvl => (lvl + 1) * BALANCE.XP_PER_LEVEL
 export const totalXpForLevel = lvl => { let t = 0; for (let i = 0; i < lvl; i++) t += xpForLevel(i); return t }
 export const levelFromXp = xp => { let l = 0; while (num(xp) >= totalXpForLevel(l + 1)) l++; return l }
+/** Досвід як на сайті: рівень, набране на цьому рівні, потрібно до наступного (сайт зберігає саме «набране на рівні») */
+export const xpProgress = xp => { const level = levelFromXp(xp); return { level, into: Math.max(0, num(xp) - totalXpForLevel(level)), need: xpForLevel(level) } }
 
 // ── Вміння: вартість рівнів ──────────────────────────────────────────────────
 /** Ціна підняття з рівня `lvl` на `lvl+1`; null — якщо досягнуто максимуму */

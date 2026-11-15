@@ -20,7 +20,7 @@ export class GodActor extends Actor {
     this.#followSize(changes)
     if (this.type !== 'character') return
     const newXp = foundry.utils.getProperty(changes, 'system.progress.xp')
-    if (newXp === undefined) return
+    if (newXp === undefined || options.godSetLevel) return   // майстер виставив рівень вручну — як на сайті, без очок
     const gained = R.levelFromXp(newXp) - R.levelFromXp(this.system.progress.xp)
     if (gained <= 0) return
     const p = this.system.progress

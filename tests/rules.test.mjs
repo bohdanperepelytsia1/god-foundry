@@ -248,6 +248,14 @@ t('гаманець: оплата з рештою, обмін, сума', () => 
   assert.deepEqual(R.consolidateMoney(W(250, 99)), W(50, 101, 0, 0).silver === 101 ? W(50, 1, 1) : null)
   assert.equal(R.fmtMoney(W(5, 0, 2)), '2з 5м'); assert.equal(R.fmtMoney(W()), '0м')
 })
+t('досвід як на сайті: набране на рівні / потрібно', () => {
+  // сайт: рівень 3, xp_current 20 → до 4-го треба (3+1)·50 = 200
+  const total = 50 + 100 + 150 + 20
+  assert.deepEqual(R.xpProgress(total), { level: 3, into: 20, need: 200 })
+  assert.deepEqual(R.xpProgress(0), { level: 0, into: 0, need: 50 })
+  // +200 до 20/200 → рівень 4, решта 20 з 250 (як addXP на сайті)
+  assert.deepEqual(R.xpProgress(total + 200), { level: 4, into: 20, need: 250 })
+})
 t('відновлення зілля з назви й опису сайту', () => {
   assert.deepEqual(R.guessRestore("Кристальне зілля відновлення здоров'я", 'Відновлює 250 хп (діє через 9 секунд, або 3 ходи)'), { hp: 250 })
   assert.deepEqual(R.guessRestore('Кристальне зілля відновлення хп', 'Діє 3 ходи або 9 секунд (500 відновлює)'), { hp: 500 })

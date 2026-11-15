@@ -122,6 +122,25 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
         this.document.update({ [path]: v })
         return
       }
+      // Досвід на поточному рівні (як на сайті): +120 — може підняти рівень, решта йде далі
+      if (el.dataset.xpInto !== undefined) {
+        ev.stopPropagation()
+        const sys = this.document.system, base = R.totalXpForLevel(sys.derived.level)
+        const into = Math.max(0, sys.progress.xp - base)
+        const next = R.parseDelta(el.value, into)
+        if (next === null) { el.value = into; return }
+        this.document.update({ 'system.progress.xp': Math.max(0, base + next) })
+        return
+      }
+      // Рівень вручну (майстер): досвід ставиться на початок рівня, набране на рівні зберігається, очки не нараховуються
+      if (el.dataset.setLevel !== undefined) {
+        ev.stopPropagation()
+        const sys = this.document.system
+        const L = Math.max(0, Math.min(99, Math.trunc(Number(el.value)) || 0))
+        const into = Math.max(0, sys.progress.xp - R.totalXpForLevel(sys.derived.level))
+        this.document.update({ 'system.progress.xp': R.totalXpForLevel(L) + Math.min(into, R.xpForLevel(L) - 1) }, { godSetLevel: true })
+        return
+      }
       // Особливі вміння (майстер): назва, гілка, вартість, максимум
       if (el.dataset.customField) {
         ev.stopPropagation()

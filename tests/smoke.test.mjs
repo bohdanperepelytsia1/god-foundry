@@ -101,7 +101,7 @@ const base = {
   tabs: [{ id: 'overview', label: 'Огляд', icon: 'x', active: true }],
   resources: [{ key: 'hp', label: 'HP', abbr: 'HP', value: 5, max: 10, bonus: 0, pct: 50, tip: 't' }],
   armorRes: [{ key: 'pr', abbr: 'PR', value: 3, max: 40, pct: 7, tip: 't' }],
-  dodgeTip: 'ШУ', xpPct: 40,
+  dodgeTip: 'ШУ', xpPct: 40, xpInto: 20, xpNeed: 200,
   money: Object.entries(GOD.MONEY).map(([key, m]) => ({ key, ...m, value: 3 })),
   stances: [{ id: 'neutral', label: 'Нейтр.', title: 't', active: true }, { id: 'attack', label: 'Атака', title: 't', active: false }],
   stats: Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: 15, mod: 1 })),
@@ -286,4 +286,14 @@ console.log('\nSmoke OK')
   const rows = tpl(base)
   assert.ok(/class="god-inv-row[^"]*"[^>]*data-item-id="[^"]+"[^>]*draggable="true"/.test(rows), 'рядок інвентаря перетягується і має data-item-id')
   console.log('Інспектор руки OK')
+}
+
+// Досвід як на сайті: набране на рівні / потрібно; майстер у режимі редагування виставляє рівень
+{
+  const sb = Handlebars.compile(readFileSync('god/templates/actor/sidebar.hbs', 'utf8'), { strict: false })
+  const html = sb({ ...base, editMode: false })
+  assert.ok(html.includes('data-xp-into value="20"') && html.includes('/ 200'), 'XP: 20 / 200')
+  assert.ok(!html.includes('data-set-level'), 'гравцю рівень не редагується')
+  assert.ok(sb({ ...base, editMode: true, isGM: true }).includes('data-set-level'), 'майстер — поле рівня')
+  console.log('Досвід як на сайті OK')
 }

@@ -7,7 +7,11 @@
 
   <div class="god-portrait-wrap">
     <img class="god-portrait {{#if portraitIcon}}is-icon{{/if}}" src="{{actor.img}}" {{#unless portraitIcon}}style="{{portraitStyle}}"{{/unless}} alt="{{actor.name}}" {{#if editMode}}data-action="editImage" data-tooltip="Змінити картинку або вибрати її шматок. Можна просто перетягнути файл з комп'ютера на портрет"{{else}}data-action="showPortrait" data-tooltip="Показати портрет"{{/if}}>
+    {{#if (and editMode isGM)}}
+    <input class="god-level-badge god-level-input" type="number" min="0" max="99" data-set-level value="{{system.derived.level}}" data-tooltip="Рівень (майстер): виставити вручну, без нарахування очок — як на сайті">
+    {{else}}
     <div class="god-level-badge" data-tooltip="Рівень">{{system.derived.level}}</div>
+    {{/if}}
     {{#if editMode}}<a class="god-token-pick {{#if tokenFollows}}follows{{/if}}" data-action="tokenImage" data-tooltip="{{#if tokenFollows}}Токен на мапі показує портрет і зміниться разом з ним. Клік — задати окремий готовий токен (або перетягни файл на портрет){{else}}Окремий токен. Клік — інший файл, ПКМ — знову як портрет{{/if}}"><img src="{{tokenImg}}" alt=""><span>{{#if tokenFollows}}Токен = портрет{{else}}Окремий токен{{/if}}</span></a>{{/if}}
     {{#if editMode}}<a class="god-token-look" data-action="tokenLook" data-tooltip="Вигляд токена: масштаб, віддзеркалення, кільце"><i class="fa-solid fa-sliders"></i></a>{{/if}}
     {{#if editable}}<div class="god-drop-zones" aria-hidden="true">
@@ -23,11 +27,11 @@
   {{/if}}
   {{#if system.details.race}}<div class="god-subtitle">{{system.details.race}}{{#if system.details.origin}} · {{system.details.origin}}{{/if}}</div>{{/if}}
 
-  <div class="god-xp" data-tooltip="Досвід: допиши +120 або порахуй (300+120)">
+  <div class="god-xp" data-tooltip="Досвід на цьому рівні, як на сайті: допиши +120 — набереш потрібне, і рівень підвищиться сам, решта перейде далі. Усього за весь час: {{system.progress.xp}} XP">
     <div class="god-xp-bar"><div style="width: {{xpPct}}%"></div></div>
     <label><span>XP</span>
-      <input type="text" data-delta="system.progress.xp" data-min="0" value="{{system.progress.xp}}">
-      <span class="god-dim">/ {{system.derived.xpNext}}</span></label>
+      <input type="text" data-xp-into value="{{xpInto}}">
+      <span class="god-dim">/ {{xpNeed}}</span></label>
   </div>
 
   <div class="god-res-list">

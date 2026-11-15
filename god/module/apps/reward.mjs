@@ -30,7 +30,7 @@ export async function rewardDialog() {
   const withPlayer = a => game.users.some(u => !u.isGM && a.testUserPermission(u, 'OWNER'))
   const rows = heroes.sort((a, b) => (withPlayer(b) - withPlayer(a)) || a.name.localeCompare(b.name, 'uk')).map(a => `
     <tr data-actor="${a.id}">
-      <td><label class="god-rw-who"><input type="checkbox" name="on-${a.id}" ${withPlayer(a) ? 'checked' : ''}><img src="${esc(a.img)}" alt=""><span>${esc(a.name)}<small>рів. ${R.levelFromXp(a.system.progress.xp)} · ${a.system.progress.xp} XP · крити ${a.system.reputation.crits} · вдача ${a.system.reputation.luck}</small></span></label></td>
+      <td><label class="god-rw-who"><input type="checkbox" name="on-${a.id}" ${withPlayer(a) ? 'checked' : ''}><img src="${esc(a.img)}" alt=""><span>${esc(a.name)}<small>рів. ${R.levelFromXp(a.system.progress.xp)} · ${R.xpProgress(a.system.progress.xp).into} / ${R.xpProgress(a.system.progress.xp).need} XP · крити ${a.system.reputation.crits} · вдача ${a.system.reputation.luck}</small></span></label></td>
       ${FIELDS.map(([k]) => `<td><input type="number" name="${k}-${a.id}" value="0" step="1"></td>`).join('')}
     </tr>`).join('')
   const content = `

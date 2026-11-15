@@ -2100,3 +2100,5 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-qb-pick-row span { flex: 1; min-width: 0; }
 .god-qb-pick-row small { opacity: .6; font-size: 11px; }
 .god-quickbar .god-qb-tools { flex: none; display: flex; align-items: center; gap: 4px; }
+.god input.god-level-input { width: 44px; text-align: center; padding: 0; outline: none; -moz-appearance: textfield; }
+.god input.god-level-input::-webkit-inner-spin-button, .god input.god-level-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }

@@ -255,10 +255,10 @@ export class GodCharacterSheet extends GodActorSheetBase {
       ` · обладунок ${d.armorWorst ? AW[d.armorWorst] : 'відсутній'} ${d.armorDodge >= 0 ? '+' : ''}${d.armorDodge}` +
       `${d.shieldDodge ? ` · щит ${d.shieldDodge}` : ''}` +
       `${dp.bonus ? ` · правка/ефекти ${dp.bonus > 0 ? '+' : ''}${dp.bonus}` : ''} · максимум ${R.MAX_DODGE}`
-    context.xpPct = (() => {
-      const lo = R.totalXpForLevel(d.level), hi = d.xpNext
-      return hi > lo ? Math.max(0, Math.min(100, (sys.progress.xp - lo) / (hi - lo) * 100)) : 0
-    })()
+    // Досвід як на сайті: скільки набрано на цьому рівні / скільки треба до наступного
+    context.xpInto = Math.max(0, sys.progress.xp - R.totalXpForLevel(d.level))
+    context.xpNeed = R.xpForLevel(d.level)
+    context.xpPct = context.xpNeed > 0 ? Math.max(0, Math.min(100, context.xpInto / context.xpNeed * 100)) : 0
     context.money = Object.entries(GOD.MONEY).map(([key, m]) => ({ key, ...m, value: sys.money[key] }))
     context.moneyTotal = R.fmtMoney(R.consolidateMoney(sys.money))
 
