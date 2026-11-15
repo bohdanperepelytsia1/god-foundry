@@ -161,11 +161,11 @@
   </fieldset>
 
   <fieldset class="god-desc-set"><legend>Опис</legend>
-    <prose-mirror name="system.description" value="{{system.description}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{description}}}</prose-mirror>
+    <prose-mirror name="system.description" value="{{system.description}}" {{#if editable}}toggled{{else}}disabled{{/if}} class="god-editor">{{{description}}}</prose-mirror>
   </fieldset>
   {{#if isSpell}}
   <fieldset class="god-desc-set"><legend>Покращення (2–5 рівні)</legend>
-    <prose-mirror name="system.upgrades" value="{{system.upgrades}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{upgrades}}}</prose-mirror>
+    <prose-mirror name="system.upgrades" value="{{system.upgrades}}" {{#if editable}}toggled{{else}}disabled{{/if}} class="god-editor">{{{upgrades}}}</prose-mirror>
   </fieldset>
   {{/if}}
   {{#if editable}}

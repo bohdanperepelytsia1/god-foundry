@@ -10,5 +10,5 @@
     <div><span>Вік</span><b>{{#if system.details.age}}{{system.details.age}}{{else}}—{{/if}}</b></div>
     {{/if}}
   </div>
-  <prose-mirror name="system.biography" value="{{system.biography}}" {{#if editable}}toggled{{/if}} class="god-editor">{{{biography}}}</prose-mirror>
+  <prose-mirror name="system.biography" value="{{system.biography}}" {{#if editable}}toggled{{else}}disabled{{/if}} class="god-editor">{{{biography}}}</prose-mirror>
 </section>

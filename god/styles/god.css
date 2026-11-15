@@ -460,9 +460,13 @@
 .god .god-details span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-faint); }
 .god .god-details b { font-weight: 400; font-size: 15px; }
 .god .god-editor {
-  display: block; min-height: 260px; padding: 8px 12px;
+  /* редактор Foundry (prose-mirror) сам — колонка: меню, потім текст; display:block ламав її (меню накладалось на текст) */
+  display: flex; flex-direction: column; position: relative; min-height: 260px; padding: 8px 12px;
   background: var(--g-panel); border: 1px solid var(--g-line); border-radius: var(--g-radius);
 }
+.god .god-editor .editor-menu { flex: none; }
+.god .god-editor .editor-content { flex: 1 1 auto; min-height: 140px; overflow-y: auto; }
+.god .god-editor.active .editor-content, .god .god-editor .editor-content[contenteditable="true"] { outline: none; }
 
 /* НІП */
 .god .god-npc-fields { display: grid; grid-template-columns: 1fr; gap: 4px; }
@@ -2103,3 +2107,12 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god .god-points-edit { display: inline-flex; align-items: center; gap: 4px; padding-right: 2px; }
 .god .god-points-edit input { width: 46px; height: 22px; padding: 0 4px; border: none; background: rgba(0, 0, 0, .25); color: inherit; font-weight: 700; text-align: center; border-radius: 4px; }
 .god input.god-sk-badge.god-sk-level { padding: 0; text-align: center; background: rgba(0, 0, 0, .25); color: var(--g-text); }
+
+/* 0.19.8 — компактні поля майстра не розтягуються стилями полів Foundry (width/flex з ядра) */
+.application.god .god-sk-cell input.god-sk-level, .application.god .god-sk-gate input.god-sk-level {
+  flex: 0 0 26px; width: 26px; min-width: 0; max-width: 26px; height: 26px; padding: 0; margin: 0; border: 1px solid var(--g-line); border-radius: 5px;
+  text-align: center; font-size: 13px; font-weight: 700; box-shadow: none; }
+.application.god .god-points-edit { flex: none; }
+.application.god .god-points-edit input { flex: 0 0 46px; width: 46px; min-width: 0; max-width: 46px; height: 22px; margin: 0; box-shadow: none; }
+.application.god input.god-level-input { flex: none; width: 44px; min-width: 0; max-width: 44px; height: 40px; padding: 0; margin: 0; position: absolute; }
+.application.god .god-toolbar .god-search { min-width: 120px; }
