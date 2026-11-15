@@ -1,9 +1,11 @@
 <div class="god-tray-body">
   <div class="god-tray-actor">
     {{#if actor}}<img src="{{actor.img}}" alt="">{{/if}}
+    {{#unless actor}}{{#if isGM}}<i class="fa-solid fa-crown god-tray-gm" data-tooltip="Майстер кидає від себе"></i>{{/if}}{{/unless}}
     <select name="actor" aria-label="Персонаж">
+      {{#if isGM}}<option value="{{NO_ACTOR}}" {{#if noActor}}selected{{/if}}>Майстер — без персонажа</option>{{/if}}
       {{#each actors}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
-      {{#unless actors.length}}<option>Немає персонажів</option>{{/unless}}
+      {{#unless actors.length}}{{#unless isGM}}<option>Немає персонажів</option>{{/unless}}{{/unless}}
     </select>
     <a class="god-hud-pin {{#if pinned}}on{{/if}}" data-action="pin"
        data-tooltip="{{#if pinned}}Відкріпити{{else}}Закріпити: відкриється сам після перезавантаження{{/if}}"><i class="fa-solid fa-thumbtack"></i></a>

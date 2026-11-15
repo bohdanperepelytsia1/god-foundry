@@ -14,4 +14,8 @@ await quickRoll(actor, { pool: { d6: 2, d20: 1 }, base: 1, extra: 1 })
 await quickRoll(actor, { pool: { d8: 3 }, mode: 'adv' })
 await quickRoll(actor, { pool: { d6: 1 }, mode: 'dis' })
 assert.deepEqual(formulas, ['1d20 + 3', '2d20kh - 2', '2d20kl', '2d6 + 1d20 + 2', '3d8', '3d8', '2d6kl'], 'куби з перевагою — двічі; один куб — 2dXkh/kl')
+// майстер без персонажа: кидок іде від гравця, без помилок
+const gm = await quickRoll(null, { label: 'Кидок кубів', pool: { d100: 1 }, mode: 'norm', crits: 2 })
+assert.equal(formulas.at(-1), '1d100', 'без персонажа: крити не списуються, формула проста')
+assert.ok(gm.content.includes('Кидок кубів') && !gm.content.includes('<img'), 'картка без портрета')
 console.log('✓ формули панелі:', formulas.join(' | '))

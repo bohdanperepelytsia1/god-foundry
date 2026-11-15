@@ -14,6 +14,9 @@ import { PinnableMixin } from './pins.mjs'
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
 const DIE_TYPES = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100']
 
+/** Значення «без персонажа» у виборі (майстер кидає від себе) */
+const NO_ACTOR = '__gm'
+
 export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(ApplicationV2)) {
   static DEFAULT_OPTIONS = {
     id: 'god-dice-tray',
@@ -49,12 +52,15 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
   _defaults() { this._pick = null; this._extra = 0; this._mode = 'norm'; this._pool = {}; this._crits = 0 }
   constructor(...args) { super(...args); this._defaults() }
 
-  /** Актор: обраний вручну → контрольований токен → призначений персонаж */
+  /**
+   * Актор: обраний вручну → контрольований токен → свій персонаж.
+   * Майстер без обраного токена кидає «від себе» (без персонажа), а не від першого-ліпшого героя.
+   */
   get actor() {
+    if (this._actorId === NO_ACTOR) return null
     return game.actors.get(this._actorId)
       ?? canvas.tokens?.controlled[0]?.actor
-      ?? game.user.character
-      ?? game.actors.find(a => a.type === 'character' && a.isOwner)
+      ?? (game.user.isGM ? null : game.user.character ?? game.actors.find(a => a.type === 'character' && a.isOwner))
       ?? null
   }
 
@@ -113,6 +119,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
     return {
       actor, isChar,
       actors: game.actors.filter(a => a.isOwner && ['character', 'npc'].includes(a.type)).map(a => ({ id: a.id, name: a.name, selected: a.id === actor?.id })),
+      isGM: game.user.isGM, noActor: !actor, NO_ACTOR,
       source: this._source, stats, skillGroups, search: this._search,
       pickLabel: this._pickLabel(),
       dice: DIE_TYPES.map(d => ({ d, n: this._pool[d] || 0 })),
@@ -163,7 +170,7 @@ export class GodDiceTray extends PinnableMixin(HandlebarsApplicationMixin(Applic
 
   static async #roll() {
     const actor = this.actor
-    if (!actor) return ui.notifications.warn('Обери персонажа для кидка')
+    if (!actor && !game.user.isGM) return ui.notifications.warn('Обери персонажа для кидка')
     const label = this._pickLabel() || (Object.values(this._pool).some(n => n) ? 'Кидок кубів' : 'Перевірка d20')
     const sub = this._pick ? (this._pick.kind === 'stat' ? 'характеристика' : `вміння, рівень ${this._baseMod(actor)}`) : ''
     const mods = this._mods(actor)

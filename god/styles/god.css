@@ -2102,3 +2102,4 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-quickbar .god-qb-tools { flex: none; display: flex; align-items: center; gap: 4px; }
 .god input.god-level-input { width: 44px; text-align: center; padding: 0; outline: none; -moz-appearance: textfield; }
 .god input.god-level-input::-webkit-inner-spin-button, .god input.god-level-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.god-tray .god-tray-gm { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--g-line2); color: var(--g-accent); }
