@@ -128,7 +128,14 @@ export class GodActor extends Actor {
    */
   async toggleEquip(item) {
     const s = item.system
-    if (s.equipped) return item.update({ 'system.equipped': false })
+    if (s.equipped) {
+      // Зняли пояс — речі з нього повертаються в загальне (як на сайті)
+      if (item.type === 'armor' && s.slot === 'Пояс') {
+        const onBelt = this.items.filter(i => i.system.location === 'belt')
+        if (onBelt.length) await this.updateEmbeddedDocuments('Item', onBelt.map(i => ({ _id: i.id, 'system.location': 'main' })))
+      }
+      return item.update({ 'system.equipped': false })
+    }
 
     const updates = [{ _id: item.id, 'system.equipped': true }]
     const off = id => updates.push({ _id: id, 'system.equipped': false })
@@ -162,6 +169,29 @@ export class GodActor extends Actor {
     }
     return this.updateEmbeddedDocuments('Item', updates)
   }
+
+  // ── Спорядження з «Огляду»: руки, пояс, одягнене ────────────────────────────
+  /** Взяти зброю в руку (з пояса — знімається з пояса) */
+  async equipToHand(item, hand = 'main') {
+    const upd = {}
+    if (item.system.location === 'belt') upd['system.location'] = 'main'
+    if (!item.system.twoHanded && (item.system.hand === 'off' ? 'off' : 'main') !== hand) {
+      if (item.system.equipped) await this.setHand(item, hand)
+      else upd['system.hand'] = hand
+    }
+    if (Object.keys(upd).length) await item.update(upd)
+    if (!item.system.equipped) await this.toggleEquip(item)
+  }
+  /** Покласти на пояс (з руки — знімається); пояс повний чи не одягнений — попередження */
+  async toBelt(item) {
+    const belt = this.system.derived?.belt ?? { slots: 0, used: 0 }
+    if (item.system.location !== 'belt' && belt.used >= belt.slots) {
+      return ui.notifications.warn(belt.slots ? `Пояс заповнений (${belt.used}/${belt.slots})` : 'Пояс не одягнено: одягни пояс у «Одягненому»')
+    }
+    return item.update({ 'system.location': 'belt', ...(item.type === 'weapon' && item.system.equipped ? { 'system.equipped': false } : {}) })
+  }
+  /** Повернути в рюкзак (загальне) */
+  async toPack(item) { return item.update({ 'system.location': 'main', ...(item.type === 'weapon' ? { 'system.equipped': false } : {}) }) }
 
   /**
    * Рука одягненої зброї змінилась (інспектор, лист предмета): хто тримав цю руку —

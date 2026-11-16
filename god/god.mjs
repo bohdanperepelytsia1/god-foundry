@@ -313,11 +313,11 @@ Hooks.on('renderChatMessageHTML', (message, html) => {
   for (const btn of html.querySelectorAll('[data-god-check]')) {
     btn.addEventListener('click', async ev => {
       ev.preventDefault()
-      const [uuid, stat, dc] = btn.dataset.godCheck.split('|')
+      const [uuid, stat, dc, kind] = btn.dataset.godCheck.split('|')
       const actor = await ownedActor(uuid)
       if (!actor || usedOnce(btn, ev)) return
       const why = btn.textContent.trim()
-      if (await Dice.thresholdCheck(actor, stat, Number(dc), why)) markUsed(btn)
+      if (await Dice.thresholdCheck(actor, stat, Number(dc), why, { injury: kind === 'injury' })) markUsed(btn)
     })
   }
   for (const btn of html.querySelectorAll('[data-god-death]')) {

@@ -9,6 +9,7 @@
  */
 import { GOD } from '../config.mjs'
 import { bindResourceControls } from './res-controls.mjs'
+import { weaponAttack, unarmedStrike } from '../dice/rolls.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
 const S = { enabled: 'quickbar', replace: 'replaceHotbar', collapsed: 'quickbarCollapsed', pos: 'quickbarPos' }
@@ -22,6 +23,7 @@ export function syncNativeHotbar() {
 }
 export const replacesHotbar = () => document.body.classList.contains('god-no-hotbar')
 const AUTO_LIMIT = 10
+const UNARMED = '@unarmed'
 const MIN_EDIT_SLOTS = 10
 
 // ── Розкладка слотів (чисті функції — для тестів). Порожнє місце — null, щоб номери 1–0 не з'їжджали ──
@@ -104,11 +106,12 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
     if (Array.isArray(saved)) return { ids: trim(saved.map(k => (k && (isMacroKey(k) ? !!fromUuidSync(k.slice(2)) : actor.items.has(k))) ? k : null)), custom: true }
     const isChar = actor.type === 'character'
     const s = actor.system
+    // У героя руки й пояс — окремі прив'язані групи панелі; тут лише решта
     const auto = [
-      ...actor.items.filter(i => i.type === 'weapon' && (i.system.equipped || !isChar)),
+      ...actor.items.filter(i => i.type === 'weapon' && !isChar),
       ...actor.items.filter(i => i.type === 'spell' && (s.schools?.[i.system.school] ?? 0) > 0),
       ...actor.items.filter(i => i.type === 'ability'),
-      ...actor.items.filter(i => i.type === 'gear' && i.system.location === 'belt'),
+      ...(isChar ? [] : actor.items.filter(i => i.type === 'gear' && i.system.location === 'belt')),
     ]
     return { ids: auto.slice(0, AUTO_LIMIT).map(i => i.id), custom: false }
   }
@@ -134,7 +137,18 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
         pct: r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0, damage: k === 'hp',
       }
     }
-    const { ids, custom } = GodQuickbar.slotIds(a)
+    // Прив'язане до листа (як «Огляд»): що в руках (або кулаки) і що на поясі — завжди на початку панелі, без номерів
+    const linked = []
+    if (isChar) {
+      const hands = a.items.filter(i => i.type === 'weapon' && i.system.equipped)
+      if (hands.length) for (const w of hands) linked.push({ id: w.id, zone: 'hands' })
+      else linked.push({ id: UNARMED, zone: 'hands' })
+      for (const i of a.items.filter(i => i.isPhysical && i.system.location === 'belt' && !i.system.equipped)) linked.push({ id: i.id, zone: 'belt' })
+    }
+    const linkedIds = new Set(linked.map(l => l.id))
+    const { custom } = GodQuickbar.slotIds(a)
+    const raw = GodQuickbar.slotIds(a).ids
+    const ids = custom ? trim(raw.map(k => (linkedIds.has(k) ? null : k))) : raw.filter(k => !linkedIds.has(k))
     let prev = null
     const mp = sys.resources.mp?.value ?? 0
     // У режимі розкладки видно всі місця (мінімум 10), щоб ставити речі на конкретний номер
@@ -172,7 +186,16 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       }
       return { key: id, index, img: i.img, name: i.name, tip, badge, dim, gap, group, kind: 'item', equip }
     })
-    this._slots = slots
+    const linkedSlots = linked.map((l, n) => {
+      if (l.id === UNARMED) return { key: UNARMED, img: 'systems/god/assets/icons/weapons/fist.svg', name: 'Кулаки', tip: 'Порожні руки: удар кулаками', group: 'atk', kind: 'item', zone: 'hands', first: n === 0 }
+      const i = a.items.get(l.id), s = i.system
+      const badge = i.type === 'gear' && s.quantity > 1 ? `×${s.quantity}` : ''
+      const tip = l.zone === 'hands' ? `Атака: ${i.name}${s.hand === 'off' ? ' · ліва рука' : ''}` : `${i.name} · на поясі${i.type === 'weapon' ? ': клік — взяти в руку' : ''}`
+      return { key: i.id, img: i.img, name: i.name, tip, badge, group: l.zone === 'hands' ? 'atk' : 'gear', kind: 'item', zone: l.zone, equip: l.zone === 'hands' ? true : null,
+        first: n === 0 || linked[n - 1].zone !== l.zone }
+    })
+    this._slots = [...linkedSlots, ...slots]
+    this._numbered = slots
     const stance = a.effects.find(e => e.getFlag('god', 'stance'))?.getFlag('god', 'stance') ?? 'neutral'
     return {
       actor: a, isChar, collapsed, custom, edit,
@@ -181,13 +204,13 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       dodge: sys.derived?.dodge ?? sys.dodge ?? 0,
       stances: [['neutral', 'Нейтральна'], ...Object.entries(GOD.STANCES).map(([id, s]) => [id, s.label])]
         .map(([id, label]) => ({ id, label, icon: `systems/god/assets/icons/stances/${id}.svg`, active: id === stance })),
-      slots: numbered(slots),
+      slots: numbered(slots), linked: linkedSlots,
     }
   }
 
   /** Клавіші 1–0: запустити слот за номером */
   activateSlot(n) {
-    const s = this._slots?.[n]
+    const s = (this._numbered ?? this._slots)?.[n]
     if (!s) return false
     this.#run(s.key)
     return true
@@ -198,12 +221,15 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       const m = await fromUuid(isMacroKey(key) ? key.slice(2) : key)
       return m?.execute()
     }
-    const a = this.actor, item = a?.items.get(key)
+    const a = this.actor
+    if (key === UNARMED && a) return weaponAttack(a, unarmedStrike())
+    const item = a?.items.get(key)
     if (!item) return
     // Обладунок — одягнути/зняти; зброя не в руках — спершу взяти в руку
     if (item.type === 'armor' || (item.type === 'weapon' && a.type === 'character' && !item.system.equipped)) {
       const was = !!item.system.equipped
-      await a.toggleEquip(item)
+      if (item.type === 'weapon') await a.equipToHand(item, item.system.hand === 'off' ? 'off' : 'main')   // з пояса — знімається з пояса
+      else await a.toggleEquip(item)
       return ui.notifications.info(`${item.name}: ${was ? 'знято' : item.type === 'weapon' ? 'у руці' : 'одягнено'}`)
     }
     return item.use()
@@ -345,12 +371,46 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
     await this.#setSlots(ids => Number.isInteger(at) ? placeSlot(ids, keys[0], at) : addSlots(ids, keys))
   }
 
+  /** Меню прив'язаних слотів (руки, пояс): те саме, що кнопки на «Огляді» */
+  #linkedMenu(slot, item, zone) {
+    const a = this.actor
+    const opts = zone === 'hands'
+      ? (item ? [['use', 'fa-dice-d20', 'Атака'], ['belt', 'fa-grip-lines', 'На пояс'], ['off', 'fa-xmark', 'Зняти з руки'], ['sheet', 'fa-pen-to-square', 'Відкрити предмет']]
+        : [['use', 'fa-hand-fist', 'Удар кулаками']])
+      : [['use', 'fa-play', item?.type === 'weapon' ? 'Взяти в праву руку' : 'Використати'], ...(item?.type === 'weapon' ? [['off-hand', 'fa-hand', 'Взяти в ліву руку']] : []),
+        ['pack', 'fa-box-open', 'У рюкзак'], ['sheet', 'fa-pen-to-square', 'Відкрити предмет']]
+    this.#popup(slot, opts, async m => {
+      if (m === 'use') return zone === 'belt' && item?.type === 'weapon' ? a.equipToHand(item, 'main') : this.#run(slot.dataset.key)
+      if (m === 'off-hand') return a.equipToHand(item, 'off')
+      if (m === 'belt') return a.toBelt(item)
+      if (m === 'off') return a.toggleEquip(item)
+      if (m === 'pack') return a.toPack(item)
+      if (m === 'sheet') return item?.sheet.render(true)
+    })
+  }
+  /** Спливне меню над слотом */
+  #popup(slot, opts, onPick) {
+    this.element.querySelector('.god-qb-menu')?.remove()
+    const menu = document.createElement('div')
+    menu.className = 'god-qb-menu'
+    menu.innerHTML = opts.map(([id, icon, label]) => `<a data-m="${id}"><i class="fa-solid ${icon}"></i> ${label}</a>`).join('')
+    this.element.append(menu)
+    const r = slot.getBoundingClientRect(), host = this.element.getBoundingClientRect()
+    menu.style.left = `${Math.max(0, r.left - host.left)}px`
+    menu.style.bottom = `${host.bottom - r.top + 6}px`
+    const outside = e => { if (!menu.contains(e.target)) close() }
+    const close = () => { menu.remove(); document.removeEventListener('pointerdown', outside, true) }
+    setTimeout(() => document.addEventListener('pointerdown', outside, true))
+    menu.addEventListener('click', e => { const m = e.target.closest('[data-m]')?.dataset.m; close(); if (m) onPick(m) })
+  }
+
   /** Маленьке меню слота (ПКМ) */
   #slotMenu(slot) {
     this.element.querySelector('.god-qb-menu')?.remove()
-    const a = this.actor, key = slot.dataset.key
+    const a = this.actor, key = slot.dataset.key, zone = slot.dataset.zone
     const item = isMacroKey(key) ? null : a?.items.get(key)
     const isChar = a?.type === 'character'
+    if (zone) return this.#linkedMenu(slot, item, zone)
     const useLabel = item?.type === 'armor' ? (item.system.equipped ? 'Зняти' : 'Одягнути')
       : item?.type === 'weapon' && isChar && !item.system.equipped ? 'Взяти в руку' : 'Використати'
     const opts = [

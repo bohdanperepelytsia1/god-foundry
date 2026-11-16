@@ -12,6 +12,7 @@
       </div>
       {{/unless}}
 
+      {{#if isNpc}}
       <section class="god-panel god-equip {{#unless equipOpen}}collapsed{{/unless}}" data-collapsible>
         <header data-action="invCollapse" data-loc="@equip" class="god-inv-toggle">
           <h3><i class="fa-solid fa-chevron-down god-chev"></i> Одягнене <small class="god-inv-meta">{{equippedCount}} з {{slots.length}}</small></h3>
@@ -29,6 +30,8 @@
         </div>
       </section>
 
+      {{/if}}
+      {{#unless isNpc}}<p class="god-hint god-inv-elsewhere"><i class="fa-solid fa-circle-info"></i> Руки, пояс{{#if beltNote}} ({{beltNote.used}}/{{beltNote.slots}}){{/if}} і одягнене — на вкладці «Огляд».</p>{{/unless}}
       <div class="god-toolbar">
         <div class="god-search"><i class="fa-solid fa-magnifying-glass"></i>
           <input type="search" data-filter="inventory" placeholder="Пошук…" class="god-select-on-focus"></div>

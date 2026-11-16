@@ -169,6 +169,16 @@ export const ARMOR_SKILL_EFFECT = {
   mediumFit: { mod: -2, label: 'середній обладунок −2' }, medium: { mod: -2, label: 'середній обладунок −2' },
   heavyFit: { dis: true, label: 'тяжкий обладунок — перешкода' }, heavy: { dis: true, label: 'тяжкий обладунок — перешкода' },
 }
+/**
+ * Бонуси обладунку з правил («Види обладунків»): травми й калітства з перешкодою для того, хто в обладунку.
+ * Середній підігнаний і тяжкий — перешкода (кидок 2d20, кращий), тяжкий підігнаний — потрійна (4d20, кращий).
+ * Скільки d20 кидає власник на перевірку «не отримати калітства».
+ */
+export const INJURY_DICE = { mediumFit: 2, heavy: 2, heavyFit: 4 }
+export const injuryDice = worst => INJURY_DICE[worst] ?? 1
+/** Легкий підігнаний: шанс ухилитись від першої та кожної третьої атаки по герою (у бою) */
+export const lightFitDodge = n => num(n) === 1 || (num(n) > 0 && num(n) % 3 === 0)
+
 export const armorDodgeMod = keys => {
   const list = keys.filter(Boolean)
   if (!list.length) return { mod: 1, worst: null }
@@ -195,7 +205,7 @@ export const afterHit = (hp, maxHp) => {
     out.death = v > -m / 2 ? 'coin' : 'saves'
     return out
   }
-  if (v <= 300) out.checks.push({ stat: 'con', dc: 12, label: 'Тілобудова 12+ — не отримати калітства' })
+  if (v <= 300) out.checks.push({ stat: 'con', dc: 12, label: 'Тілобудова 12+ — не отримати калітства', injury: true })
   if (v <= 100) out.checks.push({ stat: 'end', dc: 12, label: 'Витривалість 12+ — не втратити свідомість' })
   return out
 }
@@ -214,9 +224,15 @@ export const deathSave = (state, d20) => {
 }
 
 /** Стан свідомості за поточною MT */
+/**
+ * БМП — «без модифікаторів (бонусів)»: усі плюси до кидка (рівень уміння, МОД характеристики, ефекти) не діють,
+ * лишаються тільки штрафи. Приклад: акробатика +1 і тяжкі калітства −5 → кидок −5, а не −4.
+ */
+export const applyNoBonus = parts => parts.map(p => (Number(p.value) > 0 ? { ...p, value: 0, off: true } : p))
+
 export const mentalState = mt => {
   const v = num(mt)
-  if (v <= 5) return { key: 'psychosis', label: 'Психоз', note: 'Усі дії МОД−5, ГМ керує більшістю дій', all: -5, dmg: 0 }
+  if (v <= 5) return { key: 'psychosis', label: 'Психоз', note: 'Усі дії МОД−5 (БМП: бонуси не діють), ГМ керує більшістю дій', all: -5, dmg: 0, noBonus: true }
   if (v <= 9) return { key: 'paranoia', label: 'Паранойя', note: 'МОД−3 на всі дії, страх 16+ від волі', all: -3, dmg: 0 }
   if (v <= 14) return { key: 'anxiety', label: 'Тривожність', note: 'МОД−1 на дії, −2 на урон, страх 12+ від волі', all: -1, dmg: -2 }
   return null

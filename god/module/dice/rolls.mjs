@@ -322,6 +322,28 @@ const mergeMode = (a, b) => (a === b || b === 'norm') ? a : a === 'norm' ? b : '
 const hasStatus = (actor, id) => !!actor?.statuses?.has?.(id)
 
 /** ШАНС (1d4 = 3) — окремий кидок, видно в чаті й на кубиках */
+/**
+ * Легкий підігнаний обладунок цілі (герой): шанс ухилитись від першої та кожної третьої атаки по ньому в бою.
+ * Номер атаки рахуємо за картками попадань цього бою (бачить кожен клієнт; оновлювати бій гравцеві не потрібно).
+ * Повертає номер атаки, якщо шанс діє, інакше 0.
+ */
+function lightFitTurn(target) {
+  const a = target?.actor, combat = game.combat
+  if (a?.type !== 'character' || a.system.derived?.armorWorst !== 'lightFit' || !combat?.started) return 0
+  const n = (game.messages?.contents ?? []).filter(m => { const t = m.getFlag?.('god', 'atkOn'); return t?.combat === combat.id && t.target === target.uuid }).length + 1
+  return R.lightFitDodge(n) ? n : 0
+}
+/** Позначка на картці атаки: по кому й у якому бою (для лічильника вище) */
+const atkOnFlag = target => (game.combat?.started ? { atkOn: { combat: game.combat.id, target: target.uuid } } : {})
+/** ШАНС ухилитись (1d4 = 3) від обладунку; змінює картку, повертає true — ухилився */
+async function lightFitChance(target, rolls, add) {
+  const n = lightFitTurn(target)
+  if (!n) return false
+  const ch = await rollChance(rolls)
+  add(step('ШАНС ухилитись', ch.value, `легкий підігнаний обладунок ${esc(target.name)} · ${n === 1 ? 'перша' : `${n}-та`} атака · 1d4: 3 — ухилився`, { ok: !ch.ok, text: ch.ok ? 'Ухилився' : 'Влучання' }))
+  return ch.ok
+}
+
 async function rollChance(rolls) {
   const r = await new Roll('1d4').evaluate()
   rolls.push(r)
@@ -341,7 +363,11 @@ const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor
   .reduce((a, i) => a + (Number(i.system.phys) || 0), 0)
 
 /** Посилання на зброю для повторного кидка: uuid предмета або (для атаки НІП) сам опис */
-const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, look: item.look ?? '', system: { ...item.system } } : item.uuid
+const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, look: item.look ?? '', system: { ...item.system } }
+  : item.unarmed ? unarmedStrike() : item.uuid
+/** Герой з порожніми руками б'є кулаками: категорія «Кулачна», урон — Сила й кулачний бій, як у зброї без власного урону */
+export const unarmedStrike = () => ({ name: 'Кулаки', img: 'systems/god/assets/icons/weapons/fist.svg', unarmed: true,
+  system: { category: 'fist', phys: 0, mag: 0, hand: 'main', weight: 0, equipped: true } })
 async function itemFrom(ref) { return typeof ref === 'string' ? fromUuid(ref) : ref }
 
 /** Спільні дані атаки: категорія, рівні, перки, доступні здібності */
@@ -469,9 +495,10 @@ export async function weaponAttack(actor, item, opts = {}) {
       if (ch.ok) hitOk = false
       html += step('ШАНС промаху', ch.value, '1d4: 3 — промах', { ok: hitOk, text: hitOk ? 'Влучання' : 'Промах' })
     }
+    if (hitOk && !luck && await lightFitChance(target, rolls, x => { html += x })) hitOk = false
     if (!hitOk) {
       html += `<div class="god-note">${esc(target.name)} ухиляється — урон не кидається.</div>`
-      const msg = await sendCard(actor, html, rolls, replay, luck)
+      const msg = await sendCard(actor, html, rolls, replay, luck, luck ? null : atkOnFlag(target))
       await secondHand()
       return msg
     }
@@ -480,7 +507,7 @@ export async function weaponAttack(actor, item, opts = {}) {
   html += `<div class="god-apply god-apply-one"><button type="button" class="god-roll-dmg" data-god-damage="1"
     data-tooltip="Окремий кидок урону${critsOf(actor) ? '. Крити на урон — перед кидком' : ''}"><i class="fa-solid fa-dice-d20"></i> Кинути урон</button></div>`
   const attack = { actor: actor.uuid, item: ref, p: { ...p, critHit: cHit }, guaranteed: hc.guaranteed ?? null, target: target.uuid }
-  const msg = await sendCard(actor, html, rolls, replay, luck, { attack })
+  const msg = await sendCard(actor, html, rolls, replay, luck, { attack, ...(luck ? {} : atkOnFlag(target)) })
   await secondHand()
   return msg
 }
@@ -770,10 +797,11 @@ export async function castSpell(actor, spell, opts = {}) {
       html += step(hc.missCheck === 'half' ? 'Шанс промаху' : 'ШАНС промаху', r.total, hc.missCheck === 'half' ? '1d2: 1 — промах' : '1d4: 3 — промах',
         { ok, text: ok ? 'Влучання' : 'Промах' })
     }
+    if (ok && !luck && await lightFitChance(target, rolls, x => { html += x })) ok = false
     if (!ok) {
       await pay()
       html += `<div class="god-note">${luck ? 'Ресурси вже списані первинним кидком' : p.pay ? `Мана списана: ${s.manaCost} OM` : 'Ресурси не списувались'}</div>` + manaWarn()
-      return sendCard(actor, html, rolls, replay, luck)
+      return sendCard(actor, html, rolls, replay, luck, luck ? null : atkOnFlag(target))
     }
   }
 
@@ -806,7 +834,8 @@ export async function castSpell(actor, spell, opts = {}) {
   if (p.pay && !luck) html += `<div class="god-note">Списано ${s.manaCost} OM${s.staminaCost ? `, ${s.staminaCost} ВС` : ''}</div>` + manaWarn()
   // анімація — у момент натискання «Урон»: дані для неї кладемо в картку
   const caster = actor.isToken ? actor.token.uuid : (actor.getActiveTokens?.()?.[0]?.document?.uuid ?? actor.uuid)
-  return sendCard(actor, html, rolls, replay, luck, ev.success ? { fx: { attacker: caster, kind: 'spell', school: s.school, tier: 't100' } } : null)
+  const onFlag = needsHit && target && !luck ? atkOnFlag(target) : {}
+  return sendCard(actor, html, rolls, replay, luck, { ...onFlag, ...(ev.success ? { fx: { attacker: caster, kind: 'spell', school: s.school, tier: 't100' } } : {}) })
 }
 
 export async function useAbility(actor, item) {
@@ -900,13 +929,18 @@ export async function thresholdCheck(actor, stat, dc, why = '', opts = {}) {
   if (crits === null) return
   const tm = actor.system.stats?.[stat] ? M.statMods(actor, stat) : { total: 0, parts: [], dis: [], text: '' }
   const mod = luck ? luckTotal(tm) : tm.total
-  const roll = await new Roll(d20f(luck ? 'adv' : 'norm', crits), { m: mod, c: crits }).evaluate()
+  // Перевірка «не отримати калітства»: середній підігнаний і тяжкий обладунок — перешкода калітству (2d20), тяжкий підігнаний — потрійна (4d20)
+  const nd = opts.injury ? R.injuryDice(actor.system.derived?.armorWorst) : 1
+  const dice = Math.max(nd, luck ? 2 : 1)
+  const formula = dice > 1 ? `${dice}d20kh + @m${crits ? ' + @c' : ''}` : d20f('norm', crits)
+  const roll = await new Roll(formula, { m: mod, c: crits }).evaluate()
   const total = withCrits(roll, crits)
   const ok = total >= dc
+  const armorNote = nd > 1 ? ` · обладунок: ${nd === 4 ? 'потрійна перешкода калітству' : 'перешкода калітству'} (${nd}d20, кращий)` : ''
   let html = head(actor.img, `${STAT_LABEL(stat)} ${dc}+`, why || 'перевірка')
-  html += step('Кидок', total, `куб ${naturalOf(roll)} ${signed(mod)}${critNote(crits, naturalOf(roll))}${luck ? ' · перевага' : ''}`, { ok, text: ok ? 'Успіх' : 'Провал' })
+  html += step('Кидок', total, `куб ${naturalOf(roll)} ${signed(mod)}${critNote(crits, naturalOf(roll))}${luck ? ' · перевага' : ''}${armorNote}`, { ok, text: ok ? 'Успіх' : 'Провал' })
   html += modsLine(tm)
-  return sendCard(actor, html, [roll], { fn: 'threshold', args: [stat, dc, why], preset: { crits } }, luck)
+  return sendCard(actor, html, [roll], { fn: 'threshold', args: [stat, dc, why, { injury: !!opts.injury }], preset: { crits } }, luck)
 }
 
 /** Спаскидок: 11+ успіх, 1 = два провали, 20 = два успіхи; три успіхи — стабільний, три провали — смерть */
@@ -1027,8 +1061,8 @@ export async function hitConsequences(actor, out) {
 }
 
 const checkButtons = (actor, checks) => '<div class="god-checks">' + checks.map(ch => `
-      <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|${ch.stat}|${ch.dc}" data-tooltip="${esc(ch.label)}">
-        <i class="fa-solid fa-dice-d20"></i> ${esc(ch.label)}</button></div>`).join('') + '</div>'
+      <div class="god-apply god-apply-one"><button type="button" data-god-check="${actor.uuid}|${ch.stat}|${ch.dc}${ch.injury ? '|injury' : ''}" data-tooltip="${esc(ch.label)}">
+        <i class="fa-solid fa-dice-d20"></i> ${esc(ch.label)}${ch.injury && R.injuryDice(actor.system.derived?.armorWorst) > 1 ? ' <small>(обладунок: перешкода)</small>' : ''}</button></div>`).join('') + '</div>'
 
 /** Мана впала до 0 чи нижче — кожного разу перевірка Тілобудови */
 export async function manaConsequences(actor) {
@@ -1092,7 +1126,7 @@ const REPLAY = {
   weapon: async (a, [u], o) => { const it = await itemFrom(u); return it ? weaponAttack(a, it, o) : ui.notifications.warn('Зброї вже немає') },
   weaponDmg: async (a, [u, st], o) => { const it = await itemFrom(u); return it ? weaponDamage(a, it, st, o) : ui.notifications.warn('Зброї вже немає') },
   spell: async (a, [u], o) => { const it = await fromUuid(u); return it ? castSpell(a, it, o) : ui.notifications.warn('Заклинання вже немає') },
-  threshold: (a, [st, dc, why], o) => thresholdCheck(a, st, dc, why, o),
+  threshold: (a, [st, dc, why, extra], o) => thresholdCheck(a, st, dc, why, { ...(extra ?? {}), ...o }),
   deathSave: (a, _, o) => deathSave(a, o),
   deathCoin: (a, _, o) => deathCoin(a, o),
 }

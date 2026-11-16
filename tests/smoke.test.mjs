@@ -106,6 +106,10 @@ const base = {
   stances: [{ id: 'neutral', label: 'Нейтр.', title: 't', active: true }, { id: 'attack', label: 'Атака', title: 't', active: false }],
   stats: Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: 15, mod: 1 })),
   equippedWeapons: [sword],
+  hands: [{ hand: 'main', label: 'Права рука', sub: 'основна', weapon: sword }, { hand: 'off', label: 'Ліва рука', sub: 'друга', weapon: null, busy: '' }],
+  beltFree: true, belt: { on: true, item: { id: 'b', name: 'Пояс', img: 'x' }, slots: 3, used: 1, items: [{ id: 'p1', name: 'Зілля', img: 'x', usable: true, sub: 'HP +50' }] },
+  armorSlots: [{ slot: 'Шолом', label: 'Шолом', item: null }, { slot: 'Кираса', label: 'Кираса', item: { id: 'a', name: 'Кольчуга', img: 'x', phys: 20, mag: 0 } }],
+  armorTotal: { phys: 20, mag: 0 },
   readySpells: [row('spell', {}, { school: 'Вогонь', castable: true })],
   effectsActive: [{ id: 'e1', name: 'Атакуюча стійка', img: 'x', disabled: false, isStance: true, changes: 'урон +2' }],
   effectsOff: [{ id: 'e2', name: 'Отрута', img: 'x', disabled: true, changes: 'HP −5' }],
@@ -187,7 +191,12 @@ for (const editMode of [false, true]) {
       assert.ok(html.includes('data-res-damage'), `${f}: кнопка урону біля HP`)
       assert.equal(html.includes('god-res-bonus'), editMode, `${f}: бонус/максимум лише в редагуванні`)
     }
-    if (f === 'overview.hbs') assert.ok(html.includes('god-dmg-table') && html.includes('data-delta="system.reputation.fame"'), 'таблиця урону й репутація')
+    if (f === 'overview.hbs') {
+      assert.ok(html.includes('god-dmg-table') && html.includes('data-delta="system.reputation.fame"'), 'таблиця урону й репутація')
+      assert.ok(html.includes('data-kind="hand" data-hand="off"') && html.includes('data-action="gearToBelt"'), 'руки: взяти в порожню, на пояс')
+      assert.ok(html.includes('god-belt-panel') && html.includes('data-action="gearToPack"') && html.includes('data-kind="belt"'), 'пояс на огляді')
+      assert.ok(html.includes('data-kind="armor" data-slot="Шолом"') && html.includes('Кольчуга'), 'одягнене: слоти з «одягнути»')
+    }
     if (f === 'overview.hbs') assert.equal(html.includes('data-delta="system.stats.str.value"'), editMode, 'поля стат (з дельтою) лише в редагуванні')
     if (f === 'npc-sidebar.hbs') {
       assert.ok(html.includes('god-res-pr') && html.includes('data-delta="system.resources.pr.value"'), 'НІП: смуга поточного PR, поле клікабельне')
@@ -252,8 +261,9 @@ const wgHtml = wgT({ isGM: false, tabActive: true, canPut: true, wagons: [{ id: 
   wagon: { id: 'a', name: 'Віз', capacity: 200, weight: 10, pct: 5, items: [{ id: 'x', name: 'Мотузка', img: 'r', qty: 2, multi: true, weight: 3 }] },
   mine: [{ id: 'm', name: 'Зілля', img: 'p', qty: 1, weight: 0.2 }] })
 assert.ok(wgHtml.includes('data-wagon-item="x"') && wgHtml.includes('data-action="wagonTake"') && wgHtml.includes('data-mine-item="m"') && wgHtml.includes('data-action="wagonPut"'), 'візки: дві колонки й стрілки')
-assert.ok(!wgHtml.includes('wagonEdit') && !wgHtml.includes('wagonNew'), 'гравцю — без керування візками')
-assert.ok(wgT({ isGM: true, wagons: [] }).includes('data-action="wagonNew"'), 'майстру без візків — «Новий візок»')
+assert.ok(!wgHtml.includes('wagonEdit'), 'чужим візком гравець не керує')
+assert.ok(wgT({ canCreateWagon: true, wagons: [] }).includes('data-action="wagonNew"'), 'без візків — «Новий візок» (і гравцю)')
+assert.ok(wgT({ canCreateWagon: true, wagons: [{ id: 'a', name: 'В', active: true }], wagon: { id: 'a', name: 'В', manage: true, items: [] }, mine: [] }).includes('data-action="wagonEdit"'), 'свій візок — налаштування')
 console.log('✓ вікно імпорту з сайту')
 
 // ── панелі: персонаж і швидка панель ──

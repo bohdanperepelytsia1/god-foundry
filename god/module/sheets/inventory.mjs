@@ -76,10 +76,11 @@ export function buildInventory(actor, state) {
         search: `${i.name} ${itemSub(i)}`.toLowerCase(),
       })),
     }
-  }).filter(s => s.count || s.loc === 'main' || (s.loc === 'belt' && belt?.slots))
+  // Пояс і одягнене — на «Огляді» (як на сайті); тут лише рюкзак і місця зберігання
+  }).filter(s => s.loc !== 'belt' && (s.count || s.loc === 'main'))
 
   return {
-    sections,
+    sections, beltNote: belt?.slots || physical.some(i => i.system.location === 'belt') ? { used: physical.filter(i => i.system.location === 'belt').length, slots: belt?.slots ?? 0 } : null,
     types: INV_TYPES.map(t => ({ id: t.id, label: t.label, icon: t.icon, active: t.id === filter.id, count: physical.filter(t.test).length }))
       .filter(t => t.count || t.id === 'all' || t.active),
     sorts: INV_SORTS, sort: state.sort, total: physical.length,

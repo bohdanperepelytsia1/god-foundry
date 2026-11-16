@@ -185,6 +185,18 @@ async function hideBars(type, OWNER) {
   return n
 }
 
+/** 0.20.0: ефекти з БМП (тяжкі калітства, тяжка виснага, обмороження, пекло) — додати «бонуси не діють» */
+const NO_BONUS_EFFECTS = ['Тяжкі калітства', 'Тяжка виснага', 'Обмороження', 'Пекло']
+async function migrateNoBonus() {
+  let n = 0
+  for (const a of game.actors) {
+    const ups = a.effects.filter(e => NO_BONUS_EFFECTS.includes(e.name) && !e.changes.some(c => c.key === 'system.combat.noBonus'))
+      .map(e => ({ _id: e.id, changes: [...e.changes.map(c => ({ ...c })), { key: 'system.combat.noBonus', mode: CONST.ACTIVE_EFFECT_MODES.ADD, value: '1', priority: null }] }))
+    if (ups.length) { await a.updateEmbeddedDocuments('ActiveEffect', ups, { godMigration: true }); n += ups.length }
+  }
+  return n
+}
+
 /** 0.19.4: розхідні предмети без відновлення (зілля з сайту) — вгадати з назви й опису */
 async function migrateRestore() {
   let n = 0
@@ -286,7 +298,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook], ['0.19.4', migrateRestore],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook], ['0.19.4', migrateRestore], ['0.20.0', migrateNoBonus],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

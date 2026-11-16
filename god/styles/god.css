@@ -2116,3 +2116,45 @@ b.god-cb-ini { display: grid; place-items: center; }
 .application.god .god-points-edit input { flex: 0 0 46px; width: 46px; min-width: 0; max-width: 46px; height: 22px; margin: 0; box-shadow: none; }
 .application.god input.god-level-input { flex: none; width: 44px; min-width: 0; max-width: 44px; height: 40px; padding: 0; margin: 0; position: absolute; }
 .application.god .god-toolbar .god-search { min-width: 120px; }
+
+/* ── 0.20.0 «Огляд»: руки, пояс, одягнене (як на сайті) ── */
+.god .god-hands { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 10px; }
+.god .god-hand { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.god .god-hand-head { display: flex; align-items: baseline; gap: 8px; }
+.god .god-hand-head b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--g-accent2); }
+.god .god-hand[data-hand="off"] .god-hand-head b { color: var(--g-dim); }
+.god .god-hand-head small { color: var(--g-faint); font-size: 11px; }
+.god .god-hand-btns { margin-left: auto; display: flex; gap: 4px; }
+.god .god-hand-btns a, .god .god-belt-row > a:not(.god-belt-name), .god .god-worn-btn { display: inline-flex; align-items: center; gap: 4px; height: 24px; min-width: 24px; justify-content: center; padding: 0 6px; border: 1px solid var(--g-line); border-radius: 5px; color: var(--g-dim); font-size: 12px; cursor: pointer; }
+.god .god-hand-btns a:hover, .god .god-belt-row > a:not(.god-belt-name):hover, .god .god-worn-btn:hover { color: var(--g-text); border-color: var(--g-accent); }
+.god .god-hand-btns a.off, .god .god-custom-add.off { opacity: .4; }
+.god .god-hand .god-empty { margin: 0; padding: 14px; border: 1px dashed var(--g-line); border-radius: var(--g-radius); text-align: center; }
+.god .god-unarmed { margin-top: 8px; }
+.god .god-belt-panel header, .god .god-worn-panel header { display: flex; align-items: center; gap: 8px; }
+.god .god-belt-panel header h3, .god .god-worn-panel header h3 { flex: none; }
+.god .god-belt-slots { font-size: 12px; font-weight: 600; color: var(--g-accent2); }
+.god .god-belt-panel header .god-head-add { margin-left: auto; }
+.god .god-belt-slots.over { color: #e07a6a; }
+.god .god-belt-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 10px; }
+.god .god-belt-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-bottom: 1px solid var(--g-line); min-width: 0; }
+.god .god-belt-row img { width: 26px; height: 26px; border: none; border-radius: 4px; flex: none; }
+.god .god-belt-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--g-text); }
+.god .god-worn { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px 10px; }
+.god .god-worn-slot { display: flex; align-items: center; gap: 6px; min-height: 32px; padding: 3px 6px; border-bottom: 1px solid var(--g-line); min-width: 0; }
+.god .god-worn-label { flex: none; width: 84px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--g-faint); }
+.god .god-worn-slot:not(.filled) .god-worn-label { opacity: .7; }
+.god .god-worn-item { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--g-text); }
+.god .god-worn-item img { width: 24px; height: 24px; border: none; border-radius: 4px; flex: none; }
+.god .god-worn-slot:not(.filled) .god-worn-btn { margin-left: auto; }
+.god .god-worn-btn.add { opacity: .55; }
+.god .god-worn-slot:hover .god-worn-btn.add { opacity: 1; }
+.god .god-inv-elsewhere { margin: 0 0 8px; }
+.god-pick-dlg .god-pick-search { width: 100%; margin-bottom: 6px; }
+.god-pick-dlg .god-pick-list { display: flex; flex-direction: column; gap: 3px; }
+.god-pick-dlg .god-pick-row { display: flex; align-items: center; gap: 8px; width: 100%; height: auto; padding: 5px 8px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 5px; }
+.god-pick-dlg .god-pick-row:hover { border-color: var(--g-accent, #f2c063); background: rgba(255, 255, 255, .04); }
+.god-pick-dlg .god-pick-row img { width: 30px; height: 30px; border: none; border-radius: 4px; flex: none; }
+.god-pick-dlg .god-pick-row span { display: flex; flex-direction: column; min-width: 0; }
+.god-pick-dlg .god-pick-row small { opacity: .65; font-size: 11px; }
+.god-quickbar .god-qb-zone { flex: none; display: grid; place-items: center; width: 14px; color: var(--g-faint); font-size: 11px; }
+.god-quickbar .god-qb-linked { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--g-accent2) 60%, transparent); }

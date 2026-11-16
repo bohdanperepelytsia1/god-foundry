@@ -42,7 +42,7 @@ export function skillMods(actor, key) {
   const dis = []
   if (sys.rollDis?.skill?.[key] > 0) dis.push('ефект')
   if (arm?.dis) dis.push(arm.label)
-  return finish(parts.filter(Boolean), dis)
+  return finish(parts.filter(Boolean), dis, actor)
 }
 
 /** Перевірка характеристики */
@@ -51,7 +51,7 @@ export function statMods(actor, key) {
   const parts = [{ label: `МОД ${GOD.STATS[key]?.abbr ?? key}`, value: sys.stats?.[key]?.mod ?? 0, base: true }]
   if (sys.rollMods?.stat?.[key]) parts.push(part(`ефекти: ${GOD.STATS[key]?.label ?? key}`, sys.rollMods.stat[key]))
   parts.push(...allParts(actor))
-  return finish(parts.filter(Boolean), [])
+  return finish(parts.filter(Boolean), [], actor)
 }
 
 /** Попадання зброєю/магією: база (прицільність), ефекти й стійки, «усі дії» */
@@ -59,7 +59,7 @@ export function hitMods(actor, base, baseLabel) {
   const c = actor.system?.combat ?? {}
   const parts = [{ label: baseLabel, value: base, base: true }, part('ефекти й стійка', c.hitMod), ...allParts(actor)]
   const dis = actor.system?.rollDis?.hit > 0 ? ['ефект'] : []
-  return finish(parts.filter(Boolean), dis)
+  return finish(parts.filter(Boolean), dis, actor)
 }
 
 /** Урон: база (володіння), ефекти й стійки, свідомість */
@@ -69,13 +69,19 @@ export function damageMods(actor, base, baseLabel) {
   return finish(parts.filter(Boolean), [])
 }
 
-function finish(parts, dis) {
+/** Чи діє БМП (ефект із БМП або психоз) */
+export const noBonus = actor => !!(actor?.system?.derived?.noBonus || (actor?.system?.combat?.noBonus ?? 0) > 0)
+
+function finish(parts, dis, actor = null) {
+  const nb = noBonus(actor) && parts.some(p => Number(p.value) > 0)
+  if (nb) parts = R.applyNoBonus(parts)
   const total = parts.reduce((a, p) => a + (Number(p.value) || 0), 0)
-  return { total, parts, dis, text: describe(parts, dis) }
+  const text = describe(parts, dis) + (nb ? ' · БМП: бонуси не діють' : '')
+  return { total, parts, dis, text, noBonus: nb }
 }
 /** «рівень 3 · ефекти: соціальні +1 · тривожність −1 · з недоліком (тяжкий обладунок)» */
 export function describe(parts, dis = []) {
-  const p = parts.map(x => x.base ? `${x.label}` : `${x.label} ${sgn(x.value)}`)
+  const p = parts.map(x => x.off ? `${x.label} (не діє)` : x.base ? `${x.label}` : `${x.label} ${sgn(x.value)}`)
   if (dis.length) p.push(`недолік: ${dis.join(', ')}`)
   return p.join(' · ')
 }

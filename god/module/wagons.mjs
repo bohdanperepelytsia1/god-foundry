@@ -19,6 +19,8 @@ export const wagonWeight = w => Math.round((w?.items ?? []).reduce((t, i) => t +
 
 /** Чи бачить користувач візок: майстер — усі; гравець — якщо в списку або список порожній */
 export const canSee = (w, userId, isGM = false) => isGM || !(w?.users?.length) || w.users.includes(userId)
+/** Змінити чи видалити візок: майстер або гравець, що його створив */
+export const canManage = (w, user) => !!user?.isGM || (!!w?.owner && w.owner === user?.id)
 
 /** Покласти дані предмета у візок: однакові речі (назва, тип, картинка) складаються в стос */
 export function wagonAdd(w, data, qty) {
@@ -95,10 +97,15 @@ async function perform(op, user) {
     return ChatMessage.create({ speaker: actor ? ChatMessage.getSpeaker({ actor }) : { alias: user.name },
       content: `<div class="god-card god-give-card"><div class="god-give-row"><b>${esc(w.name)}</b><i class="fa-solid fa-trash"></i><b>викинуто</b></div><div class="god-give-what"><img src="${esc(it.img)}" alt=""> ${esc(it.name)}${n > 1 ? ` ×${n}` : ''}</div></div>` })
   }
-  if (!user.isGM) return
-  // ── керування (лише майстер)
-  if (op.action === 'create') list.push({ id: rid(), name: op.name || 'Новий візок', party: op.party ?? '', capacity: num(op.capacity), users: op.users ?? [], items: [] })
-  if (op.action === 'update') Object.assign(w, foundry.utils.mergeObject({}, op.data ?? {}), { id: w.id, items: w.items })
+  // ── керування: створити може кожен; змінити чи видалити — майстер або той, хто створив
+  if (op.action === 'create') {
+    const users = op.users ?? []
+    if (!user.isGM && users.length && !users.includes(user.id)) users.push(user.id)   // свій візок гравець бачить завжди
+    list.push({ id: rid(), name: op.name || 'Новий візок', party: op.party ?? '', capacity: num(op.capacity), users, owner: user.isGM ? null : user.id, items: [] })
+    return save(list)
+  }
+  if (!canManage(w, user)) return
+  if (op.action === 'update') Object.assign(w, foundry.utils.mergeObject({}, op.data ?? {}), { id: w.id, items: w.items, owner: w.owner ?? null })
   if (op.action === 'delete') list.splice(list.indexOf(w), 1)
   return save(list)
 }

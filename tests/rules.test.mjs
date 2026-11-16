@@ -218,6 +218,15 @@ t('складові модифікатора: ефекти гілки й вмі�
   assert.equal(h.total, 3 + 2 - 1 - 1); assert.deepEqual(h.dis, ['ефект'])
   assert.equal(M.damageMods(actor, 2, 'володіння 2').total, 0)
 })
+t('БМП у кидках: акробатика +1 і тяжкі калітства → −5', () => {
+  const actor = { type: 'character', system: { skill: () => 1, stats: { dex: { mod: 2 } }, combat: { allMod: -5, noBonus: 1 }, resources: { mt: { value: 40 } },
+    derived: { noBonus: true }, rollMods: {}, rollDis: { skill: {} } } }
+  const key = Object.keys(SKILL_INDEX).find(k => SKILL_INDEX[k].name === 'Акробатика')
+  const sk = M.skillMods(actor, key)
+  assert.equal(sk.total, -5); assert.match(sk.text, /БМП/)
+  assert.equal(M.statMods(actor, 'dex').total, -5)
+  assert.equal(M.hitMods(actor, 3, 'прицільність 3').total, -5)
+})
 t('володіння заклинанням: герой — школа, ворог — є заклинання, є й володіння', () => {
   assert.equal(R.spellMastery({ type: 'character', schools: { fire: 0 }, school: 'fire', level: 5 }), 0)
   assert.equal(R.spellMastery({ type: 'character', schools: { fire: 3 }, school: 'fire', level: 5 }), 3)
@@ -257,6 +266,17 @@ t('досвід як на сайті: набране на рівні / потр�
   assert.deepEqual(R.xpProgress(0), { level: 0, into: 0, need: 50 })
   // +200 до 20/200 → рівень 4, решта 20 з 250 (як addXP на сайті)
   assert.deepEqual(R.xpProgress(total + 200), { level: 4, into: 20, need: 250 })
+})
+t('обладунок: перешкода калітству, шанс ухилитись у легкому підігнаному', () => {
+  assert.equal(R.injuryDice('heavyFit'), 4); assert.equal(R.injuryDice('heavy'), 2); assert.equal(R.injuryDice('mediumFit'), 2)
+  assert.equal(R.injuryDice('medium'), 1); assert.equal(R.injuryDice(null), 1)
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 9].map(R.lightFitDodge), [true, false, true, false, false, true, false, true], 'перша і кожна третя')
+  assert.equal(R.afterHit(250, 1000).checks[0].injury, true)
+})
+t('БМП: плюси не діють, штрафи лишаються', () => {
+  const parts = R.applyNoBonus([{ label: 'рівень 1', value: 1, base: true }, { label: 'ефекти', value: -5 }])
+  assert.equal(parts.reduce((a, p) => a + p.value, 0), -5, 'акробатика +1 і тяжкі калітства −5 → −5')
+  assert.equal(R.mentalState(3).noBonus, true, 'психоз — БМП')
 })
 t('відновлення зілля з назви й опису сайту', () => {
   assert.deepEqual(R.guessRestore("Кристальне зілля відновлення здоров'я", 'Відновлює 250 хп (діє через 9 секунд, або 3 ходи)'), { hp: 250 })

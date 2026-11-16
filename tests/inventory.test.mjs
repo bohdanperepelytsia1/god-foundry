@@ -22,10 +22,11 @@ const actor = { items: Object.assign(items, { has: id => items.some(i => i.id ==
 const st = newInventoryState()
 let inv = buildInventory(actor, st)
 assert.equal(st.selected, null, 'нічого не вибрано, доки не клікнеш')
-assert.deepEqual(inv.sections.map(s => s.loc), ['main', 'belt', 'potions'], 'порожні розділи сховано, пояс зі слотами лишається')
+assert.deepEqual(inv.sections.map(s => s.loc), ['main', 'potions'], 'порожні розділи сховано; пояс — на «Огляді»')
+assert.deepEqual(inv.beltNote, { used: 0, slots: 2 }, 'підказка про пояс')
 assert.equal(inv.total, 4, 'заклинання не в інвентарі')
 assert.equal(inv.sections[0].rows.find(r => r.id === 'a').sub, 'Кираса · PR 20')
-assert.equal(inv.sections[2].rows[0].sub, 'HP +50')
+assert.equal(inv.sections[1].rows[0].sub, 'HP +50')
 assert.equal(inv.types.find(t => t.id === 'consumable').count, 1)
 
 st.type = 'consumable'; inv = buildInventory(actor, st)

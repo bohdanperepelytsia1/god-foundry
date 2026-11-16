@@ -11,7 +11,7 @@ const ICON = k => `systems/god/assets/icons/status/${k}.svg`
 /** Що може змінювати ефект — групи для списку */
 export const EFFECT_TARGETS = {
   'Бій': {
-    'system.combat.allMod': 'Усі дії (МОД)', 'system.combat.hitMod': 'Попадання', 'system.combat.damageMod': 'Урон',
+    'system.combat.allMod': 'Усі дії (МОД)', 'system.combat.noBonus': 'БМП: бонуси не діють (1 — так)', 'system.combat.hitMod': 'Попадання', 'system.combat.damageMod': 'Урон',
     'system.combat.dodgeBonus': 'ШУ',
   },
   'Максимум ресурсів': Object.fromEntries(Object.entries(GOD.RESOURCES).map(([k, r]) => [`system.resources.${k}.bonus`, `Макс. ${r.abbr}`])),
@@ -46,7 +46,7 @@ export const EFFECT_PRESETS = {
     bodyT: { name: 'Травма тулуба (ЖВО)', img: ICON('bleeding'), changes: [], desc: 'Не заснути від болю; −50 HP щогодини; d20 від Тілобудови ≤ 12 — блювота після їжі, води, зілля.' },
     maim1: { name: 'Легкі калітства', img: ICON('bleeding'), changes: [C('system.combat.allMod', -2)], desc: 'Кожні 24 год 1d4 — 50% шанс погіршення.' },
     maim2: { name: 'Середні калітства', img: ICON('bleeding'), changes: [C('system.combat.allMod', -3)], desc: 'd20, успіх 16+, інакше БМП. Кожні 12 год 1d4 — 50% шанс погіршення.' },
-    maim3: { name: 'Тяжкі калітства', img: ICON('bleeding'), changes: [C('system.combat.allMod', -5)], desc: 'БМП.' },
+    maim3: { name: 'Тяжкі калітства', img: ICON('bleeding'), changes: [C('system.combat.noBonus', 1), C('system.combat.allMod', -5)], desc: 'БМП.' },
   },
   'Кровотеча': {
     bleed1: { name: 'Слабка кровотеча', img: ICON('bleeding'), changes: [], desc: '−10 HP щохвилини.' },
@@ -66,12 +66,12 @@ export const EFFECT_PRESETS = {
     thirst1: { name: 'Легке зневоднення', img: ICON('fatigued'), changes: [SK('Виживання', 1)], desc: 'Легка втома; легше знайти джерело води.' },
     thirst: { name: 'Тяжке зневоднення', img: ICON('fatigued'), changes: [C('system.combat.allMod', -3), SK('Нюх', -2)], desc: 'Не заснути й не поїсти; не відчуває запахів і смаку.' },
     exhaust1: { name: 'Легка виснага', img: ICON('fatigued'), changes: [SK('Уважність', -2), SK('Пошук скарбів', -2)], desc: 'Чутливість до холоду подвоюється; рефлекси −2.' },
-    exhaust: { name: 'Тяжка виснага', img: ICON('fatigued'), changes: [C('system.combat.allMod', -1)], desc: 'БМП. −5 MT і шанс −10; кожні 4 год шанс −5 MT; кожні 20 хв Тілобудова 13+, щоб не заснути.' },
+    exhaust: { name: 'Тяжка виснага', img: ICON('fatigued'), changes: [C('system.combat.noBonus', 1), C('system.combat.allMod', -1)], desc: 'БМП. −5 MT і шанс −10; кожні 4 год шанс −5 MT; кожні 20 хв Тілобудова 13+, щоб не заснути.' },
   },
   'Холод і жара': {
     cold1: { name: 'Переохолодження', img: ICON('frozen'), changes: [C('system.combat.allMod', -1)], desc: 'Дрібна моторика з недоліком, втома.' },
-    cold2: { name: 'Обмороження', img: ICON('frozen'), changes: [C('system.combat.allMod', -2)], desc: 'БМП; дрібна моторика з потрійним недоліком; −50 HP кожні 10 хв.' },
-    heat: { name: 'Пекло', img: ICON('burning'), changes: [C('system.combat.allMod', -2)], desc: 'БМП; удвічі більше води; −100 HP блокується; HP < 100 — втрата свідомості.' },
+    cold2: { name: 'Обмороження', img: ICON('frozen'), changes: [C('system.combat.noBonus', 1), C('system.combat.allMod', -2)], desc: 'БМП; дрібна моторика з потрійним недоліком; −50 HP кожні 10 хв.' },
+    heat: { name: 'Пекло', img: ICON('burning'), changes: [C('system.combat.noBonus', 1), C('system.combat.allMod', -2)], desc: 'БМП; удвічі більше води; −100 HP блокується; HP < 100 — втрата свідомості.' },
   },
   'Положення в бою': {
     crouch: { name: 'Пригнувшись', img: ICON('prone'), changes: [C('system.combat.hitMod', -1)], desc: 'Попадання −1 (крім скритних атак), бігти не можна.' },

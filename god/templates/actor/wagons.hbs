@@ -4,7 +4,7 @@
     {{#each wagons}}
     <a class="{{#if active}}active{{/if}}" data-action="wagonPick" data-wagon="{{id}}" data-tooltip="{{#if party}}{{party}} · {{/if}}{{count}} шт."><i class="fa-solid fa-cart-flatbed"></i> {{name}}</a>
     {{/each}}
-    {{#if isGM}}<a class="god-wagon-new" data-action="wagonNew" data-tooltip="Новий візок"><i class="fa-solid fa-plus"></i></a>{{/if}}
+    {{#if canCreateWagon}}<a class="god-wagon-new" data-action="wagonNew" data-tooltip="Новий візок"><i class="fa-solid fa-plus"></i></a>{{/if}}
   </nav>
 
   {{#with wagon}}
@@ -12,7 +12,7 @@
     <section class="god-panel god-wagon-col" data-wagon-zone="wagon">
       <header><h3><i class="fa-solid fa-cart-flatbed"></i> {{name}}</h3>
         {{#if party}}<span class="god-dim">{{party}}</span>{{/if}}
-        {{#if @root.isGM}}<a class="god-head-add" data-action="wagonEdit" data-tooltip="Назва, місткість, хто бачить"><i class="fa-solid fa-gear"></i></a>
+        {{#if manage}}<a class="god-head-add" data-action="wagonEdit" data-tooltip="Назва, місткість, хто бачить"><i class="fa-solid fa-gear"></i></a>
         <a class="god-head-add" data-action="wagonDelete" data-tooltip="Видалити візок"><i class="fa-solid fa-trash"></i></a>{{/if}}
       </header>
       <div class="god-enc-bar {{#if over}}over{{/if}}" data-tooltip="Вантаж візка"><div style="width: {{pct}}%"></div>
@@ -55,8 +55,8 @@
   {{else}}
   <div class="god-empty god-wagon-none">
     <i class="fa-solid fa-cart-flatbed"></i>
-    <p>Візків поки немає.{{#if isGM}} Створи новий або перенеси з сайту (Актори → «Імпорт із сайту»).{{/if}}</p>
-    {{#if isGM}}<button type="button" class="god-btn" data-action="wagonNew"><i class="fa-solid fa-plus"></i> Новий візок</button>{{/if}}
+    <p>Візків поки немає. Створи свій{{#if isGM}} або перенеси з сайту (Актори → «Імпорт із сайту»){{/if}}.</p>
+    {{#if canCreateWagon}}<button type="button" class="god-btn" data-action="wagonNew"><i class="fa-solid fa-plus"></i> Новий візок</button>{{/if}}
   </div>
   {{/if}}
 </section>

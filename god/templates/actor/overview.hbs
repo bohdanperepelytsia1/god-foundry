@@ -35,17 +35,79 @@
     {{/each}}
   </div>
 
-  <section class="god-panel">
-    <header><h3><i class="fa-solid fa-swords"></i> У руках</h3></header>
-    {{#if equippedWeapons.length}}
-    <div class="god-weapon-cards">
-      {{#each equippedWeapons}}
-      {{> god-weapon-card}}
+  {{!-- Спорядження як на сайті: руки, пояс, одягнене — одягати й перекладати, не йдучи в інвентар --}}
+  <section class="god-panel god-gear-panel">
+    <header><h3><i class="fa-solid fa-hand-fist"></i> У руках</h3></header>
+    <div class="god-hands">
+      {{#each hands}}
+      <div class="god-hand" data-hand="{{hand}}">
+        <div class="god-hand-head"><b>{{label}}</b><small>{{sub}}</small>
+          {{#if @root.editable}}<span class="god-hand-btns">
+            {{#if weapon}}
+            <a data-action="gearToBelt" data-item-id="{{weapon.id}}" class="{{#unless @root.beltFree}}off{{/unless}}" data-tooltip="{{#if @root.beltFree}}На пояс{{else}}Пояс не одягнено або заповнений{{/if}}"><i class="fa-solid fa-grip-lines"></i></a>
+            <a data-action="gearOff" data-item-id="{{weapon.id}}" data-tooltip="Зняти — лишиться в інвентарі"><i class="fa-solid fa-xmark"></i></a>
+            {{else}}{{#unless busy}}
+            <a data-action="gearPick" data-kind="hand" data-hand="{{hand}}" data-tooltip="Взяти зброю з інвентаря чи пояса"><i class="fa-solid fa-hand"></i> Взяти</a>
+            {{/unless}}{{/if}}
+          </span>{{/if}}
+        </div>
+        {{#if weapon}}{{#with weapon}}{{> god-weapon-card}}{{/with}}
+        {{else if busy}}<p class="god-empty">Зайнята — {{busy}}</p>
+        {{else}}<p class="god-empty">Порожня</p>{{/if}}
+      </div>
       {{/each}}
     </div>
-    {{else}}
-    <p class="god-empty">Нічого в руках. Візьми зброю на вкладці «Інвентар».</p>
+    {{#if unarmed}}
+    <div class="god-weapon-card god-unarmed">
+      <img src="{{unarmed.img}}" alt="">
+      <div class="god-weapon-info"><b class="god-weapon-name">Кулаки</b><span class="god-dim">порожні руки · кулачний бій</span></div>
+      <div class="god-dmg-badge" data-tooltip="{{unarmed.dmgTip}}"><span class="phys">{{unarmed.base.phys}}<small>фіз</small></span></div>
+      <button type="button" class="god-btn" data-action="unarmed" data-tooltip="{{unarmed.rollTip}}"><i class="fa-solid fa-hand-fist"></i> Удар</button>
+    </div>
     {{/if}}
+  </section>
+
+  <section class="god-panel god-belt-panel">
+    <header><h3><i class="fa-solid fa-grip-lines"></i> Пояс</h3>
+      {{#if belt.on}}<span class="god-belt-slots {{#if belt.over}}over{{/if}}" data-tooltip="Зайнято слотів">{{belt.used}} / {{belt.slots}}</span>
+      {{#if editable}}<a class="god-head-add" data-action="gearOff" data-item-id="{{belt.item.id}}" data-tooltip="Зняти пояс «{{belt.item.name}}» — речі повернуться в загальне"><i class="fa-solid fa-xmark"></i></a>{{/if}}{{/if}}
+    </header>
+    {{#if belt.on}}
+    <ol class="god-belt-list">
+      {{#each belt.items}}
+      <li class="god-belt-row" data-item-id="{{id}}" draggable="true">
+        <img src="{{img}}" alt=""><a class="god-belt-name" data-action="itemEdit" data-tooltip="{{sub}}">{{name}}{{#if showQty}} <small>×{{qty}}</small>{{/if}}</a>
+        {{#if @root.editable}}
+        {{#if usable}}<a data-action="itemUse" data-tooltip="Використати"><i class="fa-solid fa-flask"></i></a>{{/if}}
+        {{#if weapon}}<a data-action="gearToHand" data-hand="main" data-tooltip="У праву руку"><i class="fa-solid fa-hand"></i></a>{{/if}}
+        <a data-action="gearToPack" data-tooltip="У рюкзак (загальне)"><i class="fa-solid fa-box-open"></i></a>
+        {{/if}}
+      </li>
+      {{else}}<li class="god-empty">Пояс порожній.</li>{{/each}}
+    </ol>
+    {{#if editable}}<a class="god-custom-add {{#unless beltFree}}off{{/unless}}" data-action="gearPick" data-kind="belt"><i class="fa-solid fa-plus"></i> Покласти з рюкзака</a>{{/if}}
+    {{else}}
+    <p class="god-empty">Пояс не одягнено.{{#if editable}} <a data-action="gearPick" data-kind="armor" data-slot="Пояс"><i class="fa-solid fa-shirt"></i> Одягнути пояс</a>{{/if}}</p>
+    {{/if}}
+  </section>
+
+  <section class="god-panel god-worn-panel">
+    <header><h3><i class="fa-solid fa-shirt"></i> Одягнене</h3>
+      {{#if armorTotal.phys}}<span class="god-dim">PR {{armorTotal.phys}}{{#if armorTotal.mag}} · MR {{armorTotal.mag}}{{/if}}</span>{{else if armorTotal.mag}}<span class="god-dim">MR {{armorTotal.mag}}</span>{{/if}}
+    </header>
+    <div class="god-worn">
+      {{#each armorSlots}}
+      <div class="god-worn-slot {{#if item}}filled{{/if}}" {{#if item}}data-item-id="{{item.id}}"{{/if}}>
+        <span class="god-worn-label">{{label}}</span>
+        {{#if item}}
+        <a class="god-worn-item" data-action="itemEdit" data-tooltip="PR {{item.phys}} · MR {{item.mag}}"><img src="{{item.img}}" alt="">{{item.name}}</a>
+        {{#if @root.editable}}<a class="god-worn-btn" data-action="gearOff" data-tooltip="Зняти"><i class="fa-solid fa-xmark"></i></a>{{/if}}
+        {{else}}
+        {{#if @root.editable}}<a class="god-worn-btn add" data-action="gearPick" data-kind="armor" data-slot="{{slot}}" data-tooltip="Одягнути з інвентаря"><i class="fa-solid fa-plus"></i></a>{{else}}<span class="god-dim">—</span>{{/if}}
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
   </section>
 
   <section class="god-panel">

@@ -83,6 +83,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         hitMod: int(0),       // від стійок/ефектів
         damageMod: int(0),
         allMod: int(0),       // «МОД на всі дії» — від ефектів (травми, втома, алкоголь…)
+        noBonus: int(0),      // БМП від ефектів (>0): плюси до кидків не діють, лише штрафи
       }),
       encumbrance: new f.SchemaField({ override: flt(0, { min: 0 }) }),
       money: moneyField(),
@@ -218,6 +219,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
     if (over) this.derived.dodge = Math.max(0, this.derived.dodge + over.dodge)
     this.derived.allMod = (this.combat.allMod || 0) + (over?.all ?? 0) + (mind?.all ?? 0)
     this.derived.mindDmg = mind?.dmg ?? 0
+    this.derived.noBonus = (this.combat.noBonus || 0) > 0 || !!mind?.noBonus
     this.derived.allModParts = [
       this.combat.allMod ? `ефекти ${this.combat.allMod > 0 ? '+' : ''}${this.combat.allMod}` : '',
       over?.all ? `перевантаження ${over.all}` : '', mind?.all ? `${mind.label.toLowerCase()} ${mind.all}` : '',
@@ -264,7 +266,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         // «Чим б'є»: категорія зброї лише для анімації й ближнього/дальнього бою; '' — природна атака. Урон завжди PD/MD
         look: new f.StringField({ initial: '', blank: true }),
       }),
-      combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0), allMod: int(0) }),
+      combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0), allMod: int(0), noBonus: int(0) }),
       money: moneyField(),
       notes: new f.HTMLField({ initial: '' }),
     }

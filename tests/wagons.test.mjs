@@ -22,3 +22,11 @@ assert.equal(rest.system.quantity, 3); assert.equal(w.items.length, 2, 'узяв
 assert.equal(W.wagonTake(w, 'нема', 1), null)
 assert.ok(W.canSee({ users: [] }, 'u1') && W.canSee({ users: ['u1'] }, 'u1') && !W.canSee({ users: ['u2'] }, 'u1') && W.canSee({ users: ['u2'] }, 'u1', true))
 console.log('✓ візки: стос, взяти частину, вага, хто бачить')
+
+// Гравці створюють візки: змінити/видалити — майстер або автор
+{
+  const { canManage } = await import('../god/module/wagons.mjs')
+  const w = { owner: 'u1' }
+  if (!canManage(w, { id: 'u1' }) || canManage(w, { id: 'u2' }) || !canManage(w, { id: 'x', isGM: true }) || canManage({ owner: null }, { id: 'u1' })) throw new Error('canManage')
+  console.log('✓ візки: автор і майстер керують')
+}

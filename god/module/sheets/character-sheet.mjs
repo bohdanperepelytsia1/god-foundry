@@ -4,6 +4,9 @@ import * as R from '../rules.mjs'
 import { skillInfo } from '../skill-info.mjs'
 import * as Wagons from '../wagons.mjs'
 import { GodActorSheetBase, TPL, enrich } from './sheet-base.mjs'
+import { itemSub } from './inventory.mjs'
+import { pickItem } from '../apps/equip-picker.mjs'
+import { unarmedStrike, weaponAttack } from '../dice/rolls.mjs'
 
 /** Скільки штук (для стосу); Shift — одразу все */
 async function askQty(name, quantity, all = false) {
@@ -26,7 +29,7 @@ async function wagonDialog(w = {}) {
       <label class="god-dlg-field"><span>Чий (підпис)</span><input type="text" name="party" value="${esc(w.party ?? '')}" placeholder="Пачка"></label>
       <label class="god-dlg-field"><span>Місткість, кг (0 — без меж)</span><input type="number" name="capacity" value="${w.capacity ?? 0}" min="0"></label>
       <p class="god-dlg-info">Хто бачить (нікого не позначено — усі гравці):</p>
-      ${players.map(u => `<label class="god-dlg-check"><input type="checkbox" name="u-${u.id}" ${w.users?.includes(u.id) ? 'checked' : ''}><span>${esc(u.name)}</span></label>`).join('')}`,
+      ${players.map(u => `<label class="god-dlg-check"><input type="checkbox" name="u-${u.id}" ${w.users?.includes(u.id) || (!w.id && u.isSelf) ? 'checked' : ''}><span>${esc(u.name)}${u.isSelf ? ' (ти)' : ''}</span></label>`).join('')}`,
     buttons: [{ action: 'ok', label: 'Зберегти', icon: 'fa-solid fa-check', default: true, callback: (e, btn) => {
       const el = btn.form.elements
       return { name: el.name.value.trim() || 'Візок', party: el.party.value.trim(), capacity: Math.max(0, Number(el.capacity.value) || 0),
@@ -72,6 +75,8 @@ export class GodCharacterSheet extends GodActorSheetBase {
       knowRemove: GodCharacterSheet.#knowRemove,
       wagonPick: GodCharacterSheet.#wagonPick, wagonTake: GodCharacterSheet.#wagonTake, wagonPut: GodCharacterSheet.#wagonPut,
       wagonNew: GodCharacterSheet.#wagonNew, wagonEdit: GodCharacterSheet.#wagonEdit, wagonDelete: GodCharacterSheet.#wagonDelete, wagonRemove: GodCharacterSheet.#wagonRemove,
+      gearPick: GodCharacterSheet.#gearPick, gearToHand: GodCharacterSheet.#gearToHand, gearToBelt: GodCharacterSheet.#gearToBelt,
+      gearToPack: GodCharacterSheet.#gearToPack, gearOff: GodCharacterSheet.#gearOff, unarmed: GodCharacterSheet.#unarmed,
     },
   }
 
@@ -181,6 +186,78 @@ export class GodCharacterSheet extends GodActorSheetBase {
   static #skillDown(ev, target) { this.document.changeSkill(target.dataset.skill, -1, { free: game.user.isGM && ev.shiftKey }) }
   static #statUp(ev, target) { this.document.changeStat(target.dataset.stat, +1, { free: game.user.isGM && ev.shiftKey }) }
   static #statDown(ev, target) { this.document.changeStat(target.dataset.stat, -1, { free: game.user.isGM && ev.shiftKey }) }
+  // ── Спорядження на «Огляді» (як на сайті): руки, пояс, одягнене ───────────────
+  _gearPanel(items) {
+    const worn = items.filter(i => i.system.equipped)
+    const weapons = worn.filter(i => i.type === 'weapon')
+    const twoH = weapons.find(w => w.system.twoHanded)
+    const inHand = h => weapons.find(w => !w.system.twoHanded && (w.system.hand === 'off' ? 'off' : 'main') === h)
+    const shield = worn.find(i => i.type === 'armor' && i.system.slot === 'Щит')
+    const belt = this.document.system.derived?.belt ?? { slots: 0, used: 0 }
+    const beltItem = worn.find(i => i.type === 'armor' && i.system.slot === 'Пояс')
+    const main = twoH ?? inHand('main'), off = twoH ? null : inHand('off')
+    const hands = [
+      { hand: 'main', label: 'Права рука', sub: 'основна · +СИЛ×5', weapon: main ? this._weaponRow(main) : null },
+      { hand: 'off', label: 'Ліва рука', sub: 'друга · без СИЛ', weapon: off ? this._weaponRow(off) : null,
+        busy: twoH ? `дворучна: ${twoH.name}` : shield ? `щит: ${shield.name}` : '' },
+    ]
+    const beltFree = !!beltItem && belt.used < belt.slots
+    return {
+      hands, beltFree,
+      unarmed: weapons.length ? null : { ...this._weaponRow({ ...unarmedStrike(), id: 'unarmed', totalWeight: 0 }), rollTip: 'Порожні руки: удар кулаками (кулачний бій, Сила)' },
+      belt: {
+        on: !!beltItem, item: beltItem ? { id: beltItem.id, name: beltItem.name, img: beltItem.img } : null, slots: belt.slots, used: belt.used, over: belt.used > belt.slots,
+        items: items.filter(i => i.isPhysical && i.system.location === 'belt').map(i => ({
+          id: i.id, name: i.name, img: i.img, sub: itemSub(i), qty: i.system.quantity ?? 1, showQty: (i.system.quantity ?? 1) > 1,
+          weapon: i.type === 'weapon', usable: i.type === 'gear' && i.system.consumable,
+        })),
+      },
+      armorSlots: Object.entries(GOD.ARMOR_SLOTS).filter(([slot]) => slot !== 'Пояс').map(([slot, label]) => {
+        const it = worn.find(i => i.type === 'armor' && i.system.slot === slot)
+        return { slot, label, item: it ? { id: it.id, name: it.name, img: it.img, phys: it.system.phys, mag: it.system.mag } : null }
+      }),
+      armorTotal: { phys: worn.filter(i => i.type === 'armor').reduce((a, i) => a + (Number(i.system.phys) || 0), 0), mag: worn.filter(i => i.type === 'armor').reduce((a, i) => a + (Number(i.system.mag) || 0), 0) },
+    }
+  }
+
+  /** «Одягнути» / «Взяти» / «Покласти з рюкзака»: вибір з інвентаря одним кліком */
+  static async #gearPick(ev, t) {
+    const a = this.document, kind = t.dataset.kind
+    const items = a.items.filter(i => i.isPhysical)
+    let list, title
+    if (kind === 'hand') {
+      title = t.dataset.hand === 'off' ? 'У ліву руку' : 'У праву руку'
+      list = items.filter(i => i.type === 'weapon' && !i.system.equipped && (t.dataset.hand !== 'off' || !i.system.twoHanded))
+    } else if (kind === 'belt') {
+      title = 'Покласти на пояс'
+      list = items.filter(i => i.system.location !== 'belt' && !i.system.equipped && i.type !== 'armor')
+    } else {
+      const slot = t.dataset.slot
+      title = `Одягнути: ${GOD.ARMOR_SLOTS[slot] ?? slot}`
+      list = items.filter(i => i.type === 'armor' && i.system.slot === slot && !i.system.equipped)
+    }
+    const id = await pickItem(title, list, { sub: i => itemSub(i), empty: kind === 'armor' ? 'В інвентарі немає речей для цього слота' : undefined })
+    const item = id && a.items.get(id)
+    if (!item) return
+    if (kind === 'hand') return a.equipToHand(item, t.dataset.hand)
+    if (kind === 'belt') return a.toBelt(item)
+    return a.toggleEquip(item)
+  }
+  static #gearToHand(ev, t) { const it = this._item(t); if (it) this.document.equipToHand(it, t.dataset.hand ?? 'main') }
+  static #gearToBelt(ev, t) { const it = this._item(t); if (it) this.document.toBelt(it) }
+  static #gearToPack(ev, t) { const it = this._item(t); if (it) this.document.toPack(it) }
+  /** Зняти (зброю, обладунок); пояс з речами — спитати, речі повернуться в загальне */
+  static async #gearOff(ev, t) {
+    const it = this._item(t)
+    if (!it) return
+    if (it.type === 'armor' && it.system.slot === 'Пояс' && (this.document.system.derived?.belt?.used ?? 0) > 0) {
+      const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: 'Зняти пояс' }, content: '<p>На поясі є речі — вони повернуться в загальне. Зняти пояс?</p>' })
+      if (!ok) return
+    }
+    return this.document.toggleEquip(it)
+  }
+  static #unarmed() { weaponAttack(this.document, unarmedStrike()) }
+
   /** Вкладка гілки вмінь: перемикаємо без перемальовування */
   static #skillCat(ev, target) {
     this._skillCat = target.dataset.cat
@@ -214,7 +291,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     const wagons = Wagons.allWagons().filter(w => (game.user.isGM || Wagons.canSee(w, game.user.id))
       && (!owners.length || !w.users?.length || w.users.some(id => owners.includes(id))))
     if (!wagons.some(w => w.id === this._wagon)) this._wagon = wagons[0]?.id ?? null
-    const showWagons = wagons.length > 0 || game.user.isGM
+    const showWagons = true   // вкладка є завжди: гравець може створити свій візок
     if (!showWagons && this._tab === 'wagons') this._tab = 'overview'
     const row = (id, name, img, s, type) => {
       const qty = Math.max(1, Number(s?.quantity) || 1)
@@ -226,8 +303,9 @@ export class GodCharacterSheet extends GodActorSheetBase {
     if (cur) {
       const weight = Wagons.wagonWeight(cur)
       context.wagon = { ...cur, weight, over: cur.capacity > 0 && weight > cur.capacity, pct: cur.capacity > 0 ? Math.min(100, weight / cur.capacity * 100) : 0,
-        items: cur.items.map(i => row(i._id, i.name, i.img, i.system, i.type)) }
+        items: cur.items.map(i => row(i._id, i.name, i.img, i.system, i.type)), manage: Wagons.canManage(cur, game.user) }
     }
+    context.canCreateWagon = actor.isOwner
     context.mine = actor.items.filter(i => ['gear', 'weapon', 'armor'].includes(i.type) && !i.system.equipped).map(i => row(i.id, i.name, i.img, i.system, i.type))
     context.canPut = !!cur && actor.isOwner
     context.tabs = TABS.filter(t => t.id !== 'wagons' || showWagons).map(t => ({ ...t, active: t.id === this._tab }))
@@ -265,6 +343,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
     // ── Огляд
     context.stats = Object.entries(GOD.STATS).map(([key, cfg]) => ({ key, ...cfg, value: st[key].value, base: st[key].base ?? st[key].value, bonus: st[key].bonus, mod: st[key].mod }))
     context.equippedWeapons = items.filter(i => i.type === 'weapon' && i.system.equipped).map(i => this._weaponRow(i))
+    Object.assign(context, this._gearPanel(items))
     context.readySpells = items.filter(i => i.type === 'spell').slice(0, 6).map(i => GodActorSheetBase.itemRow(i, {
       school: GOD.SPELL_SCHOOLS[i.system.school], castable: R.spellMastery({ type: this.document.type, schools: sys.schools, school: i.system.school, level: i.system.level }) > 0,
     }))
