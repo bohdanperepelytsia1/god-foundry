@@ -2,7 +2,8 @@
 import { GOD } from '../config.mjs'
 import * as R from '../rules.mjs'
 import * as M from '../roll-mods.mjs'
-import { weaponAttack } from '../dice/rolls.mjs'
+import { weaponAttack, npcStrike } from '../dice/rolls.mjs'
+export { npcStrike }
 import { GodActorSheetBase, TPL, enrich } from './sheet-base.mjs'
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -16,13 +17,6 @@ const NPC_TABS = [
 
 /** «Чим б'є» ворог: порожньо — природна атака (загальний удар; лише MD — магічний снаряд) */
 export const NPC_LOOKS = { '': 'Природна атака', ...GOD.WEAPON_CATEGORIES }
-
-/** Опис удару ворога для кидка: урон PD/MD, категорія — для анімації й дальності */
-export function npcStrike(actor) {
-  const look = GOD.WEAPON_CATEGORIES[actor.system.attack.look] ? actor.system.attack.look : ''
-  return { name: look ? GOD.WEAPON_CATEGORIES[look] : 'Атака', img: actor.img, natural: true, look,
-    system: { category: look || 'onehand', phys: 0, mag: 0, hand: 'main' } }
-}
 
 /** НІП: той самий набір, що й у персонажа (броня, інвентар, магія, ефекти), без розвитку */
 export class GodNpcSheet extends GodActorSheetBase {

@@ -155,9 +155,10 @@ async function rollDialog({ title, fields, info }) {
       return `
       <div class="god-dlg-target">
         <span class="god-dlg-target-label">${esc(fd.label ?? 'Ціль')} <small>наведи — токен підсвітиться на сцені</small></span>
+        ${fd.choices.length > 6 ? `<input type="search" class="god-target-search" placeholder="Знайти ціль (${fd.choices.length})…" autocomplete="off">` : ''}
         <div class="god-targets">
           ${fd.choices.map(t => `
-          <label class="god-target disp-${DISP[t.disp] ?? 'neutral'}" data-token-id="${t.tokenId}">
+          <label class="god-target disp-${DISP[t.disp] ?? 'neutral'}" data-token-id="${t.tokenId}" data-search="${esc(String(t.label).toLowerCase())}">
             <input type="radio" name="${fd.name}" value="${t.uuid}" ${t === pre ? 'checked' : ''} required>
             <img src="${esc(t.img)}" alt="">
             <span class="god-target-name">${esc(t.label)}${t.marked ? ' <i class="fa-solid fa-bullseye" data-tooltip="Позначена ціль (T)"></i>' : ''}
@@ -214,6 +215,20 @@ async function rollDialog({ title, fields, info }) {
 function bindTargetList(root) {
   const box = root?.querySelector?.('.god-targets')
   if (!box) return
+  // Багато токенів: пошук за ім'ям
+  root.querySelector('.god-target-search')?.addEventListener('input', ev => {
+    const q = ev.target.value.trim().toLowerCase()
+    for (const l of box.querySelectorAll('.god-target')) l.hidden = !!q && !l.dataset.search.includes(q) && !l.querySelector('input:checked')
+  })
+  // Колесо миші прокручує список цілей (а за його краями — вікно), не віддаючи прокрутку сцені Foundry
+  const wheel = ev => {
+    const el = [box, root.querySelector('.dialog-content')].find(x => x?.contains(ev.target) && x.scrollHeight > x.clientHeight + 1
+      && !((ev.deltaY < 0 && x.scrollTop <= 0) || (ev.deltaY > 0 && x.scrollTop + x.clientHeight >= x.scrollHeight - 1)))
+    if (!el) return
+    ev.preventDefault(); ev.stopPropagation()
+    el.scrollTop += ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY
+  }
+  root.addEventListener('wheel', wheel, { passive: false, capture: true })
   const tok = el => canvas?.tokens?.get(el?.closest('[data-token-id]')?.dataset.tokenId)
   const out = clearTargetHover
   box.addEventListener('pointerover', ev => {
@@ -365,6 +380,12 @@ const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor
 /** Посилання на зброю для повторного кидка: uuid предмета або (для атаки НІП) сам опис */
 const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, look: item.look ?? '', system: { ...item.system } }
   : item.unarmed ? unarmedStrike() : item.uuid
+/** Удар ворога: урон PD/MD, «Чим б'є» (категорія) — для анімації й дальності */
+export function npcStrike(actor) {
+  const look = GOD.WEAPON_CATEGORIES[actor.system.attack?.look] ? actor.system.attack.look : ''
+  return { name: actor.system.attack?.name && actor.system.attack.name !== 'Природна атака' ? actor.system.attack.name : look ? GOD.WEAPON_CATEGORIES[look] : 'Атака',
+    img: actor.img, natural: true, look, system: { category: look || 'onehand', phys: 0, mag: 0, hand: 'main' } }
+}
 /** Герой з порожніми руками б'є кулаками: категорія «Кулачна», урон — Сила й кулачний бій, як у зброї без власного урону */
 export const unarmedStrike = () => ({ name: 'Кулаки', img: 'systems/god/assets/icons/weapons/fist.svg', unarmed: true,
   system: { category: 'fist', phys: 0, mag: 0, hand: 'main', weight: 0, equipped: true } })

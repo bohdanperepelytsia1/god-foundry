@@ -52,15 +52,15 @@ assert.equal(cards.length, 0); assert.match(warns.pop(), /ціль/i)
 assert.ok(lastDialog.includes('type="radio" name="target"') && lastDialog.includes('Гоблін') && lastDialog.includes('<b>8</b> ШУ'), 'список цілей у діалозі')
 assert.ok(!/Token\.\w+" checked/.test(lastDialog), 'без позначеної цілі нічого не обрано наперед')
 
-// 2. Попадання 8 проти ШУ 8 — промах (треба більше), урон не кидається
-rolled.length = 0; nextTotals = [8]
+// 2. Попадання 7 проти ШУ 8 — промах, урон не кидається (рівно ШУ — уже влучання)
+rolled.length = 0; nextTotals = [7]
 dialogAnswer = { target: goblin.document.uuid, dir: 'front', hitMod: 0, dmgMod: 0 }
 await weaponAttack(hero, sword)
 assert.equal(rolled.length, 1, 'лише кидок попадання')
 assert.ok(cards.at(-1).includes('Промах') && !cards.at(-1).includes('data-god-apply'), 'промах без урону')
 
-// 3. Попадання 9 > 8 — урон з кнопкою на ціль
-rolled.length = 0; nextTotals = [9, 15]
+// 3. Попадання 8 = ШУ 8 — влучання, урон з кнопкою на ціль
+rolled.length = 0; nextTotals = [8, 15]
 await weaponAttack(hero, sword)
 assert.equal(rolled.length, 1, 'спершу лише попадання')
 assert.ok(cards.at(-1).includes('data-god-damage') && !cards.at(-1).includes('data-god-apply'), 'кнопка «Кинути урон», урону ще немає')

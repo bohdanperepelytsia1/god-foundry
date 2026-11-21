@@ -7,9 +7,9 @@
  * Замінює нативний хотбар Foundry: макроси теж кладуться в слоти, клавіші 1–0 запускають слоти.
  * Без персонажа (майстер без токена) панель показує макроси з першої сторінки хотбара користувача.
  */
-import { GOD } from '../config.mjs'
+import { GOD, defaultIcon } from '../config.mjs'
 import { bindResourceControls } from './res-controls.mjs'
-import { weaponAttack, unarmedStrike } from '../dice/rolls.mjs'
+import { weaponAttack, unarmedStrike, npcStrike } from '../dice/rolls.mjs'
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api
 const S = { enabled: 'quickbar', replace: 'replaceHotbar', collapsed: 'quickbarCollapsed', pos: 'quickbarPos' }
@@ -24,6 +24,7 @@ export function syncNativeHotbar() {
 export const replacesHotbar = () => document.body.classList.contains('god-no-hotbar')
 const AUTO_LIMIT = 10
 const UNARMED = '@unarmed'
+const NPC_STRIKE = '@npc'
 const MIN_EDIT_SLOTS = 10
 
 // ── Розкладка слотів (чисті функції — для тестів). Порожнє місце — null, щоб номери 1–0 не з'їжджали ──
@@ -144,7 +145,7 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       if (hands.length) for (const w of hands) linked.push({ id: w.id, zone: 'hands' })
       else linked.push({ id: UNARMED, zone: 'hands' })
       for (const i of a.items.filter(i => i.isPhysical && i.system.location === 'belt' && !i.system.equipped)) linked.push({ id: i.id, zone: 'belt' })
-    }
+    } else if (a.type === 'npc') linked.push({ id: NPC_STRIKE, zone: 'hands' })   // атака ворога (PD/MD) — як кнопка «Атакувати» на картці
     const linkedIds = new Set(linked.map(l => l.id))
     const { custom } = GodQuickbar.slotIds(a)
     const raw = GodQuickbar.slotIds(a).ids
@@ -187,6 +188,11 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       return { key: id, index, img: i.img, name: i.name, tip, badge, dim, gap, group, kind: 'item', equip }
     })
     const linkedSlots = linked.map((l, n) => {
+      if (l.id === NPC_STRIKE) {
+        const st = npcStrike(a), at = a.system.attack ?? {}
+        return { key: NPC_STRIKE, img: st.look ? defaultIcon('weapon', { category: st.look }) : 'systems/god/assets/icons/weapons/fist.svg', name: st.name,
+          tip: `${st.name}${at.phys ? ` · ${at.phys} фіз` : ''}${at.mag ? ` · ${at.mag} маг` : ''}`, group: 'atk', kind: 'item', zone: 'hands', first: n === 0 }
+      }
       if (l.id === UNARMED) return { key: UNARMED, img: 'systems/god/assets/icons/weapons/fist.svg', name: 'Кулаки', tip: 'Порожні руки: удар кулаками', group: 'atk', kind: 'item', zone: 'hands', first: n === 0 }
       const i = a.items.get(l.id), s = i.system
       const badge = i.type === 'gear' && s.quantity > 1 ? `×${s.quantity}` : ''
@@ -223,6 +229,7 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     const a = this.actor
     if (key === UNARMED && a) return weaponAttack(a, unarmedStrike())
+    if (key === NPC_STRIKE && a) return weaponAttack(a, npcStrike(a))
     const item = a?.items.get(key)
     if (!item) return
     // Обладунок — одягнути/зняти; зброя не в руках — спершу взяти в руку
@@ -376,7 +383,7 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this.actor
     const opts = zone === 'hands'
       ? (item ? [['use', 'fa-dice-d20', 'Атака'], ['belt', 'fa-grip-lines', 'На пояс'], ['off', 'fa-xmark', 'Зняти з руки'], ['sheet', 'fa-pen-to-square', 'Відкрити предмет']]
-        : [['use', 'fa-hand-fist', 'Удар кулаками']])
+        : [['use', 'fa-hand-fist', slot.dataset.key === NPC_STRIKE ? 'Атакувати' : 'Удар кулаками']])
       : [['use', 'fa-play', item?.type === 'weapon' ? 'Взяти в праву руку' : 'Використати'], ...(item?.type === 'weapon' ? [['off-hand', 'fa-hand', 'Взяти в ліву руку']] : []),
         ['pack', 'fa-box-open', 'У рюкзак'], ['sheet', 'fa-pen-to-square', 'Відкрити предмет']]
     this.#popup(slot, opts, async m => {

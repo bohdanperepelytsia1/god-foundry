@@ -1427,7 +1427,9 @@ body.god-no-hotbar .god-quickbar { bottom: 12px; }
 .god-dialog .god-dlg-target { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .god-dialog .god-dlg-target-label { font-size: 12px; color: var(--g-dim); }
 .god-dialog .god-dlg-target-label small { color: var(--g-faint); font-size: 11px; }
-.god-dialog .god-targets { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
+.god-dialog .god-targets { display: flex; flex-direction: column; gap: 4px; max-height: min(260px, 34vh); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.god-dialog .god-target[hidden] { display: none; }
+.god-dialog .god-target-search { width: 100%; margin: 2px 0 6px; }
 .god-dialog .god-target {
   position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 22px; align-items: center; gap: 10px;
   padding: 4px 8px 4px 4px; border: 1px solid var(--g-line); border-left: 3px solid var(--disp, var(--g-line2)); border-radius: 8px;

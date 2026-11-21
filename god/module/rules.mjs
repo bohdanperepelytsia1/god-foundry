@@ -119,21 +119,22 @@ export const CHANCE_HIT = 3
 export const chanceSucceeds = d4 => num(d4) === CHANCE_HIT
 
 /**
- * Сітка попадання (Combat manual): число на кубі попадання важливіше за ШУ.
- * 20 — гарантований критичний урон, 19/18/17 — гарантований урон 100/75/50%,
+ * Сітка попадання («Стіки попадання та урону»): рахується за РЕЗУЛЬТАТОМ кидка (куб + модифікатори),
+ * а 1 — ще й за натуральним числом на кубі. Натуральна 20 теж дає гарантований крит.
+ * 20+ — гарантований критичний урон, 19/18/17 — гарантований урон 100/75/50% (влучання гарантоване),
  * 3 — ШАНС промаху (1d4 = 3), 2 — 50% промаху, 1 — гарантований промах.
- * Інакше — влучання, якщо результат більше за ШУ.
+ * Інакше — влучання, якщо результат не менший за ШУ (12 проти ШУ 12 — влучання).
  * → { hit, auto, guaranteed: тир|null, missCheck: 'chance'|'half'|null, reason }
  */
 export const hitCheck = ({ total, natural, dodge }) => {
-  const n = num(natural)
-  if (n === 1) return { hit: false, auto: true, guaranteed: null, missCheck: null, reason: 'Натуральна 1 — гарантований промах' }
-  const G = { 20: 'crit', 19: 't100', 18: 't75', 17: 't50' }
-  if (G[n]) return { hit: true, auto: true, guaranteed: G[n], missCheck: null, reason: `Натуральна ${n} — гарантований ${TIER[G[n]].label.toLowerCase()}` }
-  const hit = num(total) > num(dodge)
+  const n = num(natural), t = Math.trunc(num(total))
+  if (n === 1 || t <= 1) return { hit: false, auto: true, guaranteed: null, missCheck: null, reason: n === 1 ? 'Натуральна 1 — гарантований промах' : 'Результат 1 — гарантований промах' }
+  const g = n === 20 || t >= 20 ? 'crit' : t === 19 ? 't100' : t === 18 ? 't75' : t === 17 ? 't50' : null
+  if (g) return { hit: true, auto: true, guaranteed: g, missCheck: null, reason: `${n === 20 && t < 20 ? 'Натуральна 20' : `Результат ${t}`} — гарантований ${TIER[g].label.toLowerCase()}` }
+  const hit = t >= num(dodge)
   if (!hit) return { hit: false, auto: false, guaranteed: null, missCheck: null, reason: '' }
-  if (n === 2) return { hit: true, auto: false, guaranteed: null, missCheck: 'half', reason: 'Натуральна 2 — шанс промаху 50%' }
-  if (n === 3) return { hit: true, auto: false, guaranteed: null, missCheck: 'chance', reason: 'Натуральна 3 — ШАНС промаху' }
+  if (t === 2) return { hit: true, auto: false, guaranteed: null, missCheck: 'half', reason: 'Результат 2 — шанс промаху 50%' }
+  if (t === 3) return { hit: true, auto: false, guaranteed: null, missCheck: 'chance', reason: 'Результат 3 — ШАНС промаху' }
   return { hit: true, auto: false, guaranteed: null, missCheck: null, reason: '' }
 }
 
