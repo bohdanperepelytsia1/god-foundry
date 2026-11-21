@@ -187,7 +187,8 @@ async function rollDialog({ title, fields, info }) {
     classes: ['god-dialog'],
     position: { width: hasTarget ? 420 : 380 },
     render: hasTarget ? (event, dialog) => bindTargetList(dialog?.element ?? event?.target?.element ?? dialog) : undefined,
-    content: `${info ? `<p class="god-dlg-info">${info}</p>` : ''}${rows}`,
+    // власна обгортка з обмеженою висотою: кнопки внизу видно за будь-якої розмітки рамки Foundry (v13/v14)
+    content: `<div class="god-dlg-body">${info ? `<p class="god-dlg-info">${info}</p>` : ''}${rows}</div>`,
     rejectClose: false,
     buttons: [{
       action: 'roll', label: 'Кинути', icon: 'fa-solid fa-dice-d20', default: true,
@@ -432,7 +433,7 @@ export async function weaponAttack(actor, item, opts = {}) {
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
-    info: 'Спершу кидок попадання: має бути <b>більше</b> за ШУ цілі (17–20 — гарантовано, 1 — промах). Урон — окремим кидком, якщо влучив.' +
+    info: 'Спершу кидок попадання: результат <b>не менший</b> за ШУ цілі (17–20+ — гарантовано, 1 — промах). Урон — окремим кидком, якщо влучив.' +
       `<div class="god-mods"><b>Попадання:</b> ${esc(hm.text)}</div><div class="god-mods"><b>Урон:</b> ${esc(dm.text)}</div>`,
     fields: [
       { type: 'target', name: 'target', choices },
@@ -758,7 +759,7 @@ export async function castSpell(actor, spell, opts = {}) {
   const p = opts.preset ?? await rollDialog({
     title: `Сотворення: ${spell.name}`,
     info: `${school}, володіння ${schoolLvl} → <b>${n}d${die}</b>, потрібно ≥ ${s.threshold} хоча б на одному кубі.` +
-      (needsHit ? `<br>Спершу попадання: має бути <b>більше</b> за ШУ цілі.<div class="god-mods">${esc(shm.text)}</div>` : ''),
+      (needsHit ? `<br>Спершу попадання: результат <b>не менший</b> за ШУ цілі.<div class="god-mods">${esc(shm.text)}</div>` : ''),
     fields: [
       ...(needsHit ? [
         { type: 'target', name: 'target', choices },

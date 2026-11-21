@@ -33,7 +33,6 @@ const ours = app => {
 
 function fitDialog(app) {
   const el = app.element
-  if (!el.querySelector('.dialog-content')) return false
   // рамка — за вмістом (зафіксована раніше висота обрізала б кнопки)
   if (el.style.height && el.style.height !== 'auto') { app.setPosition({ height: 'auto' }); el.style.height = 'auto' }
   return sizeDialog(el)
@@ -41,7 +40,9 @@ function fitDialog(app) {
 
 /** Обмежити вміст діалогу так, щоб уся рамка вмістилась у вікно браузера */
 export function sizeDialog(el, H = window.innerHeight) {
-  const dc = el.querySelector('.dialog-content')
+  // вміст діалогу: у v13 — .dialog-content; інакше — те, що стоїть перед кнопками, або вся область вмісту
+  const footer = el.querySelector('.form-footer, footer')
+  const dc = el.querySelector('.dialog-content') ?? footer?.previousElementSibling ?? el.querySelector('.window-content')
   if (!dc) return false
   // «рамка без вмісту» = шапка + кнопки + відступи: міряємо, стиснувши вміст до нуля
   dc.style.overflowY = 'hidden'
@@ -70,7 +71,7 @@ function watch(app) {
   let t = null
   const again = () => { clearTimeout(t); t = setTimeout(() => fit(app), 30) }
   el.addEventListener('toggle', again, true)
-  const form = el.querySelector('.dialog-content')
+  const form = el.querySelector('.dialog-content') ?? el.querySelector('.god-dlg-body')
   if (form && typeof ResizeObserver === 'function') {
     const ro = new ResizeObserver(again)
     for (const child of form.children) ro.observe(child)
@@ -78,7 +79,10 @@ function watch(app) {
 }
 
 export function registerFit() {
-  Hooks.on('renderApplicationV2', app => requestAnimationFrame(() => { fit(app); if (ours(app)) watch(app) }))
+  // діалоги ловимо і власним хуком: не в кожній версії Foundry діалог викликає renderApplicationV2
+  const onRender = app => requestAnimationFrame(() => { fit(app); if (ours(app)) watch(app) })
+  Hooks.on('renderApplicationV2', onRender)
+  Hooks.on('renderDialogV2', onRender)
   let t = null
   window.addEventListener('resize', () => {
     clearTimeout(t)
