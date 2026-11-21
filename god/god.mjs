@@ -29,7 +29,25 @@ import { registerRotationHandle } from './module/rotate-handle.mjs'
 import { registerResourceSync } from './module/resource-sync.mjs'
 import { GodQuickbar, registerQuickbarSettings, syncNativeHotbar, replacesHotbar } from './module/apps/quickbar.mjs'
 
+/**
+ * Стилі системи завжди свіжі: браузер (і застосунок Foundry) міг закешувати god.css з попередньої версії —
+ * тоді нові блоки листа лишались без стилів (v14: величезні картинки в «Одягненому», голі рядки вибору).
+ * Перепідключаємо таблицю стилів з номером версії в адресі, щойно система вантажиться.
+ */
+function freshStyles() {
+  const v = encodeURIComponent(game.system?.version ?? '')
+  for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+    const href = link.getAttribute('href') ?? ''
+    if (!/systems\/god\/styles\/[^?]+\.css/.test(href) || href.includes(`v=${v}`)) continue
+    const fresh = link.cloneNode()
+    fresh.href = `${href.split('?')[0]}?v=${v}`
+    fresh.addEventListener('load', () => link.remove(), { once: true })
+    link.after(fresh)
+  }
+}
+
 Hooks.once('init', () => {
+  freshStyles()
   console.log('G.O.D. | ініціалізація системи')
   CONFIG.GOD = GOD
 

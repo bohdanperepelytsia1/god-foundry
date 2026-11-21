@@ -464,7 +464,7 @@ export async function pickItems(actor, have = [], { single = false } = {}) {
     const on = have.includes(i.id)
     return `<label class="god-qb-pick-row" data-search="${esc(i.name.toLowerCase())}">
       <input type="${single ? 'radio' : 'checkbox'}" name="pick" value="${i.id}" ${on && !single ? 'checked disabled' : ''}>
-      <img src="${esc(i.img)}" alt=""><span>${esc(i.name)}${i.system.equipped ? ' <small>в руках / одягнено</small>' : ''}${on ? ' <small>вже на панелі</small>' : ''}</span></label>`
+      <img src="${esc(i.img)}" alt="" width="26" height="26" style="width:26px;height:26px;flex:none"><span>${esc(i.name)}${i.system.equipped ? ' <small>в руках / одягнено</small>' : ''}${on ? ' <small>вже на панелі</small>' : ''}</span></label>`
   }
   const res = await foundry.applications.api.DialogV2.wait({
     window: { title: single ? 'Що поставити на це місце' : 'Додати на швидку панель', icon: 'fa-solid fa-plus' },
