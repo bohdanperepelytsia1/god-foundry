@@ -22,6 +22,7 @@ import { registerImageSocket } from './module/apps/image-drop.mjs'
 import { registerTransfer } from './module/apps/transfer.mjs'
 import { registerWagons, registerWagonSocket } from './module/wagons.mjs'
 import { registerReward, rewardDialog } from './module/apps/reward.mjs'
+import { registerActionLog, GodActionLog, actAs } from './module/apps/action-log.mjs'
 import { registerFit } from './module/fit.mjs'
 import { registerPinSettings, Pins } from './module/apps/pins.mjs'
 import { registerMigrationSettings, registerMigrationMenu, migrateWorld, migrateWorldForce } from './module/migration.mjs'
@@ -100,6 +101,7 @@ Hooks.once('init', () => {
   registerCombatPanel()
   registerWagons()
   registerReward()
+  registerActionLog()
   registerFit()
   registerSiteImporter()
   game.settings.register('god', 'showFoeDodge', {
@@ -132,6 +134,7 @@ Hooks.once('init', () => {
     quickbar: () => GodQuickbar.refresh(),
     combat: () => GodCombatPanel.toggle(),
     reward: () => rewardDialog(),
+    actionLog: () => GodActionLog.open(),
     importSite: () => new GodSiteImporter().render({ force: true }),
     guide: openGuide,
   }
@@ -171,6 +174,11 @@ Hooks.once('init', () => {
     onDown: () => { GodDiceTray.open(); return true },
   })
 
+  // Довжина числа в знаках: поле ресурсу розширюється під 4–6-значні значення
+  // Великі числа в тісних колонках: 12500 → 12.5к (повне — у підказці)
+  Handlebars.registerHelper('god-short', v => { const n = Number(v); if (!Number.isFinite(n) || Math.abs(n) < 10000) return v; const k = n / 1000; return `${Math.abs(k) >= 100 ? Math.round(k) : Math.round(k * 10) / 10}к` })
+  Handlebars.registerHelper('god-kg', v => { const n = Number(v); if (!Number.isFinite(n) || Math.abs(n) < 100) return v; return Math.abs(n) < 1000 ? Math.round(n) : `${Math.round(n / 100) / 10}к` })
+  Handlebars.registerHelper('god-len', v => Math.max(1, String(v ?? '').length))
   Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
   Handlebars.registerHelper('god-eq', (a, b) => a === b)
   Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
@@ -662,6 +670,11 @@ async function markApplied(message, key, info) {
 }
 
 Hooks.once('ready', async () => {
+  // Поле ресурсу росте разом із числом, яке вводять (для браузерів без field-sizing)
+  document.addEventListener('input', ev => {
+    const el = ev.target
+    if (el instanceof HTMLInputElement && el.closest('.god-res-bar')) el.style.setProperty('--w', Math.max(1, el.value.length))
+  })
   registerImageSocket()
   registerTransfer()
   registerWagonSocket()
@@ -672,7 +685,7 @@ Hooks.once('ready', async () => {
       const doc = fromUuidSync(msg.uuid)
       const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
       if (!actor || message?.getFlag('god', `applied.${msg.key}`)) return
-      const out = await API.dealDamage(actor, typeof msg.amount === 'object' && msg.amount ? { amount: Number(msg.amount.amount) || 0, ignorePr: !!msg.amount.ignorePr } : (Number(msg.amount) || 0))
+      const out = await actAs(msg.from, () => API.dealDamage(actor, typeof msg.amount === 'object' && msg.amount ? { amount: Number(msg.amount.amount) || 0, ignorePr: !!msg.amount.ignorePr } : (Number(msg.amount) || 0)))
       if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
     } else if (msg?.op === 'mark' && message) {
       await message.setFlag('god', `applied.${msg.key}`, msg.info)

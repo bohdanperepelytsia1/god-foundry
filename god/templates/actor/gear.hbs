@@ -67,10 +67,10 @@
               </div>
               <div class="god-inv-qty">
                 {{#if showQty}}
-                <a data-action="invQty" data-step="-1" data-tooltip="−1 · Shift −10">−</a><b>{{qty}}</b><a data-action="invQty" data-step="1" data-tooltip="+1 · Shift +10">+</a>
+                <a data-action="invQty" data-step="-1" data-tooltip="−1 · Shift −10">−</a><b{{#if (god-eq (god-short qty) qty)}}{{else}} data-tooltip="{{qty}}"{{/if}}>{{god-short qty}}</b><a data-action="invQty" data-step="1" data-tooltip="+1 · Shift +10">+</a>
                 {{/if}}
               </div>
-              <span class="god-inv-w" data-tooltip="Вага разом, кг">{{weight}}</span>
+              <span class="god-inv-w" data-tooltip="Вага разом: {{weight}} кг">{{god-kg weight}}</span>
               <span class="god-inv-eq">
                 {{#if equippable}}<a data-action="itemEquip" data-tooltip="{{#if equipped}}Зняти{{else}}Одягнути / взяти в руку{{/if}}">
                   <i class="fa-solid fa-shirt {{#unless equipped}}god-off{{/unless}}"></i></a>{{/if}}

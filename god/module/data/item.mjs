@@ -55,9 +55,11 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
 }
 
 export class GearData extends foundry.abstract.TypeDataModel {
-  /** Старі предмети без категорії: беремо її з розділу інвентаря */
+  /** Старі предмети без категорії: беремо її з розділу інвентаря.
+   *  Лише для повного запису предмета: Foundry проганяє migrateData і через часткові оновлення ({location}),
+   *  і там відсутня категорія не означає «стара» — інакше перекладання скидало б категорію на «Загальне». */
   static migrateData(source) {
-    if (source && source.category === undefined && source.location) source.category = GOD.LOCATION_CATEGORY[source.location] ?? 'item'
+    if (source && source.category === undefined && source.location && 'weight' in source && 'quantity' in source) source.category = GOD.LOCATION_CATEGORY[source.location] ?? 'item'
     return super.migrateData(source)
   }
   static defineSchema() {

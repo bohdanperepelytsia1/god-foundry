@@ -2179,3 +2179,41 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god .god-hand-shield img { width: 36px; height: 36px; border: none; border-radius: 5px; flex: none; }
 .god .god-hand-shield .god-hand-shield-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .god .god-hand-shield small { color: var(--g-faint); }
+
+/* ═══ 0.21.1: великі числа в смугах ресурсів — поле під довжину числа, без переносу ═══ */
+.god .god-res-bar input, .god-hud .god-res-bar input, .god-quickbar .god-res-bar input {
+  width: calc(var(--w, 3) * 1ch + 6px); min-width: calc(2ch + 6px); max-width: 60%; flex: 0 0 auto; padding: 0 2px 0 0;
+  font-variant-numeric: tabular-nums; field-sizing: content;
+}
+.god .god-res-max { white-space: nowrap; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: clip; }
+.god .god-res-bar { flex-wrap: nowrap; }
+.god .god-res-armor .god-res-bar input { font-size: 12px; }
+.god .god-res-armor .god-res-max { font-size: 10.5px; }
+.god .god-res-armor .god-res { gap: 3px; }
+.god .god-inv-qty { gap: 0; min-width: 0; }
+.god .god-inv-qty a { width: 15px; flex: none; }
+.god .god-inv-qty b { min-width: 0; flex: 1 1 auto; overflow: hidden; white-space: nowrap; font-size: 12.5px; }
+.god .god-inv-w { white-space: nowrap; overflow: hidden; }
+.god .god-insp-qty input { width: 100%; min-width: 0; font-size: 13px; }
+.god .god-insp-inv { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.god .god-insp-inv select { min-width: 0; width: 100%; }
+
+/* ═══ 0.21.1: журнал дій гравців (майстер) ═══ */
+#god-action-log .window-content { padding: 0; overflow: hidden; }
+.god-log { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.god-log-off { margin: 8px 10px 0; padding: 6px 8px; border-radius: 6px; background: color-mix(in srgb, #e07a6a 18%, transparent); font-size: 12px; }
+.god-log-bar { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; padding: 8px 10px 0; }
+.god-log-bar input, .god-log-bar select { height: 28px; min-width: 0; font-size: 12.5px; }
+.god-log-bar2 { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--g-line); font-size: 12px; }
+.god-log-bar2 label { display: flex; align-items: center; gap: 4px; margin: 0; }
+.god-log-count { margin-left: auto; color: var(--g-dim); font-variant-numeric: tabular-nums; }
+.god-log-bar2 a { color: var(--g-dim); } .god-log-bar2 a:hover { color: var(--g-text); }
+.god-log-list { list-style: none; margin: 0; padding: 4px 10px 10px; overflow-y: auto; flex: 1; min-height: 0; }
+.god-log-day { margin: 10px 0 4px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--g-faint); font-weight: 600; }
+.god-log-row { display: grid; grid-template-columns: 62px 110px minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid color-mix(in srgb, var(--g-line) 50%, transparent); font-size: 12.5px; line-height: 1.35; }
+.god-log-row time { color: var(--g-dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.god-log-who { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--g-dim); }
+.god-log-who i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.god-log-what { overflow-wrap: anywhere; }
+.god-log-what b { color: var(--g-accent2); font-weight: 600; }
+.god-log-btn { margin-top: 4px; }

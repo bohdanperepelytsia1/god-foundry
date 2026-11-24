@@ -78,6 +78,9 @@ for (const M of [WeaponData, ArmorData, SpellData, TraitData]) M.defineSchema()
 console.log('✓ схеми предметів')
 
 // ── рендер усіх шаблонів ──
+Handlebars.registerHelper('god-short', v => { const n = Number(v); if (!Number.isFinite(n) || Math.abs(n) < 10000) return v; const k = n / 1000; return `${Math.abs(k) >= 100 ? Math.round(k) : Math.round(k * 10) / 10}к` })
+Handlebars.registerHelper('god-kg', v => { const n = Number(v); if (!Number.isFinite(n) || Math.abs(n) < 100) return v; return Math.abs(n) < 1000 ? Math.round(n) : `${Math.round(n / 100) / 10}к` })
+Handlebars.registerHelper('god-len', v => Math.max(1, String(v ?? '').length))
 Handlebars.registerHelper('god-signed', n => (Number(n) >= 0 ? `+${n}` : `${n}`))
 Handlebars.registerHelper('god-eq', (a, b) => a === b)
 Handlebars.registerHelper('god-or', (...a) => a.slice(0, -1).some(Boolean))
@@ -234,6 +237,12 @@ for (const [type, flags] of [['weapon', { isWeapon: true, isPhysical: true }], [
   if (type === 'armor') assert.ok(html.includes('system.quiverCap') === (it.system.slot === 'Сагайдак'), 'місткість лише для сагайдака')
 }
 console.log('✓ лист предмета — 5 типів')
+{
+  const { GearData } = await import('../god/module/data/item.mjs')
+  assert.equal(GearData.migrateData({ location: 'quiver' }).category, undefined, 'часткове оновлення {location} не скидає категорію')
+  assert.equal(GearData.migrateData({ location: 'potions', weight: 0, quantity: 1 }).category, 'potion', 'старий предмет без категорії — з розділу')
+  console.log('✓ категорія предмета не скидається при перекладанні')
+}
 
 // ── описи вмінь: є для кожного вміння з правил ──
 const { SKILL_INFO } = await import('../god/module/skill-info.mjs')
