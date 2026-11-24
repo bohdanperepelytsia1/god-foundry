@@ -76,7 +76,7 @@ export class GodCharacterSheet extends GodActorSheetBase {
       wagonPick: GodCharacterSheet.#wagonPick, wagonTake: GodCharacterSheet.#wagonTake, wagonPut: GodCharacterSheet.#wagonPut,
       wagonNew: GodCharacterSheet.#wagonNew, wagonEdit: GodCharacterSheet.#wagonEdit, wagonDelete: GodCharacterSheet.#wagonDelete, wagonRemove: GodCharacterSheet.#wagonRemove,
       gearPick: GodCharacterSheet.#gearPick, gearToHand: GodCharacterSheet.#gearToHand, gearToBelt: GodCharacterSheet.#gearToBelt,
-      gearToPack: GodCharacterSheet.#gearToPack, gearOff: GodCharacterSheet.#gearOff, unarmed: GodCharacterSheet.#unarmed,
+      gearToPack: GodCharacterSheet.#gearToPack, gearOff: GodCharacterSheet.#gearOff, unarmed: GodCharacterSheet.#unarmed, gearToQuiver: GodCharacterSheet.#gearToQuiver,
     },
   }
 
@@ -199,7 +199,9 @@ export class GodCharacterSheet extends GodActorSheetBase {
     const hands = [
       { hand: 'main', label: 'Права рука', sub: 'основна · +СИЛ×5', weapon: main ? this._weaponRow(main) : null },
       { hand: 'off', label: 'Ліва рука', sub: 'друга · без СИЛ', weapon: off ? this._weaponRow(off) : null,
-        busy: twoH ? `дворучна: ${twoH.name}` : shield ? `щит: ${shield.name}` : '' },
+        busy: twoH ? `дворучна: ${twoH.name}` : '',
+        shield: shield && !off ? { id: shield.id, name: shield.name, img: shield.img, up: !!this.document.system.shieldUp,
+          pr: this.document.system.resources.spr, mr: this.document.system.resources.smr } : null },
     ]
     const beltFree = !!beltItem && belt.used < belt.slots
     return {
@@ -212,7 +214,14 @@ export class GodCharacterSheet extends GodActorSheetBase {
           weapon: i.type === 'weapon', usable: i.type === 'gear' && i.system.consumable,
         })),
       },
-      armorSlots: Object.entries(GOD.ARMOR_SLOTS).filter(([slot]) => slot !== 'Пояс').map(([slot, label]) => {
+      quiver: (() => {
+        const qi = worn.find(i => i.type === 'armor' && i.system.slot === 'Сагайдак')
+        const q = this.document.system.derived?.quiver ?? { cap: 0, used: 0 }
+        if (!qi) return null
+        return { item: { id: qi.id, name: qi.name, img: qi.img }, cap: q.cap, used: q.used, over: q.cap > 0 && q.used > q.cap,
+          arrows: items.filter(i => i.isPhysical && i.system.location === 'quiver').map(i => ({ id: i.id, name: i.name, img: i.img, qty: Math.max(1, i.system.quantity ?? 1), sub: itemSub(i) })) }
+      })(),
+      armorSlots: Object.entries(GOD.ARMOR_SLOTS).filter(([slot]) => slot !== 'Пояс' && slot !== 'Сагайдак').map(([slot, label]) => {
         const it = worn.find(i => i.type === 'armor' && i.system.slot === slot)
         return { slot, label, item: it ? { id: it.id, name: it.name, img: it.img, phys: it.system.phys, mag: it.system.mag } : null }
       }),
@@ -245,6 +254,28 @@ export class GodCharacterSheet extends GodActorSheetBase {
   }
   static #gearToHand(ev, t) { const it = this._item(t); if (it) this.document.equipToHand(it, t.dataset.hand ?? 'main') }
   static #gearToBelt(ev, t) { const it = this._item(t); if (it) this.document.toBelt(it) }
+  /** Покласти стріли в сагайдак: вибрати стріли, потім скільки */
+  static async #gearToQuiver() {
+    const a = this.document
+    const list = a.items.filter(i => i.type === 'gear' && i.system.category === 'ammo' && i.system.location !== 'quiver')
+    const id = await pickItem('Покласти в сагайдак', list, { sub: i => `×${Math.max(1, i.system.quantity ?? 1)}`, empty: 'В інвентарі немає стріл (категорія «Стріли, болти, кулі»)' })
+    const item = id && a.items.get(id)
+    if (!item) return
+    const have = Math.max(1, item.system.quantity ?? 1)
+    const q = a.system.derived?.quiver ?? { cap: 0, used: 0 }
+    const free = q.cap > 0 ? Math.max(0, q.cap - q.used) : have
+    let n = Math.min(have, free)
+    if (have > 1) {
+      const res = await foundry.applications.api.DialogV2.prompt({
+        window: { title: `Скільки: ${item.name}` }, classes: ['god-dialog'], rejectClose: false,
+        content: `<label class="god-dlg-field"><span>Стріл (є ${have}${q.cap ? `, вільно в сагайдаку ${free}` : ''})</span><input type="number" name="n" value="${n}" min="1" max="${have}" autofocus></label>`,
+        ok: { label: 'Покласти', callback: (e, b) => Number(b.form.elements.n.value) || 0 },
+      })
+      if (!res) return
+      n = res
+    }
+    return a.toQuiver(item, n)
+  }
   static #gearToPack(ev, t) { const it = this._item(t); if (it) this.document.toPack(it) }
   /** Зняти (зброю, обладунок); пояс з речами — спитати, речі повернуться в загальне */
   static async #gearOff(ev, t) {
@@ -324,8 +355,16 @@ export class GodCharacterSheet extends GodActorSheetBase {
       const r = sys.resources[key]
       return { key, abbr: key.toUpperCase(), value: r.value, max: r.max,
         pct: r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0,
-        tip: key === 'pr' ? `Фізичний захист — сума одягненої броні${d.shield && sys.skill?.('Щити') ? ` + ${R.shieldPrBonus(sys.skill('Щити'))} від вміння «Щити»` : ''}` : 'Магічний захист — сума одягненої броні' }
+        tip: key === 'pr' ? 'Фізичний захист — сума одягненої броні (без щита)' : 'Магічний захист — сума одягненої броні (без щита)' }
     })
+    // Щит — окремі смуги; діють, коли щит піднято
+    context.shieldRes = d.shield ? ['spr', 'smr'].map(key => {
+      const r = sys.resources[key]
+      return { key, abbr: key === 'spr' ? 'PR' : 'MR', value: r.value, max: r.max,
+        pct: r.max > 0 ? Math.max(0, Math.min(100, r.value / r.max * 100)) : 0,
+        tip: `${key === 'spr' ? 'Фізичний' : 'Магічний'} захист щита${key === 'spr' && sys.skill?.('Щити') ? ` (+${R.shieldPrBonus(sys.skill('Щити'))} від вміння «Щити»)` : ''} — окремо від броні. ${sys.shieldUp ? 'Щит піднято: урон спершу йде сюди' : 'Щит опущено: не захищає, поки не піднімеш'}` }
+    }) : null
+    context.shieldUp = !!sys.shieldUp
     const dp = d.dodgeParts
     const AW = { lightFit: 'легкий підігнаний', light: 'легкий', mediumFit: 'середній підігнаний', medium: 'середній', heavyFit: 'тяжкий підігнаний', heavy: 'тяжкий' }
     context.dodgeTip = `ШУ: навантаження ${dp.load} з бази ${dp.base} → ${dp.fromLoad}` +

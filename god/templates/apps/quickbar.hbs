@@ -30,7 +30,7 @@
   <div class="god-qb-slots {{#if edit}}editing{{/if}}" data-tooltip-direction="UP">
     {{#each linked}}
     {{#if first}}<span class="god-qb-zone" data-tooltip="{{#if (god-eq zone "hands")}}У руках — як на «Огляді»{{else}}На поясі — як на «Огляді»{{/if}}"><i class="fa-solid {{#if (god-eq zone "hands")}}fa-hand{{else}}fa-grip-lines{{/if}}"></i></span>{{/if}}
-    <a class="god-qb-slot god-qb-{{group}} god-qb-linked" data-slot data-action="use" data-key="{{key}}" data-zone="{{zone}}" data-tooltip="{{tip}} · ПКМ — меню">
+    <a class="god-qb-slot god-qb-{{group}} god-qb-linked {{#if dim}}dim{{/if}}" data-slot data-action="use" data-key="{{key}}" data-zone="{{zone}}" data-tooltip="{{tip}} · ПКМ — меню">
       <img src="{{img}}" alt="">{{#if badge}}<em>{{badge}}</em>{{/if}}{{#if equip}}<i class="god-qb-worn fa-solid fa-hand"></i>{{/if}}</a>
     {{/each}}
     {{#if linked.length}}<span class="god-qb-gap god-qb-gap-linked"></span>{{/if}}

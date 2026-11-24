@@ -106,7 +106,7 @@ export const ARMOR_SLOTS = {
   'Шолом': 'Шолом', 'Кираса': 'Кираса', 'Поножі': 'Поножі', 'Рукавиці': 'Рукавиці', 'Чоботи': 'Чоботи',
   'Одяг': 'Одяг', 'Плащ_накидка': 'Плащ / накидка', 'Шия': 'Шия', 'Щит': 'Щит',
   'Палець_л': 'Палець (л)', 'Палець_п': 'Палець (п)', 'Кисть_л': 'Кисть (л)', 'Кисть_п': 'Кисть (п)',
-  'Пояс': 'Пояс', 'Рюкзак': 'Рюкзак',
+  'Пояс': 'Пояс', 'Рюкзак': 'Рюкзак', 'Сагайдак': 'Сагайдак',
 }
 
 export const ARMOR_CLASSES = {
@@ -126,7 +126,7 @@ export const TOKEN_SIZES = { tiny: 0.5, small: 1, medium: 1, large: 2, huge: 3, 
 export const CREATURE_RANKS = { weak: 'Слабкий', junior: 'Молодший', regular: 'Рядовий', senior: 'Старший', elite: 'Елітний', legendary: 'Легендарний' }
 
 export const INVENTORY_LOCATIONS = {
-  main: 'Загальне', belt: 'Пояс', quest: 'Квестові', tools: 'Інструменти',
+  main: 'Загальне', belt: 'Пояс', quiver: 'Сагайдак', quest: 'Квестові', tools: 'Інструменти',
   books: 'Книги', ingredients: 'Інгредієнти', potions: 'Зілля', materials: 'Матеріали й трофеї', valuables: 'Цінності',
 }
 
@@ -251,7 +251,7 @@ export const ICON_ROOT = 'systems/god/assets/icons/'
 const SLOT_ICON = {
   'Шолом': 'helmet', 'Кираса': 'cuirass', 'Поножі': 'greaves', 'Рукавиці': 'gloves', 'Чоботи': 'boots', 'Одяг': 'clothes',
   'Плащ_накидка': 'cloak', 'Шия': 'neck', 'Щит': 'shield', 'Палець_л': 'ring', 'Палець_п': 'ring',
-  'Кисть_л': 'wrist', 'Кисть_п': 'wrist', 'Пояс': 'belt', 'Рюкзак': 'backpack',
+  'Кисть_л': 'wrist', 'Кисть_п': 'wrist', 'Пояс': 'belt', 'Рюкзак': 'backpack', 'Сагайдак': 'quiver',
 }
 /** Типова іконка для предмета за типом і ключовим полем (категорія/слот/школа) */
 export function defaultIcon(type, system = {}) {

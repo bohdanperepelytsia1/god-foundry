@@ -11,7 +11,7 @@
  */
 import * as R from './rules.mjs'
 
-const KEYS = ['hp', 'mp', 'mt', 'ed', 'pr', 'mr']
+const KEYS = ['hp', 'mp', 'mt', 'ed', 'pr', 'mr', 'spr', 'smr']
 const queued = new Map()    // actor.uuid → { actor, base:{m,t}, skip:Set, timer }
 const applied = new Map()   // actor.uuid → { m, t } — максимуми після останнього врахування
 let clock = 0               // монотонний лічильник замість часу: порядок важливіший за мілісекунди

@@ -16,19 +16,21 @@ const moneyField = () => new f.SchemaField(
 
 /** Спільні похідні від предметів (використовуються і персонажем, і НІП) */
 function itemTotals(actor) {
-  const t = { equippedWeight: 0, totalWeight: 0, pr: 0, mr: 0, bagBonus: 0, beltSlots: 0, beltUsed: 0, spellStatMult: false, armorKeys: [] }
+  const t = { equippedWeight: 0, totalWeight: 0, pr: 0, mr: 0, spr: 0, smr: 0, bagBonus: 0, beltSlots: 0, beltUsed: 0, quiverCap: 0, quiverUsed: 0, spellStatMult: false, armorKeys: [] }
   for (const it of actor.items) {
     const s = it.system
     const w = (Number(s.weight) || 0) * (Number(s.quantity) || 1)
     t.totalWeight += w
     if (s.location === 'belt') t.beltUsed++
+    if (s.location === 'quiver') t.quiverUsed += Math.max(1, Number(s.quantity) || 1)
     if (!s.equipped) continue
     if (it.type === 'weapon' || it.type === 'armor') t.equippedWeight += w
     if (it.type === 'armor') {
       t.armorKeys.push(R.armorClassKey(s.armorClass, s.fitted))
-      t.pr += Number(s.phys) || 0
-      t.mr += Number(s.mag) || 0
-      if (s.slot === 'Щит') t.shield = s.shieldSize || 'small'
+      // Щит — окремий захист (PR/MR щита), не складається з бронею: працює, лише коли щит піднято
+      if (s.slot === 'Щит') { t.shield = s.shieldSize || 'small'; t.spr += Number(s.phys) || 0; t.smr += Number(s.mag) || 0 }
+      else { t.pr += Number(s.phys) || 0; t.mr += Number(s.mag) || 0 }
+      if (s.slot === 'Сагайдак') t.quiverCap += Number(s.quiverCap) || 0
       if (s.slot === 'Рюкзак') t.bagBonus += Number(s.bagBonus) || 0
       if (s.slot === 'Пояс')   t.beltSlots += Number(s.beltSlots) || 0
     }
@@ -57,6 +59,8 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         ...Object.fromEntries(Object.keys(GOD.RESOURCES).map(k => [k, resourceField()])),
         pr: new f.SchemaField({ value: int(0) }),
         mr: new f.SchemaField({ value: int(0) }),
+        spr: new f.SchemaField({ value: int(0) }),   // PR щита
+        smr: new f.SchemaField({ value: int(0) }),   // MR щита
       }),
       skills: new f.SchemaField(skillCats),
       // Модифікатори кидків від ефектів (Active Effects пишуть сюди): окреме вміння, гілка вмінь, перевірка характеристики
@@ -78,6 +82,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         skillPoints: int(GOD.BALANCE.START_SKILL_PTS),
         statPoints: int(0),
       }),
+      shieldUp: new f.BooleanField({ initial: false }),   // щит піднято (окрема дія): урон спершу йде в PR/MR щита
       combat: new f.SchemaField({
         dodgeBonus: int(0),   // ручна правка майстра (±), поверх динамічного ШУ
         hitMod: int(0),       // від стійок/ефектів
@@ -184,8 +189,11 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       r.auto = Math.round((this.stats[cfg.stat]?.value || 0) * cfg.mult)
       r.max = r.auto + (r.bonus || 0)
     }
-    this.resources.pr.max = t.pr + (t.shield ? R.shieldPrBonus(this.skill('Щити')) : 0)
+    this.resources.pr.max = t.pr
     this.resources.mr.max = t.mr
+    // Щит окремо; вміння «Щити» додає PR саме щиту
+    this.resources.spr.max = t.shield ? t.spr + R.shieldPrBonus(this.skill('Щити')) : 0
+    this.resources.smr.max = t.shield ? t.smr : 0
 
     const level = R.levelFromXp(this.progress.xp)
     const dodgeAuto = R.calcDodge({
@@ -199,7 +207,7 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       equippedWeight: t.equippedWeight,
       totalWeight: t.totalWeight,
       maxWeight: R.calcMaxWeight({ override: this.encumbrance.override, muleLvl: this.skill('Мул'), bagBonus: t.bagBonus }),
-      belt: { slots: t.beltSlots, used: t.beltUsed },
+      belt: { slots: t.beltSlots, used: t.beltUsed }, quiver: { cap: t.quiverCap, used: t.quiverUsed },
       dodgeAuto,
       armorDodge: t.armor.mod, armorWorst: t.armor.worst, shieldDodge: t.shieldDodge, shield: t.shield ?? null,
       dodge: Math.max(0, Math.min(R.MAX_DODGE, dodgeAuto + t.armor.mod + t.shieldDodge + (this.combat.dodgeBonus || 0))),
@@ -247,6 +255,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         ed: new f.SchemaField({ value: int(0), max: int(0) }),
         pr: new f.SchemaField({ value: int(0), base: int(0) }),
         mr: new f.SchemaField({ value: int(0), base: int(0) }),
+        spr: new f.SchemaField({ value: int(0) }),
+        smr: new f.SchemaField({ value: int(0) }),
       }),
       schools: new f.SchemaField(Object.fromEntries(
         Object.keys(GOD.SPELL_SCHOOLS).map(k => [k, int(0, { min: 0, max: 10 })])
@@ -266,6 +276,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
         // «Чим б'є»: категорія зброї лише для анімації й ближнього/дальнього бою; '' — природна атака. Урон завжди PD/MD
         look: new f.StringField({ initial: '', blank: true }),
       }),
+      shieldUp: new f.BooleanField({ initial: false }),
       combat: new f.SchemaField({ dodgeBonus: int(0), hitMod: int(0), damageMod: int(0), allMod: int(0), noBonus: int(0) }),
       money: moneyField(),
       notes: new f.HTMLField({ initial: '' }),
@@ -294,6 +305,8 @@ export class NpcData extends foundry.abstract.TypeDataModel {
     for (const s of Object.values(this.stats)) s.mod = R.statMod(s.value)
     this.resources.pr.max = (this.resources.pr.base || 0) + t.pr
     this.resources.mr.max = (this.resources.mr.base || 0) + t.mr
+    this.resources.spr.max = t.shield ? t.spr : 0
+    this.resources.smr.max = t.shield ? t.smr : 0
     this.derived = {
       armorDodge: t.armor.worst ? t.armor.mod : 0, shieldDodge: t.shieldDodge, shield: t.shield ?? null,
       // НІП: база + клас обладунку (лише якщо щось одягнено) + щит + ефекти, × розмір
@@ -303,7 +316,7 @@ export class NpcData extends foundry.abstract.TypeDataModel {
       equippedWeight: t.equippedWeight,
       totalWeight: t.totalWeight,
       maxWeight: 0,
-      belt: { slots: t.beltSlots, used: t.beltUsed },
+      belt: { slots: t.beltSlots, used: t.beltUsed }, quiver: { cap: t.quiverCap, used: t.quiverUsed },
       armorPr: t.pr, armorMr: t.mr,
       spellStatMult: t.spellStatMult,
       allMod: this.combat.allMod || 0, mindDmg: 0,

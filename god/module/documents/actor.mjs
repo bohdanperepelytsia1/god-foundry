@@ -134,6 +134,7 @@ export class GodActor extends Actor {
         const onBelt = this.items.filter(i => i.system.location === 'belt')
         if (onBelt.length) await this.updateEmbeddedDocuments('Item', onBelt.map(i => ({ _id: i.id, 'system.location': 'main' })))
       }
+      if (item.type === 'armor' && s.slot === 'Щит' && this.system.shieldUp) await this.update({ 'system.shieldUp': false })
       return item.update({ 'system.equipped': false })
     }
 
@@ -190,6 +191,26 @@ export class GodActor extends Actor {
     }
     return item.update({ 'system.location': 'belt', ...(item.type === 'weapon' && item.system.equipped ? { 'system.equipped': false } : {}) })
   }
+  /** Покласти n стріл у сагайдак (з урахуванням місткості); однакові стріли в сагайдаку складаються в стос */
+  async toQuiver(item, n) {
+    const q = this.system.derived?.quiver ?? { cap: 0, used: 0 }
+    const worn = this.items.some(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Сагайдак')
+    if (!worn) return ui.notifications.warn('Сагайдак не одягнено: одягни його в «Одягненому»')
+    const have = Math.max(1, item.system.quantity ?? 1)
+    const free = q.cap > 0 ? q.cap - q.used : Infinity
+    n = Math.min(have, Math.max(1, Math.trunc(n ?? have) || have), free)
+    if (n <= 0) return ui.notifications.warn(`Сагайдак повний (${q.used}/${q.cap})`)
+    const same = this.items.find(i => i.id !== item.id && i.type === 'gear' && i.system.location === 'quiver' && i.name === item.name && i.system.category === item.system.category)
+    if (same) await same.update({ 'system.quantity': Math.max(1, same.system.quantity ?? 1) + n })
+    if (n >= have) return same ? item.delete() : item.update({ 'system.location': 'quiver' })
+    await item.update({ 'system.quantity': have - n })
+    if (!same) {
+      const data = item.toObject(); delete data._id
+      data.system.quantity = n; data.system.location = 'quiver'
+      await this.createEmbeddedDocuments('Item', [data])
+    }
+  }
+
   /** Повернути в рюкзак (загальне) */
   async toPack(item) { return item.update({ 'system.location': 'main', ...(item.type === 'weapon' ? { 'system.equipped': false } : {}) }) }
 

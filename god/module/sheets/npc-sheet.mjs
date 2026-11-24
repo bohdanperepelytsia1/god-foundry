@@ -59,6 +59,15 @@ export class GodNpcSheet extends GodActorSheetBase {
       const r = sys.resources[key]
       if (r.max > 0) context.resources.push({ key, abbr: key.toUpperCase(), value: r.value, max: r.max, pct: pct(r), tip: armorTip(key), armor: true })
     }
+    // Щит — окремо від броні; діє, коли піднято
+    if (sys.derived.shield) {
+      for (const key of ['spr', 'smr']) {
+        const r = sys.resources[key]
+        if (r.max > 0) context.resources.push({ key, abbr: key === 'spr' ? 'PR щ' : 'MR щ', value: r.value, max: r.max, pct: pct(r), armor: true,
+          tip: `${key === 'spr' ? 'Фізичний' : 'Магічний'} захист щита — ${sys.shieldUp ? 'піднято' : 'опущено, не діє'}` })
+      }
+      context.shieldToggle = { up: !!sys.shieldUp }
+    }
     // Картка ворога як на сайті: показники з формулами і таблиця уражень 10–150% від PD/MD
     const d = sys.derived
     const dodgeTip = `База ${sys.dodge}${d.armorDodge ? `, обладунок ${d.armorDodge > 0 ? '+' : ''}${d.armorDodge}` : ''}${d.shieldDodge ? `, щит +${d.shieldDodge}` : ''}${sys.combat.dodgeBonus ? `, ефекти ${sys.combat.dodgeBonus > 0 ? '+' : ''}${sys.combat.dodgeBonus}` : ''}${sys.size !== 'medium' ? `, ${GOD.CREATURE_SIZES[sys.size]}` : ''}`

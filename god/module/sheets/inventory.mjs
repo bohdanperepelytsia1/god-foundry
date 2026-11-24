@@ -77,7 +77,7 @@ export function buildInventory(actor, state) {
       })),
     }
   // Пояс і одягнене — на «Огляді» (як на сайті); тут лише рюкзак і місця зберігання
-  }).filter(s => s.loc !== 'belt' && (s.count || s.loc === 'main'))
+  }).filter(s => s.loc !== 'belt' && s.loc !== 'quiver' && (s.count || s.loc === 'main'))
 
   return {
     sections, beltNote: belt?.slots || physical.some(i => i.system.location === 'belt') ? { used: physical.filter(i => i.system.location === 'belt').length, slots: belt?.slots ?? 0 } : null,

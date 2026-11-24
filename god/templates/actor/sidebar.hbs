@@ -43,6 +43,13 @@
     <div class="god-res-armor">
       {{#each armorRes}}{{> god-res}}{{/each}}
     </div>
+    {{#if shieldRes}}
+    <div class="god-res-shield {{#if shieldUp}}up{{/if}}">
+      <a class="god-shield-toggle" data-action="shieldToggle" data-tooltip="{{#if shieldUp}}Опустити щит{{else}}Підняти щит — окрема дія: урон спершу йде в захист щита{{/if}}">
+        <i class="fa-solid fa-shield-halved"></i> {{#if shieldUp}}Піднято{{else}}Щит{{/if}}</a>
+      <div class="god-res-armor">{{#each shieldRes}}{{> god-res}}{{/each}}</div>
+    </div>
+    {{/if}}
   </div>
 
   {{#if (god-or system.derived.allMod system.derived.overload)}}

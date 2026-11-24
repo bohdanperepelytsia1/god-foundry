@@ -43,13 +43,16 @@
       <label><span>Слот</span><select name="system.slot">{{selectOptions config.ARMOR_SLOTS selected=system.slot}}</select></label>
       <label><span>Клас</span><select name="system.armorClass">{{selectOptions config.ARMOR_CLASSES selected=system.armorClass}}</select></label>
       <label class="god-check" data-tooltip="Підігнаний: тяжкий −1 ШУ замість −2, середній без штрафу ШУ"><input type="checkbox" name="system.fitted" {{checked system.fitted}}><span>Підігнаний</span></label>
-      <label><span>Фізичний захист</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
+      <label {{#if (god-eq system.slot "Щит")}}data-tooltip="PR щита — окремо від броні; діє, коли щит піднято"{{/if}}><span>Фізичний захист</span><input type="number" name="system.phys" value="{{system.phys}}"></label>
       <label><span>Магічний захист</span><input type="number" name="system.mag" value="{{system.mag}}"></label>
       {{#if (god-eq system.slot "Щит")}}
       <label data-tooltip="Кулачний — з усім, крім дворучної; каплевидний — ШУ −1; башенний — ШУ −3"><span>Тип щита</span><select name="system.shieldSize">{{selectOptions config.SHIELD_SIZES selected=system.shieldSize}}</select></label>
       {{/if}}
       {{#if (god-eq system.slot "Пояс")}}
       <label><span>Слотів пояса</span><input type="number" name="system.beltSlots" value="{{system.beltSlots}}" min="0"></label>
+      {{/if}}
+      {{#if (god-eq system.slot "Сагайдак")}}
+      <label data-tooltip="Скільки стріл (болтів) уміщає"><span>Місткість, стріл</span><input type="number" name="system.quiverCap" value="{{system.quiverCap}}" min="0"></label>
       {{/if}}
       {{#if (god-eq system.slot "Рюкзак")}}
       <label><span>+ до макс. ваги</span><input type="number" name="system.bagBonus" value="{{system.bagBonus}}" min="0" step="0.1"></label>

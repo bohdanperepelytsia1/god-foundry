@@ -60,8 +60,8 @@ export async function repairArmor() {
 /** Підсумок урону одним рядком: що зняло з MR, PR і HP */
 export function damageSummary(name, out) {
   if (!out.total) return `${name}: урону немає`
-  if (out.blocked) return `${name}: магічну броню не пробито — ${out.total} урону зникло`
-  const parts = [out.toMr && `MR −${out.toMr}`, out.toPr && `PR −${out.toPr}`, out.toHp && `HP −${out.toHp}`].filter(Boolean)
+  const parts = [out.toSmr && `MR щита −${out.toSmr}`, out.toSpr && `PR щита −${out.toSpr}`, out.toMr && `MR −${out.toMr}`, out.toPr && `PR −${out.toPr}`, out.toHp && `HP −${out.toHp}`].filter(Boolean)
+  if (out.blocked) return `${name}: ${parts.length ? `${parts.join(', ')}; ` : ''}${out.blockedBy === 'smr' ? 'магічний захист щита' : 'магічну броню'} не пробито — решта урону зникла`
   return `${name}: ${parts.join(', ') || 'без змін'}`
 }
 
@@ -71,8 +71,12 @@ export function damageSummary(name, out) {
  */
 export async function dealDamage(actor, amount) {
   const r = actor.system.resources
-  const out = R.applyDamage({ hp: r.hp.value, pr: r.pr?.value ?? 0, mr: r.mr?.value ?? 0 }, amount)
+  // Піднятий щит — перший шар захисту, окремо від броні
+  const shield = shieldRaised(actor) ? { pr: r.spr?.value ?? 0, mr: r.smr?.value ?? 0 } : null
+  const out = R.applyDamage({ hp: r.hp.value, pr: r.pr?.value ?? 0, mr: r.mr?.value ?? 0, shield }, amount)
   const upd = {}
+  if (shield && out.spr !== r.spr.value) upd['system.resources.spr.value'] = out.spr
+  if (shield && out.smr !== r.smr.value) upd['system.resources.smr.value'] = out.smr
   if (out.hp !== r.hp.value) upd['system.resources.hp.value'] = out.hp
   if (r.pr && out.pr !== r.pr.value) upd['system.resources.pr.value'] = out.pr
   if (r.mr && out.mr !== r.mr.value) upd['system.resources.mr.value'] = out.mr
@@ -83,12 +87,25 @@ export async function dealDamage(actor, amount) {
   return out
 }
 
+/** Щит одягнено й піднято */
+export const shieldRaised = actor => !!actor?.system?.shieldUp && actor.items.some(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Щит')
+
+/** Підняти чи опустити щит — окрема дія; у чат іде коротка картка */
+export async function toggleShield(actor, up = !actor.system.shieldUp) {
+  const sh = actor.items.find(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Щит')
+  if (up && !sh) return ui.notifications.warn(`${actor.name}: щит не одягнено`)
+  await actor.update({ 'system.shieldUp': !!up })
+  const r = actor.system.resources
+  await ChatMessage.create({ speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="god-card god-shield-card"><i class="fa-solid fa-shield-halved"></i> <b>${foundry.utils.escapeHTML(actor.name)}</b> ${up ? 'піднімає щит' : 'опускає щит'}${up && sh ? ` «${foundry.utils.escapeHTML(sh.name)}» (PR ${r.spr?.value ?? 0} · MR ${r.smr?.value ?? 0})` : ''}</div>` })
+}
+
 /** Урон вручну: конкретному актору (кнопка біля HP) або обраним токенам */
 export async function applyDamagePrompt(target) {
   const actors = target ? [target] : selectedActors()
   if (!actors.length) return
   const r = await ask(target ? `Урон: ${target.name}` : 'Завдати урону', `
-    <p class="god-dlg-info">Урон іде послідовно: <b>MR → PR → HP</b>. Якщо він менший за MR — щит не пробито, урону немає.</p>
+    <p class="god-dlg-info">Урон іде послідовно: <b>MR → PR → HP</b> (піднятий щит — спершу MR і PR щита). Якщо урон менший за MR шару — далі він не йде.</p>
     <label class="god-dlg-field"><span>Урон</span><input type="number" name="amount" value="0" min="0" autofocus></label>`, ['amount'])
   if (!r?.amount) return
   for (const a of actors) await dealDamage(a, r.amount)

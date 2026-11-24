@@ -2167,3 +2167,15 @@ b.god-cb-ini { display: grid; place-items: center; }
 .god-dialog .god-dlg-body { max-height: calc(100dvh - 230px); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
 .application.god-dialog { max-height: calc(100dvh - 100px); }
 .application.god-dialog > .window-content { min-height: 0; overflow-y: auto; }
+
+/* 0.21.0 — щит окремо від броні: смуги PR/MR щита й перемикач «підняти» */
+.god .god-res-spr .god-res-fill, .god .god-res-smr .god-res-fill { background: linear-gradient(90deg, #6b5a3a, #c9a66b); }
+.god .god-res-shield { margin-top: 6px; padding: 6px; border: 1px dashed var(--g-line); border-radius: 6px; opacity: .75; }
+.god .god-res-shield.up { opacity: 1; border-style: solid; border-color: color-mix(in srgb, #c9a66b 60%, transparent); background: color-mix(in srgb, #c9a66b 8%, transparent); }
+.god .god-shield-toggle { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 2px 8px; border: 1px solid var(--g-line); border-radius: 5px; font-size: 12px; color: var(--g-dim); cursor: pointer; }
+.god .god-shield-toggle:hover { color: var(--g-text); border-color: #c9a66b; }
+.god .god-res-shield.up .god-shield-toggle, .god .god-shield-toggle.up { color: #1b1d26; background: #c9a66b; border-color: #c9a66b; font-weight: 600; }
+.god .god-hand-shield { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--g-line); border-radius: var(--g-radius); }
+.god .god-hand-shield img { width: 36px; height: 36px; border: none; border-radius: 5px; flex: none; }
+.god .god-hand-shield .god-hand-shield-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.god .god-hand-shield small { color: var(--g-faint); }

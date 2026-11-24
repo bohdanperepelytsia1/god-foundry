@@ -78,6 +78,15 @@ t('урон: MR → PR → HP, тип не важливий', () => {
   // без MR — одразу в PR, потім HP (HP може піти в мінус)
   assert.deepEqual(pick(R.applyDamage({ hp: 10, pr: 5, mr: 0 }, 40)), { hp: -25, pr: 0, mr: 0, toHp: 35, blocked: false })
   assert.equal(R.applyDamage({ hp: 10, pr: 5, mr: 3 }, 0).blocked, false, 'нуль — не блок, просто нічого')
+  // піднятий щит — окремий перший шар: MR щита → PR щита → MR броні → PR броні → HP
+  const sh = R.applyDamage({ hp: 100, pr: 40, mr: 20, shield: { pr: 30, mr: 10 } }, 100)
+  assert.deepEqual([sh.smr, sh.spr, sh.mr, sh.pr, sh.hp], [0, 0, 0, 0, 100], 'щит, потім броня; усе поглинуто')
+  assert.deepEqual([sh.toSmr, sh.toSpr, sh.toMr, sh.toPr, sh.toHp], [10, 30, 20, 40, 0])
+  assert.equal(R.applyDamage({ hp: 100, pr: 40, mr: 20, shield: { pr: 30, mr: 10 } }, 130).hp, 70, 'залишок — у HP')
+  const blk = R.applyDamage({ hp: 100, pr: 40, mr: 20, shield: { pr: 30, mr: 50 } }, 40)
+  assert.equal(blk.blocked, true); assert.equal(blk.blockedBy, 'smr', 'MR щита не пробито — урон зник, броня ціла')
+  const thru = R.applyDamage({ hp: 100, pr: 40, mr: 20, shield: { pr: 5, mr: 10 } }, 25)
+  assert.deepEqual([thru.smr, thru.spr, thru.mr, thru.pr, thru.hp, thru.blockedBy], [0, 0, 20, 40, 100, 'mr'], 'пробив щит, але не MR броні — решта зникла')
 })
 t('ключі гілок: кожна категорія має ключ, і він є у списку', () => {
   for (const [cat, c] of Object.entries(SKILL_CATEGORIES)) assert.ok(SKILL_INDEX[c.gate]?.isGate && SKILL_INDEX[c.gate].cat === cat, cat)

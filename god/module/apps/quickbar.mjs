@@ -144,6 +144,8 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       const hands = a.items.filter(i => i.type === 'weapon' && i.system.equipped)
       if (hands.length) for (const w of hands) linked.push({ id: w.id, zone: 'hands' })
       else linked.push({ id: UNARMED, zone: 'hands' })
+      const sh = a.items.find(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Щит')
+      if (sh) linked.push({ id: sh.id, zone: 'hands' })
       for (const i of a.items.filter(i => i.isPhysical && i.system.location === 'belt' && !i.system.equipped)) linked.push({ id: i.id, zone: 'belt' })
     } else if (a.type === 'npc') linked.push({ id: NPC_STRIKE, zone: 'hands' })   // атака ворога (PD/MD) — як кнопка «Атакувати» на картці
     const linkedIds = new Set(linked.map(l => l.id))
@@ -195,6 +197,11 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
       }
       if (l.id === UNARMED) return { key: UNARMED, img: 'systems/god/assets/icons/weapons/fist.svg', name: 'Кулаки', tip: 'Порожні руки: удар кулаками', group: 'atk', kind: 'item', zone: 'hands', first: n === 0 }
       const i = a.items.get(l.id), s = i.system
+      if (i.type === 'armor' && s.slot === 'Щит') {
+        const up = !!a.system.shieldUp, r = a.system.resources
+        return { key: i.id, img: i.img, name: i.name, group: 'atk', kind: 'item', zone: 'hands', equip: up, dim: !up, first: n === 0 || linked[n - 1].zone !== l.zone,
+          tip: `${i.name}: ${up ? 'піднято' : 'опущено'} · PR щита ${r.spr?.value ?? 0} · MR ${r.smr?.value ?? 0} · клік — ${up ? 'опустити' : 'підняти'}` }
+      }
       const badge = i.type === 'gear' && s.quantity > 1 ? `×${s.quantity}` : ''
       const tip = l.zone === 'hands' ? `Атака: ${i.name}${s.hand === 'off' ? ' · ліва рука' : ''}` : `${i.name} · на поясі${i.type === 'weapon' ? ': клік — взяти в руку' : ''}`
       return { key: i.id, img: i.img, name: i.name, tip, badge, group: l.zone === 'hands' ? 'atk' : 'gear', kind: 'item', zone: l.zone, equip: l.zone === 'hands' ? true : null,
@@ -232,6 +239,8 @@ export class GodQuickbar extends HandlebarsApplicationMixin(ApplicationV2) {
     if (key === NPC_STRIKE && a) return weaponAttack(a, npcStrike(a))
     const item = a?.items.get(key)
     if (!item) return
+    // Одягнений щит — підняти/опустити (окрема дія)
+    if (item.type === 'armor' && item.system.slot === 'Щит' && item.system.equipped) return (await import('../api.mjs')).toggleShield(a)
     // Обладунок — одягнути/зняти; зброя не в руках — спершу взяти в руку
     if (item.type === 'armor' || (item.type === 'weapon' && a.type === 'character' && !item.system.equipped)) {
       const was = !!item.system.equipped

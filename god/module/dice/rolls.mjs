@@ -381,6 +381,14 @@ const glovesPr = actor => [...(actor.items ?? [])].filter(i => i.type === 'armor
 /** Посилання на зброю для повторного кидка: uuid предмета або (для атаки НІП) сам опис */
 const itemRef = item => item.natural ? { name: item.name, img: item.img, natural: true, look: item.look ?? '', system: { ...item.system } }
   : item.unarmed ? unarmedStrike() : item.uuid
+/** Стріли для лука: з одягненого сагайдака, а без нього — усі стріли в інвентарі (категорія «Стріли, болти, кулі») */
+export function arrowsFor(actor) {
+  const quiver = actor.items.find(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Сагайдак') ?? null
+  const isArrow = i => i.type === 'gear' && i.system.category === 'ammo' && (i.system.quantity ?? 1) > 0
+  const list = actor.items.filter(i => isArrow(i) && (quiver ? i.system.location === 'quiver' : true))
+  return { quiver, list }
+}
+
 /** Удар ворога: урон PD/MD, «Чим б'є» (категорія) — для анімації й дальності */
 export function npcStrike(actor) {
   const look = GOD.WEAPON_CATEGORIES[actor.system.attack?.look] ? actor.system.attack.look : ''
@@ -430,6 +438,9 @@ export async function weaponAttack(actor, item, opts = {}) {
   const saved = npc ? (actor.getFlag?.('god', 'attackMods') ?? {}) : {}
   const hitStart = (isChar ? R.capMod(hitDefault) : hitDefault) + (Number(saved.hit) || 0)
   const dmgStart = (isChar ? R.capMod(dmgDefault) : dmgDefault) + (Number(saved.dmg) || 0)
+  // Лук героя: стріли з сагайдака (без сагайдака — будь-які стріли в інвентарі); стріляти без стріл не можна
+  const arrows = isChar && cat === 'bow' && !opts.preset ? arrowsFor(actor) : null
+  if (arrows && !arrows.list.length) return ui.notifications.warn(arrows.quiver ? `Сагайдак «${arrows.quiver.name}» порожній — поклади туди стріли («Огляд» → Сагайдак)` : 'Немає стріл: додай стріли в інвентар або одягни сагайдак зі стрілами')
   const abilityOpts = { '': 'Звичайна атака', ...Object.fromEntries(abilities.map(a => [a.id, `${a.name}${a.level > 1 ? ` (${a.level} рів.)` : ''} — ${a.ed} ВС`])) }
   const p = opts.preset ?? await rollDialog({
     title: `Атака: ${item.name}`,
@@ -438,6 +449,8 @@ export async function weaponAttack(actor, item, opts = {}) {
     fields: [
       { type: 'target', name: 'target', choices },
       { type: 'select', name: 'dir', label: 'Звідки б\'єш', options: DIRECTIONS, value: DIRECTIONS[saved.dir] ? saved.dir : 'front' },
+      ...(arrows ? [{ type: 'select', name: 'arrow', label: arrows.quiver ? 'Стріла з сагайдака' : 'Стріла', value: arrows.list[0].id,
+        options: Object.fromEntries(arrows.list.map(a => [a.id, `${a.name} ×${Math.max(1, a.system.quantity ?? 1)}`])) }] : []),
       ...(abilities.length ? [{ type: 'select', name: 'ability', label: 'Здібність зброї', options: abilityOpts, value: '' }] : []),
       ...critField(actor, 'critHit', 'Крити на попадання'),
       { type: 'row', note: npc ? 'Поправки до попадання й урону ворог запам\'ятає до наступної атаки' : '', items: [
@@ -459,10 +472,21 @@ export async function weaponAttack(actor, item, opts = {}) {
 
   // Здібність: спершу витривалість
   const ab = abilities.find(a => a.id === p.ability) ?? null
+  if (ab?.id === 'double' && arrows && !arrows.quiver) return ui.notifications.warn('Подвійний постріл: потрібен одягнений сагайдак')
   if (ab && !luck) {
     const ed = sys.resources?.ed
     if (ed && ed.value < ab.ed) return ui.notifications.warn(`${ab.name}: потрібно ${ab.ed} ВС, є ${ed.value}`)
     if (ed) await actor.update({ 'system.resources.ed.value': ed.value - ab.ed })
+  }
+  // Стріла: списуємо одразу (подвійний постріл — дві)
+  let arrowNote = ''
+  if (arrows && !luck) {
+    const arrow = actor.items.get(p.arrow) ?? arrows.list[0]
+    const need = ab?.id === 'double' ? 2 : 1
+    const have = Math.max(1, arrow.system.quantity ?? 1)
+    if (have < need) return ui.notifications.warn(`${arrow.name}: потрібно ${need} стріли, є ${have}`)
+    have > need ? await arrow.update({ 'system.quantity': have - need }) : await arrow.delete()
+    arrowNote = `${arrow.name}${need > 1 ? ` ×${need}` : ''} · лишилось ${have - need}`
   }
 
   // Положення: тил — перевага на попадання, фланг +1; сам лежиш −3. Вдача: перевага, від'ємні модифікатори відкидаються
@@ -490,6 +514,7 @@ export async function weaponAttack(actor, item, opts = {}) {
   const sub = `${natural ? esc(actor.name) + (item.look ? ` · ${GOD.WEAPON_CATEGORIES[item.look] ?? ''}` : '') : (GOD.WEAPON_CATEGORIES[cat] ?? '')}${hand} · володіння ${profLvl} → ${esc(target.name)}`
   let html = head(item.img ?? actor.img, item.name, sub)
   if (ab) html += `<div class="god-ability"><i class="fa-solid fa-star"></i> ${esc(ab.name)}${ab.level > 1 ? ` · ${ab.level} рівень` : ''} <small>${luck ? 'ВС уже списано' : `−${ab.ed} ВС`}</small></div>`
+  if (arrowNote) html += `<div class="god-ability god-arrow-used"><i class="fa-solid fa-arrow-right-long"></i> ${esc(arrowNote)}</div>`
 
   let hc = { hit: true, guaranteed: null }
   if (ab?.id === 'shadow') {

@@ -19,6 +19,7 @@
   <div class="god-subtitle">{{lookup config.CREATURE_RANKS system.rank}} · {{lookup config.CREATURE_SIZES system.size}}</div>
 
   <div class="god-res-list">
+    {{#if shieldToggle}}<a class="god-shield-toggle {{#if shieldToggle.up}}up{{/if}}" data-action="shieldToggle" data-tooltip="{{#if shieldToggle.up}}Опустити щит{{else}}Підняти щит — урон спершу йде в захист щита{{/if}}"><i class="fa-solid fa-shield-halved"></i> {{#if shieldToggle.up}}Щит піднято{{else}}Підняти щит{{/if}}</a>{{/if}}
     {{#each resources}}
     {{#> god-res damage=(god-eq key "hp")}}
       {{#if @root.editMode}}{{#unless armor}}<input class="god-res-bonus" type="text" inputmode="numeric" data-delta="system.resources.{{key}}.max" data-min="0" value="{{max}}" data-tooltip="Максимум: число або вираз (+10, -10, 150-20)">{{/unless}}{{/if}}

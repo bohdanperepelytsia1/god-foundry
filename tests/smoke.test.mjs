@@ -43,6 +43,9 @@ sys.parent = { items: [
   item('armor', { equipped: true, slot: 'Рюкзак', bagBonus: 15, weight: 1 }),
   item('weapon', { equipped: true, weight: 1, spellStatMult: true }),
   item('gear', { weight: 0.5, quantity: 4, location: 'belt' }),
+  item('armor', { equipped: true, slot: 'Щит', phys: 30, mag: 5, weight: 0 }),
+  item('armor', { equipped: true, slot: 'Сагайдак', quiverCap: 20, weight: 0 }),
+  item('gear', { category: 'ammo', quantity: 12, weight: 0, location: 'quiver' }),
 ] }
 sys.prepareDerivedData()
 const d = sys.derived
@@ -56,6 +59,8 @@ assert.equal(d.dodge, 10, 'без класу обладунку +1 ШУ, пра�
 assert.equal(d.speed, 4); assert.equal(d.initiative, 2)
 assert.equal(d.maxWeight, 20 + 2 * 5 + 15, 'база + Мул + рюкзак')
 assert.equal(d.belt.used, 1); assert.equal(d.spellStatMult, true)
+assert.deepEqual(d.quiver, { cap: 20, used: 12 }, 'сагайдак: місткість і стріли')
+assert.equal(sys.resources.spr.max, 30, 'щит: окрема фіз. броня'); assert.equal(sys.resources.smr.max, 5, 'щит: окремий МР')
 assert.equal(sys.skill('Ухиляння'), 2); assert.equal(sys.skill('нема'), 0)
 // фіксація: вкачане понад зафіксоване — незафіксований розвиток
 sys.floors.skills = { 'Ухиляння': 2, 'Спринт': 1, 'Мул': 2 }
@@ -108,6 +113,7 @@ const base = {
   equippedWeapons: [sword],
   hands: [{ hand: 'main', label: 'Права рука', sub: 'основна', weapon: sword }, { hand: 'off', label: 'Ліва рука', sub: 'друга', weapon: null, busy: '' }],
   beltFree: true, belt: { on: true, item: { id: 'b', name: 'Пояс', img: 'x' }, slots: 3, used: 1, items: [{ id: 'p1', name: 'Зілля', img: 'x', usable: true, sub: 'HP +50' }] },
+  quiver: { item: { id: 'q', name: 'Сагайдак', img: 'x' }, cap: 20, used: 12, over: false, arrows: [{ id: 'ar', name: 'Стріли', img: 'x', qty: 12, sub: '' }] },
   armorSlots: [{ slot: 'Шолом', label: 'Шолом', item: null }, { slot: 'Кираса', label: 'Кираса', item: { id: 'a', name: 'Кольчуга', img: 'x', phys: 20, mag: 0 } }],
   armorTotal: { phys: 20, mag: 0 },
   readySpells: [row('spell', {}, { school: 'Вогонь', castable: true })],
@@ -171,7 +177,7 @@ for (const editMode of [false, true]) {
       assert.ok(html.includes('data-inv-sort'), 'сортування')
       assert.ok(html.includes('class="god-inv-detail" data-item-id="igear"'), 'інспектор прив\'язаний до предмета')
       assert.ok(html.includes('HP <b>+50</b>') && html.includes('Червона рідина') && html.includes('Розділити'), 'відновлення, опис, розділення')
-      assert.equal((html.match(/<option/g) || []).length, 2 + 9, 'сортування + місце в інспекторі')
+      assert.equal((html.match(/<option/g) || []).length, 2 + 10, 'сортування + місце в інспекторі')
     }
     if (f === 'skills.hbs') {
       assert.ok(html.includes('data-action="skillUp"'), '± видно одразу, як на сайті')
@@ -195,6 +201,7 @@ for (const editMode of [false, true]) {
       assert.ok(html.includes('god-dmg-table') && html.includes('data-delta="system.reputation.fame"'), 'таблиця урону й репутація')
       assert.ok(html.includes('data-kind="hand" data-hand="off"') && html.includes('data-action="gearToBelt"'), 'руки: взяти в порожню, на пояс')
       assert.ok(html.includes('god-belt-panel') && html.includes('data-action="gearToPack"') && html.includes('data-kind="belt"'), 'пояс на огляді')
+      assert.ok(html.includes('god-quiver-panel') && html.includes('12 / 20') && html.includes('×12'), 'сагайдак на огляді')
       assert.ok(html.includes('data-kind="armor" data-slot="Шолом"') && html.includes('Кольчуга'), 'одягнене: слоти з «одягнути»')
     }
     if (f === 'overview.hbs') assert.equal(html.includes('data-delta="system.stats.str.value"'), editMode, 'поля стат (з дельтою) лише в редагуванні')
@@ -224,6 +231,7 @@ for (const [type, flags] of [['weapon', { isWeapon: true, isPhysical: true }], [
     facts: [{ label: 'ПППС 6' }, { label: '100 OM', cls: 'mag' }], handOptions: { main: 'a', off: 'b' }, damageKinds: { mag: 'm', phys: 'p', none: 'n' } })
   assert.ok(html.includes('god-item-sheet'))
   if (type === 'armor') assert.ok(html.includes('system.beltSlots'), 'поле слотів для пояса')
+  if (type === 'armor') assert.ok(html.includes('system.quiverCap') === (it.system.slot === 'Сагайдак'), 'місткість лише для сагайдака')
 }
 console.log('✓ лист предмета — 5 типів')
 

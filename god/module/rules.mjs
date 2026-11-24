@@ -404,26 +404,34 @@ export const parseDelta = (raw, current) => {
   return calc(s)
 }
 
-// ── Урон по цілі: спершу броня (PR/MR), залишок — у здоров'я ────────────────
+// ── Урон по цілі: щит (якщо піднято) → броня (PR/MR) → здоров'я ─────────────
 /**
- * Урон G.O.D.: тип і походження не мають значення — уся сума йде послідовно
- * магічна броня (MR) → фізична броня (PR) → HP.
- * Якщо урон не пробив MR повністю (урон < MR), він зникає: MR не зменшується, далі нічого не йде.
- * Пробив (урон ≥ MR) — MR падає до 0, залишок знімає PR, а що не вмістилось у PR — HP.
- * Приймає число або { phys, mag } (сумуються).
- * → { hp, pr, mr, total, toMr, toPr, toHp, blocked }
+ * Урон G.O.D.: тип і походження не мають значення — уся сума йде послідовно шарами захисту.
+ * Піднятий щит — перший шар і окремий від броні: MR щита → PR щита, далі MR броні → PR броні → HP.
+ * У кожного шару MR: урон, менший за MR, зникає (MR не зменшується, далі нічого не йде);
+ * пробив (≥ MR) — MR падає до 0, залишок іде далі.
+ * Приймає число або { phys, mag } (сумуються). shield: { pr, mr } — лише коли щит піднято.
+ * → { hp, pr, mr, spr, smr, total, toSmr, toSpr, toMr, toPr, toHp, blocked, blockedBy }
  */
-export const applyDamage = ({ hp, pr, mr }, dmg) => {
+export const applyDamage = ({ hp, pr, mr, shield = null }, dmg) => {
   const total = Math.max(0, typeof dmg === 'object' && dmg ? num(dmg.phys) + num(dmg.mag) + num(dmg.amount) : num(dmg))
-  const MR = Math.max(0, num(mr)), PR = Math.max(0, num(pr))
-  const out = { hp: num(hp), pr: num(pr), mr: num(mr), total, toMr: 0, toPr: 0, toHp: 0, blocked: false }
+  const out = { hp: num(hp), pr: num(pr), mr: num(mr), spr: num(shield?.pr), smr: num(shield?.mr), total,
+    toSmr: 0, toSpr: 0, toMr: 0, toPr: 0, toHp: 0, blocked: false, blockedBy: null }
   if (!total) return out
-  if (MR > 0 && total < MR) { out.blocked = true; return out }   // щит не пробито — урон у нікуди
   let left = total
-  out.toMr = Math.min(MR, left); left -= out.toMr; out.mr = MR - out.toMr
-  // Смертельний постріл ігнорує фіз. захист: PR не знімається, урон іде далі в HP
-  if (dmg?.ignorePr) { out.ignorePr = true; out.pr = num(pr) }
-  else { out.toPr = Math.min(PR, left); left -= out.toPr; out.pr = PR - out.toPr }
+  const layer = (mrKey, prKey, toMr, toPr, ignorePr) => {
+    const MR = Math.max(0, out[mrKey]), PR = Math.max(0, out[prKey])
+    if (MR > 0 && left < MR) { out.blocked = true; out.blockedBy = mrKey; left = 0; return }
+    out[toMr] = Math.min(MR, left); left -= out[toMr]; out[mrKey] = MR - out[toMr]
+    if (ignorePr) return
+    out[toPr] = Math.min(PR, left); left -= out[toPr]; out[prKey] = PR - out[toPr]
+  }
+  if (shield) layer('smr', 'spr', 'toSmr', 'toSpr', false)
+  if (left > 0) {
+    // Смертельний постріл ігнорує фіз. захист броні: PR не знімається, урон іде далі в HP
+    if (dmg?.ignorePr) out.ignorePr = true
+    layer('mr', 'pr', 'toMr', 'toPr', !!dmg?.ignorePr)
+  }
   out.toHp = left; out.hp = num(hp) - left
   return out
 }

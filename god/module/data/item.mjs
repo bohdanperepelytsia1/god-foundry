@@ -48,6 +48,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       phys: int(0),
       mag: int(0),
       beltSlots: int(0, { min: 0 }),   // лише для слота «Пояс»
+      quiverCap: int(0, { min: 0 }),   // лише для слота «Сагайдак»: скільки стріл уміщає
       bagBonus: flt(0, { min: 0 }),    // лише для слота «Рюкзак»
     }
   }

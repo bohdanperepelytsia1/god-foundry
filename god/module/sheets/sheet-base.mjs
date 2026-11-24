@@ -49,7 +49,7 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
       itemUse: GodActorSheetBase.#itemUse,
       itemEdit: GodActorSheetBase.#itemEdit,
       itemDelete: GodActorSheetBase.#itemDelete,
-      itemEquip: GodActorSheetBase.#itemEquip, invHand: GodActorSheetBase.#invHand,
+      itemEquip: GodActorSheetBase.#itemEquip, invHand: GodActorSheetBase.#invHand, shieldToggle: GodActorSheetBase.#shieldToggle,
       itemCreate: GodActorSheetBase.#itemCreate,
       itemExpand: GodActorSheetBase.#itemExpand,
       effectToggle: GodActorSheetBase.#effectToggle,
@@ -484,6 +484,7 @@ export class GodActorSheetBase extends HandlebarsApplicationMixin(ActorSheetV2) 
     ui.notifications.info(`«${item.name}» — на швидкій панелі`)
   }
   static #itemEquip(ev, target) { const it = this._item(target); if (it) this.document.toggleEquip(it) }
+  static async #shieldToggle() { (await import('../api.mjs')).toggleShield(this.document) }
   static #invHand(ev, target) { const it = this._item(target); if (it) this.document.setHand(it, target.dataset.hand) }
   static async #itemCreate(ev, target) {
     const type = target.dataset.type

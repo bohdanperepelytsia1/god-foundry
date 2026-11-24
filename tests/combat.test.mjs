@@ -212,3 +212,16 @@ console.log('✓ НІП: природна броня + броня з предм�
   assert.equal(msgs.at(-1).flags.god.fx.natural, true)
   console.log('✓ НІП: «Чим б\'є», урон PD/MD, запам\'ятовані поправки')
 }
+
+// ── Сагайдак: стріли беруться з одягненого сагайдака, без нього — з інвентаря ──
+{
+  const { arrowsFor } = await import('../god/module/dice/rolls.mjs')
+  const it = (id, type, system) => ({ id, type, name: id, system })
+  const items = [it('q', 'armor', { slot: 'Сагайдак', equipped: true, quiverCap: 20 }), it('a1', 'gear', { category: 'ammo', location: 'quiver', quantity: 5 }),
+    it('a2', 'gear', { category: 'ammo', location: 'main', quantity: 10 }), it('p', 'gear', { category: 'potion', location: 'quiver', quantity: 1 })]
+  const r = arrowsFor({ items })
+  assert.equal(r.quiver.id, 'q'); assert.deepEqual(r.list.map(i => i.id), ['a1'], 'лише стріли в сагайдаку')
+  items[0].system.equipped = false
+  assert.deepEqual(arrowsFor({ items }).list.map(i => i.id), ['a1', 'a2'], 'без сагайдака — усі стріли')
+  console.log('✓ сагайдак: які стріли доступні')
+}

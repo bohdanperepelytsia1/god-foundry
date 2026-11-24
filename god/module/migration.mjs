@@ -185,6 +185,21 @@ async function hideBars(type, OWNER) {
   return n
 }
 
+/** 0.21.0: щит окремо від броні — PR/MR щита повні, PR/MR броні не більші за новий максимум */
+async function migrateShield() {
+  let n = 0
+  for (const a of game.actors) {
+    if (!['character', 'npc'].includes(a.type) || !a.items.some(i => i.type === 'armor' && i.system.equipped && i.system.slot === 'Щит')) continue
+    const r = a.system.resources
+    await a.update({
+      'system.resources.spr.value': r.spr.max, 'system.resources.smr.value': r.smr.max,
+      'system.resources.pr.value': Math.min(r.pr.value, r.pr.max), 'system.resources.mr.value': Math.min(r.mr.value, r.mr.max),
+    }, { godMigration: true })
+    n++
+  }
+  return n
+}
+
 /** 0.20.0: ефекти з БМП (тяжкі калітства, тяжка виснага, обмороження, пекло) — додати «бонуси не діють» */
 const NO_BONUS_EFFECTS = ['Тяжкі калітства', 'Тяжка виснага', 'Обмороження', 'Пекло']
 async function migrateNoBonus() {
@@ -298,7 +313,7 @@ async function migrateArmorDodgeEverywhere() {
 // Кожен крок ідемпотентний; кроки з '*' виконуються при кожному оновленні системи
 const STEPS = [
   ['0.4.0', migrateIcons], ['0.9.2', migrateArmorDodgeEffects],
-  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook], ['0.19.4', migrateRestore], ['0.20.0', migrateNoBonus],
+  ['0.9.9', migrateArmorDodgeEverywhere], ['0.9.9', migrateGearIcons], ['0.9.9', migrateTokenBars], ['0.12.0', migrateActorImages], ['0.14.0', migrateHideHeroBars], ['0.14.1', migrateSiteImportFix], ['0.15.1', migrateHideFoeBars], ['0.18.0', migrateStorageActors], ['0.19.1', migrateFoeLook], ['0.19.4', migrateRestore], ['0.20.0', migrateNoBonus], ['0.21.0', migrateShield],
   ['*', migrateEffectChanges], ['*', persistMigratedData],
 ]
 

@@ -46,12 +46,19 @@
             {{#if weapon}}
             <a data-action="gearToBelt" data-item-id="{{weapon.id}}" class="{{#unless @root.beltFree}}off{{/unless}}" data-tooltip="{{#if @root.beltFree}}На пояс{{else}}Пояс не одягнено або заповнений{{/if}}"><i class="fa-solid fa-grip-lines"></i></a>
             <a data-action="gearOff" data-item-id="{{weapon.id}}" data-tooltip="Зняти — лишиться в інвентарі"><i class="fa-solid fa-xmark"></i></a>
-            {{else}}{{#unless busy}}
+            {{else}}{{#unless busy}}{{#unless shield}}
             <a data-action="gearPick" data-kind="hand" data-hand="{{hand}}" data-tooltip="Взяти зброю з інвентаря чи пояса"><i class="fa-solid fa-hand"></i> Взяти</a>
-            {{/unless}}{{/if}}
+            {{/unless}}{{/unless}}{{/if}}
           </span>{{/if}}
         </div>
         {{#if weapon}}{{#with weapon}}{{> god-weapon-card}}{{/with}}
+        {{else if shield}}
+        <div class="god-hand-shield" data-item-id="{{shield.id}}">
+          <img src="{{shield.img}}" alt="" width="36" height="36">
+          <span class="god-hand-shield-info"><b>{{shield.name}}</b><small>PR щита {{shield.pr.value}}/{{shield.pr.max}} · MR {{shield.mr.value}}/{{shield.mr.max}} — окремо від броні</small></span>
+          {{#if @root.editable}}<a class="god-shield-toggle {{#if shield.up}}up{{/if}}" data-action="shieldToggle" data-tooltip="{{#if shield.up}}Опустити щит{{else}}Підняти щит — окрема дія: урон спершу йде в захист щита{{/if}}"><i class="fa-solid fa-shield-halved"></i> {{#if shield.up}}Піднято{{else}}Підняти{{/if}}</a>
+          <a class="god-worn-btn" data-action="gearOff" data-tooltip="Зняти щит"><i class="fa-solid fa-xmark"></i></a>{{/if}}
+        </div>
         {{else if busy}}<p class="god-empty">Зайнята — {{busy}}</p>
         {{else}}<p class="god-empty">Порожня</p>{{/if}}
       </div>
@@ -91,6 +98,24 @@
     {{/if}}
   </section>
 
+  {{#if quiver}}
+  <section class="god-panel god-belt-panel god-quiver-panel">
+    <header><h3><i class="fa-solid fa-bullseye"></i> Сагайдак</h3>
+      <span class="god-belt-slots {{#if quiver.over}}over{{/if}}" data-tooltip="Стріл / місткість">{{quiver.used}}{{#if quiver.cap}} / {{quiver.cap}}{{/if}}</span>
+      {{#if editable}}<a class="god-head-add" data-action="gearOff" data-item-id="{{quiver.item.id}}" data-tooltip="Зняти сагайдак «{{quiver.item.name}}»"><i class="fa-solid fa-xmark"></i></a>{{/if}}
+    </header>
+    <ol class="god-belt-list">
+      {{#each quiver.arrows}}
+      <li class="god-belt-row" data-item-id="{{id}}" draggable="true">
+        <img src="{{img}}" alt="" width="26" height="26"><a class="god-belt-name" data-action="itemEdit" data-tooltip="{{sub}}">{{name}} <small>×{{qty}}</small></a>
+        {{#if @root.editable}}<a data-action="gearToPack" data-tooltip="У рюкзак (загальне)"><i class="fa-solid fa-box-open"></i></a>{{/if}}
+      </li>
+      {{else}}<li class="god-empty">Сагайдак порожній — без стріл лук не стріляє.</li>{{/each}}
+    </ol>
+    {{#if editable}}<a class="god-custom-add" data-action="gearToQuiver"><i class="fa-solid fa-plus"></i> Покласти стріли</a>{{/if}}
+  </section>
+  {{/if}}
+
   <section class="god-panel god-worn-panel">
     <header><h3><i class="fa-solid fa-shirt"></i> Одягнене</h3>
       {{#if armorTotal.phys}}<span class="god-dim">PR {{armorTotal.phys}}{{#if armorTotal.mag}} · MR {{armorTotal.mag}}{{/if}}</span>{{else if armorTotal.mag}}<span class="god-dim">MR {{armorTotal.mag}}</span>{{/if}}
@@ -107,6 +132,9 @@
         {{/if}}
       </div>
       {{/each}}
+      {{#unless quiver}}{{#if editable}}
+      <div class="god-worn-slot"><span class="god-worn-label">Сагайдак</span><a class="god-worn-btn add" data-action="gearPick" data-kind="armor" data-slot="Сагайдак" data-tooltip="Одягнути сагайдак — для стріл"><i class="fa-solid fa-plus"></i></a></div>
+      {{/if}}{{/unless}}
     </div>
   </section>
 
