@@ -101,7 +101,7 @@ async function perform(op, user) {
     delete data._id
     data.system.quantity = n
     if ('equipped' in data.system) data.system.equipped = false
-    if (data.system.location === 'belt') data.system.location = 'main'
+    if (data.system.location === 'belt' || data.system.location === 'quiver') data.system.location = 'main'
     await to.createEmbeddedDocuments('Item', [data])   // однакові речі в отримувача складуться в стос
     n >= have ? await item.delete() : await item.update({ 'system.quantity': have - n })
     return card(from, to, `<img src="${esc(item.img)}" alt=""> ${esc(item.name)}${n > 1 ? ` ×${n}` : ''}`)
@@ -109,6 +109,8 @@ async function perform(op, user) {
   if (op.kind === 'money') {
     const from = await fromUuid(op.from)
     if (!from || !from.testUserPermission(user, 'OWNER') || !to.system?.money) return
+    op.amount = Object.fromEntries(Object.keys(GOD.MONEY).map(k => [k, Math.max(0, Math.trunc(Number(op.amount?.[k]) || 0))]))   // сокет: лише невід'ємні цілі
+    if (!R.moneyTotal(op.amount)) return
     const left = R.payMoney(from.system.money, op.amount)
     if (!left) return ui.notifications.warn(`${from.name}: не вистачає грошей`)
     await from.update({ 'system.money': left })

@@ -134,6 +134,11 @@ export class GodActor extends Actor {
         const onBelt = this.items.filter(i => i.system.location === 'belt')
         if (onBelt.length) await this.updateEmbeddedDocuments('Item', onBelt.map(i => ({ _id: i.id, 'system.location': 'main' })))
       }
+      // Зняли сагайдак — стріли з нього в загальне
+      if (item.type === 'armor' && s.slot === 'Сагайдак') {
+        const inQuiver = this.items.filter(i => i.system.location === 'quiver')
+        if (inQuiver.length) await this.updateEmbeddedDocuments('Item', inQuiver.map(i => ({ _id: i.id, 'system.location': 'main' })))
+      }
       if (item.type === 'armor' && s.slot === 'Щит' && this.system.shieldUp) await this.update({ 'system.shieldUp': false })
       return item.update({ 'system.equipped': false })
     }

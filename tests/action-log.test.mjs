@@ -31,3 +31,5 @@ assert.equal(log.length, 1, 'повернув як було — запис за�
 pushEntry(log, { ...e(2500, 90, 85), u: 'u2' })
 assert.equal(log.length, 2)
 console.log('✓ журнал дій: підписи, різниця, злиття')
+assert.equal(partText(actorParts(undefined, { 'system.resources.hp.value': 50 })[0]), 'HP → 50', 'немає знімка — лише нове значення')
+console.log('✓ журнал: без знімка')

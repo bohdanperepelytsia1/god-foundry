@@ -15,7 +15,7 @@ export const INV_TYPES = [
   { id: 'magic', label: 'Магічне', icon: 'fa-sparkles', test: i => i.system.isMagic },
 ]
 export const INV_SORTS = { manual: 'Свій порядок', name: 'За назвою', weight: 'Найважчі', qty: 'Найбільше штук', type: 'За типом' }
-const LOC_ICONS = { main: 'fa-sack', belt: 'fa-grip-lines', quest: 'fa-scroll', tools: 'fa-screwdriver-wrench', books: 'fa-book', ingredients: 'fa-leaf', potions: 'fa-flask', materials: 'fa-cubes', valuables: 'fa-gem' }
+const LOC_ICONS = { main: 'fa-sack', belt: 'fa-grip-lines', quiver: 'fa-bullseye', quest: 'fa-scroll', tools: 'fa-screwdriver-wrench', books: 'fa-book', ingredients: 'fa-leaf', potions: 'fa-flask', materials: 'fa-cubes', valuables: 'fa-gem' }
 const TYPE_ORDER = { weapon: 0, armor: 1, gear: 2 }
 const abbr = k => GOD.RESOURCES[k]?.abbr ?? k.toUpperCase()
 const round = n => Math.round(n * 100) / 100
@@ -52,6 +52,8 @@ const sorters = {
 }
 
 /** Списки за місцями зберігання з урахуванням фільтра й сортування */
+const wornSlot = (actor, slot) => actor.items.some(i => i.type === 'armor' && i.system.equipped && i.system.slot === slot)
+
 export function buildInventory(actor, state) {
   const physical = actor.items.filter(i => i.isPhysical)
   const filter = INV_TYPES.find(t => t.id === state.type) ?? INV_TYPES[0]
@@ -76,8 +78,10 @@ export function buildInventory(actor, state) {
         search: `${i.name} ${itemSub(i)}`.toLowerCase(),
       })),
     }
-  // Пояс і одягнене — на «Огляді» (як на сайті); тут лише рюкзак і місця зберігання
-  }).filter(s => s.loc !== 'belt' && s.loc !== 'quiver' && (s.count || s.loc === 'main'))
+  // Пояс, сагайдак і одягнене — на «Огляді» (як на сайті); тут лише рюкзак і місця зберігання.
+  // Але якщо пояс чи сагайдак зняли або видалили, а речі в ньому лишились, — показуємо їх тут, щоб не загубились
+  }).filter(s => (s.loc === 'belt' || s.loc === 'quiver' ? s.count && !wornSlot(actor, s.loc === 'belt' ? 'Пояс' : 'Сагайдак') : s.count || s.loc === 'main'))
+    .map(s => s.loc === 'belt' || s.loc === 'quiver' ? { ...s, label: `${s.label} (не одягнено)` } : s)
 
   return {
     sections, beltNote: belt?.slots || physical.some(i => i.system.location === 'belt') ? { used: physical.filter(i => i.system.location === 'belt').length, slots: belt?.slots ?? 0 } : null,

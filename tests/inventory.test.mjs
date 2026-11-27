@@ -47,3 +47,15 @@ const wi = await inspectItem(actor, items[0], { enrich, changeLabel })
 assert.equal(wi.stats[0].value, '180 фіз', '100% урону: СИЛ 30×5 + 30')
 assert.equal(wi.useLabel, 'Атакувати')
 console.log('✓ інвентар: розділи, фільтр, сортування, інспектор')
+
+// Сагайдак зняли/видалили, а стріли лишились у ньому — вони видні в інвентарі, а не губляться
+{
+  const it2 = [mk('ar', 'gear', 'Стріли', { category: 'ammo', quantity: 12, location: 'quiver' }), mk('q', 'armor', 'Сагайдак', { slot: 'Сагайдак', equipped: false })]
+  const a2 = { items: Object.assign(it2, { has: id => it2.some(i => i.id === id), get: id => it2.find(i => i.id === id) }), system: { derived: {} } }
+  let inv2 = buildInventory(a2, newInventoryState())
+  assert.ok(inv2.sections.some(s => s.loc === 'quiver' && s.label.includes('не одягнено')), 'стріли без сагайдака — у списку')
+  it2[1].system.equipped = true
+  inv2 = buildInventory(a2, newInventoryState())
+  assert.ok(!inv2.sections.some(s => s.loc === 'quiver'), 'сагайдак одягнено — стріли на «Огляді»')
+  console.log('✓ стріли без сагайдака не губляться')
+}

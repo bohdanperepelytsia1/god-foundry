@@ -635,11 +635,14 @@ async function applyToTarget(uuid, amount, mark) {
   ui.notifications.info(`Урон ${amount?.amount ?? amount} → ${actor.name}: надіслано майстру`)
   // для анімації: оцінка, чи дійде урон до HP (застосує майстер)
   const r = actor.system.resources ?? {}
-  try { return R.applyDamage({ hp: r.hp?.value ?? 0, pr: r.pr?.value ?? 0, mr: r.mr?.value ?? 0 }, amount) } catch { return true }
+  const shield = API.shieldRaised(actor) ? { pr: r.spr?.value ?? 0, mr: r.smr?.value ?? 0 } : null
+  try { return R.applyDamage({ hp: r.hp?.value ?? 0, pr: r.pr?.value ?? 0, mr: r.mr?.value ?? 0, shield }, amount) } catch { return true }
 }
 
 /** Ключі кнопок урону, які вже натиснуто на цьому клієнті (до приходу прапорця з сервера) */
 const pendingApply = new Set()
+/** Майстер: кнопки урону, які зараз застосовуються (захист від подвійного кліку двох гравців) */
+const gmApplying = new Set()
 function lockApplyButton(btn, done) {
   btn.parentElement?.querySelector('[data-god-defend]')?.remove()
   btn.disabled = true
@@ -684,7 +687,11 @@ Hooks.once('ready', async () => {
     if (msg?.op === 'damage') {
       const doc = fromUuidSync(msg.uuid)
       const actor = doc?.actor ?? (doc instanceof Actor ? doc : null)
-      if (!actor || message?.getFlag('god', `applied.${msg.key}`)) return
+      // два гравці натиснули ту саму кнопку майже одночасно — застосовуємо раз
+      const lock = `${msg.messageId}.${msg.key}`
+      if (!actor || message?.getFlag('god', `applied.${msg.key}`) || (msg.messageId && gmApplying.has(lock))) return
+      if (msg.messageId) gmApplying.add(lock)
+      setTimeout(() => gmApplying.delete(lock), 10000)
       const out = await actAs(msg.from, () => API.dealDamage(actor, typeof msg.amount === 'object' && msg.amount ? { amount: Number(msg.amount.amount) || 0, ignorePr: !!msg.amount.ignorePr } : (Number(msg.amount) || 0)))
       if (message) await message.setFlag('god', `applied.${msg.key}`, { by: msg.from, text: API.damageSummary(actor.name, out) })
     } else if (msg?.op === 'mark' && message) {

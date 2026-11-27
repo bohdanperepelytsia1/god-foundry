@@ -52,7 +52,10 @@ export async function repairArmor() {
   for (const a of actors) {
     const res = a.system.resources
     const fix = k => Math.min(res[k].max, res[k].value + Math.ceil(res[k].max * pct / 100))
-    await a.update({ 'system.resources.pr.value': fix('pr'), 'system.resources.mr.value': fix('mr') })
+    const upd = { 'system.resources.pr.value': fix('pr'), 'system.resources.mr.value': fix('mr') }
+    // щит лагодиться разом з бронею
+    for (const k of ['spr', 'smr']) if (res[k]?.max > 0) upd[`system.resources.${k}.value`] = fix(k)
+    await a.update(upd)
   }
   ui.notifications.info(`Броню відновлено на ${pct}%`)
 }

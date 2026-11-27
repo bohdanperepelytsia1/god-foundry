@@ -2,11 +2,13 @@
  * Журнал дій гравців — для майстра, окремо від чату (кидки лишаються в чаті, сюди не йдуть).
  * Пише лише активний майстер: хуки змін документів приходять йому від усіх клієнтів разом з id користувача.
  * Старі значення беремо зі знімка, який майстер тримає в пам'яті (після оновлення Foundry їх уже не віддає).
- * Зберігається в налаштуванні світу, останні MAX записів.
+ * Зберігається в налаштуванні користувача-майстра (scope 'user', Foundry v13+): у базі, але гравцям не розсилається
+ * і з консолі його не прочитати. Останні MAX записів.
  */
 import { GOD } from '../config.mjs'
 
 const MAX = 2000
+const STORE = 'actionLogData'
 const MERGE_MS = 20000   // кілька кліків «−» по HP за 20 с — один запис
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
@@ -57,7 +59,7 @@ export function actorParts(before, changes) {
     if (from === to || (typeof to === 'object' && to !== null && !Array.isArray(to))) continue
     if (k.startsWith('system.knowledge') || k.startsWith('system.customSkills')) { parts.push({ k: k.split('.').slice(0, 2).join('.'), text: k.includes('customSkills') ? 'особливі вміння' : 'знання', edit: true }); continue }
     if (k === 'system.biography' || k === 'img') { parts.push({ k, text: actorLabel(k), edit: true }); continue }
-    parts.push({ k, label: actorLabel(k), from: isNum(from) || typeof from === 'boolean' ? from : short(from), to: isNum(to) || typeof to === 'boolean' ? to : short(to) })
+    parts.push({ k, label: actorLabel(k), from: from === undefined ? undefined : isNum(from) || typeof from === 'boolean' ? from : short(from), to: isNum(to) || typeof to === 'boolean' ? to : short(to) })
   }
   // однакові «змінив знання» — один раз
   return parts.filter((p, i) => !p.edit || parts.findIndex(q => q.k === p.k) === i)
@@ -76,7 +78,7 @@ export function itemParts(name, before, changes) {
     if (k === 'system.quantity') { parts.push({ k, label: `${n} ×`, from, to }); continue }
     if (k === 'system.hand') { parts.push({ k, text: `${n}: ${to === 'off' ? 'у ліву руку' : 'у праву руку'}` }); continue }
     if (k === 'system.description' || k === 'img') { parts.push({ k, text: `змінив ${ITEM_FIXED[k]} ${n}`, edit: true }); continue }
-    parts.push({ k, label: `${n}: ${ITEM_FIXED[k] ?? k.replace(/^system\./, '')}`, from: isNum(from) || typeof from === 'boolean' ? from : short(from), to: isNum(to) || typeof to === 'boolean' ? to : short(to) })
+    parts.push({ k, label: `${n}: ${ITEM_FIXED[k] ?? k.replace(/^system\./, '')}`, from: from === undefined ? undefined : isNum(from) || typeof from === 'boolean' ? from : short(from), to: isNum(to) || typeof to === 'boolean' ? to : short(to) })
   }
   return parts
 }
@@ -86,7 +88,7 @@ export function partText(p) {
   if (p.text) return p.text
   const d = isNum(p.from) && isNum(p.to) ? p.to - p.from : null
   const delta = d ? ` (${d > 0 ? '+' : '−'}${Math.abs(Math.round(d * 100) / 100)})` : ''
-  return `${p.label} ${short(p.from)} → ${short(p.to)}${delta}`
+  return p.from === undefined ? `${p.label} → ${short(p.to)}` : `${p.label} ${short(p.from)} → ${short(p.to)}${delta}`
 }
 
 /** Додати запис до журналу (чиста логіка — для тестів): той самий гравець, той самий герой, ті самі числові поля за MERGE_MS — зливаємо */
@@ -112,10 +114,11 @@ let log = null, saveTimer = null
 let actingFor = null     // майстер виконує дію гравця (урон із сокета) — запис на гравця
 
 const isWriter = () => game.user === game.users.activeGM
-function getLog() { return (log ??= foundry.utils.deepClone(game.settings.get('god', 'actionLog') ?? [])) }
+const readStored = () => game.settings.get('god', STORE) ?? []
+function getLog() { return (log ??= foundry.utils.deepClone(readStored())) }
 function save() {
   clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => game.settings.set('god', 'actionLog', getLog()).catch(err => console.warn('G.O.D. | журнал', err)), 1500)
+  saveTimer = setTimeout(() => game.settings.set('god', STORE, getLog()).catch(err => console.warn('G.O.D. | журнал', err)), 1500)
   GodActionLog.instance?.render()
 }
 
@@ -138,18 +141,28 @@ export async function actAs(userId, fn) {
 const ownerActor = doc => doc?.parent instanceof Actor ? doc.parent : (doc?.actor ?? null)
 
 export function registerActionLog() {
-  game.settings.register('god', 'actionLog', { scope: 'world', config: false, type: Array, default: [], onChange: () => { if (!isWriter()) log = null; GodActionLog.instance?.render() } })
+  // 0.21.1 зберігав журнал у світі (розсилався всім) — лишаємо для перенесення
+  game.settings.register('god', 'actionLog', { scope: 'world', config: false, type: Array, default: [] })
+  game.settings.register('god', STORE, { scope: 'user', config: false, type: Array, default: [], onChange: () => GodActionLog.instance?.render() })
   game.settings.register('god', 'actionLogOn', {
     name: 'Журнал дій гравців', hint: 'Майстер бачить, що гравці міняли в героях і предметах (окремо від чату). Відкрити — кнопка «Журнал дій» у вкладці акторів або на панелі токенів.',
     scope: 'world', config: true, type: Boolean, default: true,
   })
   const on = () => isWriter() && game.settings.get('god', 'actionLogOn')
 
-  Hooks.once('ready', () => {
+  Hooks.once('ready', async () => {
     if (!isWriter()) return
+    const old = game.settings.get('god', 'actionLog') ?? []
+    if (old.length) {
+      log = [...old, ...readStored()].sort((a, b) => a.t - b.t).slice(-MAX)
+      await game.settings.set('god', STORE, log)
+      await game.settings.set('god', 'actionLog', [])
+    }
     for (const a of game.actors) { snap.set(a.uuid, flat(a)); for (const i of a.items) snap.set(i.uuid, flat(i)) }
   })
   const remember = doc => { if (isWriter()) snap.set(doc.uuid, flat(doc)) }
+  // Незв'язані токени (вороги) — свої копії акторів: знімок, коли сцена завантажилась
+  Hooks.on('canvasReady', () => { if (isWriter()) for (const t of canvas.tokens?.placeables ?? []) if (t.actor && !t.document.actorLink) remember(t.actor) })
 
   Hooks.on('updateActor', (actor, changes, options, userId) => {
     const before = snap.get(actor.uuid)
@@ -236,7 +249,7 @@ export class GodActionLog extends foundry.applications.api.ApplicationV2 {
   _onClose(o) { super._onClose?.(o); GodActionLog.instance = null }
 
   async _renderHTML() {
-    const all = isWriter() ? getLog() : (game.settings.get('god', 'actionLog') ?? [])
+    const all = isWriter() ? getLog() : readStored()
     const f = this.filter, q = f.q.trim().toLowerCase()
     const rows = all.filter(e => (f.gm || !e.gm) && (!f.user || e.u === f.user) && (!f.actor || e.a === f.actor))
       .map(e => ({ e, text: e.parts.map(partText).join(' · ') }))
@@ -284,7 +297,7 @@ export class GodActionLog extends foundry.applications.api.ApplicationV2 {
     for (const k of ['user', 'actor']) content.querySelector(`select[name=${k}]`).addEventListener('change', ev => { this.filter[k] = ev.target.value; this.render() })
     content.querySelector('input[name=gm]').addEventListener('change', ev => { this.filter.gm = ev.target.checked; this.render() })
     content.querySelector('[data-act=export]').addEventListener('click', () => {
-      const all = isWriter() ? getLog() : game.settings.get('god', 'actionLog')
+      const all = isWriter() ? getLog() : readStored()
       const txt = all.map(e => `${new Date(e.t).toLocaleString('uk-UA')}\t${e.un}\t${e.an}\t${e.parts.map(partText).join(' · ')}`).join('\n')
       foundry.utils.saveDataToFile(txt, 'text/plain', `god-journal-${new Date().toISOString().slice(0, 10)}.txt`)
     })
@@ -292,7 +305,7 @@ export class GodActionLog extends foundry.applications.api.ApplicationV2 {
       const ok = await foundry.applications.api.DialogV2.confirm({ window: { title: 'Очистити журнал?' }, content: '<p>Усі записи буде видалено. Скасувати не можна.</p>', rejectClose: false })
       if (!ok) return
       log = []
-      await game.settings.set('god', 'actionLog', [])
+      await game.settings.set('god', STORE, [])
       this.render()
     })
   }
